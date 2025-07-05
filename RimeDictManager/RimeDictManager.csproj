@@ -19,12 +19,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-    <Folder Include="Services\" />
-    <Folder Include="ViewModels\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="..\LICENSE.txt" />
     <None Include="..\README.md" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
