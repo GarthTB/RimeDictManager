@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+        <AssemblyName>Rime Dict Manager</AssemblyName>
+        <ApplicationIcon>Assets\RDM.ico</ApplicationIcon>
+        <Version>2.0.0</Version>
+        <Title>Rime Dict Manager</Title>
+        <Authors>Garth TB | 天卜 &lt;g-art-h@outlook.com&gt;</Authors>
+        <Description>A WPF app for maintaining RIME dict with auto-encoding support | 基于 WPF 的 RIME 词库维护工具，可自动编码</Description>
+        <Copyright>Copyright (c) 2026 Garth TB | 天卜</Copyright>
+        <PackageProjectUrl>https://github.com/GarthTB/RimeDictManager</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageIcon>Assets\RDM.png</PackageIcon>
+        <Company>Garth TB | 天卜 &lt;g-art-h@outlook.com&gt;</Company>
+        <Product>Rime Dict Manager</Product>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <DebugType>none</DebugType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Page Update="Views\MainWindow.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <XamlRuntime>Wpf</XamlRuntime>
+            <SubType>Designer</SubType>
+        </Page>
+    </ItemGroup>
+
+</Project>
