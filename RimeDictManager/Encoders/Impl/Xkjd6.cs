@@ -1,4 +1,4 @@
-namespace RimeDictManager.Core.Encoding.Encoders;
+namespace RimeDictManager.Encoders.Impl;
 
 using System.IO;
 
@@ -8,14 +8,14 @@ internal sealed class Xkjd6(string dictPath): IVarLenEncoder
 {
     /// <summary> 单字词库 </summary>
     private readonly Dictionary<char, string[]> _charsDict
-        = File.ReadLines(dictPath).LoadCharsDict(3); // 只有前3码参与词组编码
+        = File.ReadLines(dictPath).ToCharsDict(3); // 只有前3码参与词组编码
 
     public uint Chars => (uint)_charsDict.Count;
 
     public (byte Min, byte Max) LenRange => (3, 6);
 
     public IEnumerable<string> Encode(string word) =>
-        (word.F3L1Codes(_charsDict) switch {
+        (_charsDict.F3L1Codes(word) switch {
             { Count: 2 } codes =>
                 from c1 in codes[0]
                 from c2 in codes[1]

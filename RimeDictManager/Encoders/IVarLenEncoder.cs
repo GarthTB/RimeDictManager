@@ -1,4 +1,4 @@
-namespace RimeDictManager.Core.Encoding;
+namespace RimeDictManager.Encoders;
 
 /// <summary> 变长编码器 </summary>
 internal interface IVarLenEncoder: IEncoder

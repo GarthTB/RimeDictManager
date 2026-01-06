@@ -1,4 +1,4 @@
-namespace RimeDictManager.Core.Models;
+namespace RimeDictManager.Models;
 
 /// <summary> 词库的一行 </summary>
 /// <param name="Idx"> 行索引（新条目为null） </param>

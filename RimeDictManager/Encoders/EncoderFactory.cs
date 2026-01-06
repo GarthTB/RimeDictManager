@@ -1,6 +1,6 @@
-namespace RimeDictManager.Core.Encoding;
+namespace RimeDictManager.Encoders;
 
-using Encoders;
+using Impl;
 
 /// <summary> 编码器工厂 </summary>
 internal class EncoderFactory

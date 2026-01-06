@@ -1,6 +1,6 @@
-namespace RimeDictManager.Core.Models;
+namespace RimeDictManager.Models;
 
-/// <summary> 词库前缀树：提供按编码的快速搜索 </summary>
+/// <summary> 词库前缀树：提供按编码的快速前缀搜索 </summary>
 internal sealed class Trie
 {
     /// <summary> 根节点 </summary>
@@ -24,7 +24,6 @@ internal sealed class Trie
             l.Word == line.Word && l.Code == line.Code && l.Weight == line.Weight))
             throw new ArgumentException("试图插入重复条目", nameof(line));
         node.Entries.Add(line);
-
         Count++;
     }
 
@@ -38,7 +37,6 @@ internal sealed class Trie
         if ((line.Code ?? "").Any(c => !node.Children.TryGetValue(c, out node))
          || !node.Entries.Remove(line))
             throw new ArgumentException("试图删除不存在的条目", nameof(line));
-
         Count--;
     }
 
@@ -50,7 +48,6 @@ internal sealed class Trie
         var node = _root;
         if (code.Any(c => !node.Children.TryGetValue(c, out node)))
             return [];
-
         if (exact)
             return node.Entries;
 
@@ -62,7 +59,6 @@ internal sealed class Trie
             foreach (var child in top.Children.Values)
                 nodes.Push(child);
         }
-
         return entries;
     }
 
