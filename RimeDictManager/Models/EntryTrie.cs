@@ -1,43 +1,38 @@
 namespace RimeDictManager.Models;
 
 /// <summary> 词库前缀树：提供按编码的快速前缀搜索 </summary>
-internal sealed class Trie
+internal sealed class EntryTrie
 {
     /// <summary> 根节点 </summary>
     private readonly Node _root = new(new(8105), []); // 假设覆盖通规
 
-    /// <summary> 条目总数 </summary>
-    public uint Count { get; private set; }
-
     /// <summary> 插入条目 </summary>
-    /// <param name="line"> 待插入的对象 </param>
-    public void Insert(Line line) {
-        if (line.Word is { Length: 0 } || line.Comment is {})
-            throw new ArgumentException("待插入的条目异常", nameof(line));
+    /// <param name="entry"> 待插入的条目 </param>
+    public void Insert(Line entry) {
+        if (entry.Word is { Length: 0 } || entry.Comment is {})
+            throw new ArgumentException("待插入的条目异常", nameof(entry));
 
-        var node = (line.Code ?? "").Aggregate( // 无编码的条目插入根节点
+        var node = (entry.Code ?? "").Aggregate( // 无编码的条目插入根节点
             _root,
             static (node, c) => node.Children.TryGetValue(c, out var child)
                 ? child
                 : node.Children[c] = new([], []));
         if (node.Entries.Any(l =>
-            l.Word == line.Word && l.Code == line.Code && l.Weight == line.Weight))
-            throw new ArgumentException("试图插入重复条目", nameof(line));
-        node.Entries.Add(line);
-        Count++;
+            l.Word == entry.Word && l.Code == entry.Code && l.Weight == entry.Weight))
+            throw new ArgumentException("试图插入重复条目", nameof(entry));
+        node.Entries.Add(entry);
     }
 
     /// <summary> 删除条目 </summary>
-    /// <param name="line"> 待删除的对象 </param>
-    public void Remove(Line line) {
-        if (line.Word is { Length: 0 } || line.Comment is {})
-            throw new ArgumentException("待删除的条目异常", nameof(line));
+    /// <param name="entry"> 待删除的条目 </param>
+    public void Remove(Line entry) {
+        if (entry.Word is { Length: 0 } || entry.Comment is {})
+            throw new ArgumentException("待删除的条目异常", nameof(entry));
 
         var node = _root;
-        if ((line.Code ?? "").Any(c => !node.Children.TryGetValue(c, out node))
-         || !node.Entries.Remove(line))
-            throw new ArgumentException("试图删除不存在的条目", nameof(line));
-        Count--;
+        if ((entry.Code ?? "").Any(c => !node.Children.TryGetValue(c, out node))
+         || !node.Entries.Remove(entry))
+            throw new ArgumentException("试图删除不存在的条目", nameof(entry));
     }
 
     /// <summary> 按编码搜索条目 </summary>

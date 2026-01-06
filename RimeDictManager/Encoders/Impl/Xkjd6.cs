@@ -37,7 +37,7 @@ internal sealed class Xkjd6(string dictPath): IVarLenEncoder
     public IEnumerable<string> Shorten(IEnumerable<string> fullCodes, byte len) =>
         len switch {
             6 => fullCodes,
-            > 2 => fullCodes.Select(c => c[..len]),
+            > 2 => fullCodes.Select(code => code[..len]),
             _ => throw new ArgumentOutOfRangeException(nameof(len), "简码长度无效")
         };
 }
