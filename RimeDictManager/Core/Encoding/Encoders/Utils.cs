@@ -21,7 +21,7 @@ internal static class Utils
     /// <param name="word"> 词组 </param>
     /// <param name="charsDict"> 单字词库 </param>
     /// <returns> 各有效单字的编码集合 </returns>
-    public static List<string[]> F3L1(this string word, Dictionary<char, string[]> charsDict) {
+    public static List<string[]> F3L1Codes(this string word, Dictionary<char, string[]> charsDict) {
         List<string[]> set = new(4);
         for (var i = 0; i < word.Length && set.Count < 4; i++)
             if (charsDict.TryGetValue(word[i], out var codes))
