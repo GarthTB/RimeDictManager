@@ -16,22 +16,26 @@ internal sealed record Line(uint? Idx, string? Word, string? Code, string? Weigh
     public static Line FromString(uint index, string line) {
         if (line.Length == 0) // 空行不含任何字符
             return new(index, null, null, null, null);
-        if (line.StartsWith('#')) // 注释行的行首为#
+        if (line[0] == '#') // 注释行的行首为#
             return new(index, null, null, null, line);
         if (line.Split('\t', 4) is { Length: < 4 } parts // 条目行最多3列
-         && parts.ElementAtOrDefault(0) is {} word) // 且必须有字词
+         && parts.ElementAtOrDefault(0) is { Length: > 0 } word) // 且必须有字词
             return new(index, word, parts.ElementAtOrDefault(1), parts.ElementAtOrDefault(2), null);
 
         throw new FormatException($"词库第{index + 1}行格式错误：{line}");
     }
 
     /// <summary> 将对象转换为字符串 </summary>
+    /// <remarks> 需与FromString可逆 </remarks>
     public override string ToString() =>
-        (Word, Code, Weight, Comment) switch {
-            (null, null, null, _) => Comment ?? "", // 注释行或空行
-            ({}, null, null, null) => Word,
-            ({}, {}, null, null) => $"{Word}\t{Code}",
-            ({}, {}, {}, null) => $"{Word}\t{Code}\t{Weight}",
+        (Word, Comment) switch {
+            (null, _) => Comment ?? "", // 注释行或空行
+            ({ Length: > 0 }, null) => (Code, Weight) switch { // 条目行
+                (null, null) => Word,
+                ({}, null) => $"{Word}\t{Code}",
+                ({}, {}) => $"{Word}\t{Code}\t{Weight}",
+                _ => throw new FormatException("条目格式错误，请报告异常")
+            },
             _ => throw new FormatException("条目格式错误，请报告异常")
         };
 }

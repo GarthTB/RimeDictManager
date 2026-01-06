@@ -10,12 +10,10 @@ internal sealed class Trie
     public uint Count { get; private set; }
 
     /// <summary> 插入条目 </summary>
-    /// <param name="line"> 要插入的对象 </param>
+    /// <param name="line"> 待插入的对象 </param>
     public void Insert(Line line) {
-        if (line.Word is null)
-            throw new ArgumentException("试图插入非条目行", nameof(line));
-        if (line.Comment is {})
-            throw new FormatException("条目格式错误，请报告异常"); // 条目行不能有注释
+        if (line.Word is { Length: 0 } || line.Comment is {})
+            throw new ArgumentException("待插入的条目异常", nameof(line));
 
         var node = (line.Code ?? "").Aggregate( // 无编码的条目插入根节点
             _root,
@@ -31,12 +29,10 @@ internal sealed class Trie
     }
 
     /// <summary> 删除条目 </summary>
-    /// <param name="line"> 要删除的对象 </param>
+    /// <param name="line"> 待删除的对象 </param>
     public void Remove(Line line) {
-        if (line.Word is null)
-            throw new ArgumentException("试图删除非条目行", nameof(line));
-        if (line.Comment is {})
-            throw new FormatException("条目格式错误，请报告异常"); // 条目行不能有注释
+        if (line.Word is { Length: 0 } || line.Comment is {})
+            throw new ArgumentException("待删除的条目异常", nameof(line));
 
         var node = _root;
         if ((line.Code ?? "").Any(c => !node.Children.TryGetValue(c, out node))
@@ -50,9 +46,9 @@ internal sealed class Trie
     /// <param name="code"> 编码 </param>
     /// <param name="exact"> true时精确搜索，false时前缀搜索 </param>
     /// <returns> 无重、无序的条目 </returns>
-    public IReadOnlyList<Line> Search(string? code, bool exact) {
+    public IReadOnlyList<Line> Search(string code, bool exact) {
         var node = _root;
-        if ((code ?? "").Any(c => !node.Children.TryGetValue(c, out node)))
+        if (code.Any(c => !node.Children.TryGetValue(c, out node)))
             return [];
 
         if (exact)
