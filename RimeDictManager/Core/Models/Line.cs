@@ -9,9 +9,10 @@ namespace RimeDictManager.Core.Models;
 /// <remarks> 格式标准见 https://github.com/rime/home/wiki/RimeWithSchemata </remarks>
 internal sealed record Line(uint? Idx, string? Word, string? Code, string? Weight, string? Comment)
 {
-    /// <summary> 将字符串解析为对象，一定有效 </summary>
+    /// <summary> 将字符串解析为对象 </summary>
     /// <param name="index"> 行索引 </param>
     /// <param name="line"> 词库的一行 </param>
+    /// <returns> 一定有效的一行 </returns>
     public static Line FromString(uint index, string line) {
         if (line.Length == 0) // 空行不含任何字符
             return new(index, null, null, null, null);
@@ -20,6 +21,7 @@ internal sealed record Line(uint? Idx, string? Word, string? Code, string? Weigh
         if (line.Split('\t', 4) is { Length: < 4 } parts // 条目行最多3列
          && parts.ElementAtOrDefault(0) is {} word) // 且必须有字词
             return new(index, word, parts.ElementAtOrDefault(1), parts.ElementAtOrDefault(2), null);
+
         throw new FormatException($"词库第{index + 1}行格式错误：{line}");
     }
 

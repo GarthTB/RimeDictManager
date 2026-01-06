@@ -46,9 +46,10 @@ internal sealed class Trie
         Count--;
     }
 
-    /// <summary> 按编码搜索条目，无序 </summary>
+    /// <summary> 按编码搜索条目 </summary>
     /// <param name="code"> 编码 </param>
     /// <param name="exact"> true时精确搜索，false时前缀搜索 </param>
+    /// <returns> 无重、无序的条目 </returns>
     public IReadOnlyList<Line> Search(string? code, bool exact) {
         var node = _root;
         if ((code ?? "").Any(c => !node.Children.TryGetValue(c, out node)))
@@ -59,7 +60,6 @@ internal sealed class Trie
 
         Stack<Node> nodes = new(16);
         nodes.Push(node);
-
         List<Line> entries = new(16);
         while (nodes.TryPop(out var top)) {
             entries.AddRange(top.Entries);
