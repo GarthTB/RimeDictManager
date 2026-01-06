@@ -1,6 +1,6 @@
 namespace RimeDictManager.Core.Models;
 
-/// <summary> 词库前缀树：提供快速前缀搜索 </summary>
+/// <summary> 词库前缀树：提供按编码的快速搜索 </summary>
 internal sealed class Trie
 {
     /// <summary> 根节点 </summary>
