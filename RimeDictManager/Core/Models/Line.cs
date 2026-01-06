@@ -10,19 +10,19 @@ namespace RimeDictManager.Core.Models;
 internal sealed record Line(uint? Idx, string? Word, string? Code, string? Weight, string? Comment)
 {
     /// <summary> 将字符串解析为对象 </summary>
-    /// <param name="index"> 行索引 </param>
+    /// <param name="idx"> 行索引 </param>
     /// <param name="line"> 词库的一行 </param>
     /// <returns> 一定有效的一行 </returns>
-    public static Line FromString(uint index, string line) {
+    public static Line FromString(uint idx, string line) {
         if (line.Length == 0) // 空行不含任何字符
-            return new(index, null, null, null, null);
+            return new(idx, null, null, null, null);
         if (line[0] == '#') // 注释行的行首为#
-            return new(index, null, null, null, line);
+            return new(idx, null, null, null, line);
         if (line.Split('\t', 4) is { Length: < 4 } parts // 条目行最多3列
          && parts.ElementAtOrDefault(0) is { Length: > 0 } word) // 且必须有字词
-            return new(index, word, parts.ElementAtOrDefault(1), parts.ElementAtOrDefault(2), null);
+            return new(idx, word, parts.ElementAtOrDefault(1), parts.ElementAtOrDefault(2), null);
 
-        throw new FormatException($"词库第{index + 1}行格式错误：{line}");
+        throw new FormatException($"词库第{idx + 1}行格式错误：{line}");
     }
 
     /// <summary> 将对象转换为字符串 </summary>

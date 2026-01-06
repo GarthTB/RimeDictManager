@@ -22,18 +22,18 @@ internal static class Utils
     /// <param name="charsDict"> 单字词库 </param>
     /// <returns> 各有效单字的编码集合 </returns>
     public static List<string[]> F3L1Codes(this string word, Dictionary<char, string[]> charsDict) {
-        List<string[]> set = new(4);
-        for (var i = 0; i < word.Length && set.Count < 4; i++)
-            if (charsDict.TryGetValue(word[i], out var codes))
-                set.Add(codes);
+        List<string[]> codes = new(4);
+        for (var i = 0; i < word.Length && codes.Count < 4; i++)
+            if (charsDict.TryGetValue(word[i], out var arr))
+                codes.Add(arr);
 
-        if (set.Count != 4)
-            return set;
+        if (codes.Count != 4)
+            return codes;
 
-        for (var (i, ori) = (word.Length - 1, set[3]); i >= 4 && set[3] == ori; i--)
-            if (charsDict.TryGetValue(word[i], out var codes))
-                set[3] = codes;
+        for (var (i, ori) = (word.Length - 1, codes[3]); i >= 4 && codes[3] == ori; i--)
+            if (charsDict.TryGetValue(word[i], out var arr))
+                codes[3] = arr;
 
-        return set;
+        return codes;
     }
 }
