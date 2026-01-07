@@ -4,14 +4,13 @@ using System.IO;
 
 /// <summary> 星空键道6 编码器 </summary>
 /// <param name="dictPath"> 单字词库路径 </param>
-internal sealed class Xkjd6(string dictPath): IVarLenEncoder
+internal sealed class Xkjd6(string dictPath): IEncoder
 {
     /// <summary> 单字词库 </summary>
     private readonly Dictionary<char, string[]> _charsDict
         = File.ReadLines(dictPath).ToCharsDict(3); // 只有前3码参与词组编码
 
     public uint Chars => (uint)_charsDict.Count;
-
     public (byte Min, byte Max) LenRange => (3, 6);
 
     public IEnumerable<string> Encode(string word) =>
@@ -33,11 +32,4 @@ internal sealed class Xkjd6(string dictPath): IVarLenEncoder
                 select $"{c1[0]}{c2[0]}{c3[0]}{c4[0]}{c1[2]}{c2[2]}",
             _ => []
         }).Distinct();
-
-    public IEnumerable<string> Shorten(IEnumerable<string> fullCodes, byte len) =>
-        len switch {
-            6 => fullCodes,
-            > 2 => fullCodes.Select(code => code[..len]),
-            _ => throw new ArgumentOutOfRangeException(nameof(len), "简码长度无效")
-        };
 }
