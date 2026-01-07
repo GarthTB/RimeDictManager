@@ -33,11 +33,11 @@ internal class RimeDict
                 Insert(Line.FromString(idx, rawLine));
             idx++;
         }
+        Modified = false; // 纠正Insert副作用
 
         if (_header.Count < 2)
             throw new FormatException("词库缺失文件头");
         _srcPath = dictPath;
-        Modified = false;
     }
 
     /// <summary> 条目总数 </summary>
@@ -70,14 +70,6 @@ internal class RimeDict
         Modified = true;
     }
 
-    /// <summary> 按字词精确搜索条目 </summary>
-    /// <param name="word"> 字词 </param>
-    /// <returns> 无重、无序的条目 </returns>
-    public IReadOnlyList<Line> SearchByWord(string word) =>
-        _entriesByWord.TryGetValue(word, out var list)
-            ? list
-            : [];
-
     /// <summary> 按编码搜索条目 </summary>
     /// <param name="code"> 编码 </param>
     /// <param name="exact"> true时精确搜索，false时前缀搜索 </param>
@@ -85,13 +77,13 @@ internal class RimeDict
     public IReadOnlyList<Line> SearchByCode(string code, bool exact) =>
         _entriesByCode.Search(code, exact);
 
-    /// <summary> 搜索词组或编码相同的条目 </summary>
-    /// <param name="entry"> 条目 </param>
+    /// <summary> 按字词精确搜索条目 </summary>
+    /// <param name="word"> 字词 </param>
     /// <returns> 无重、无序的条目 </returns>
-    public IEnumerable<Line> SearchRelated(Line entry) =>
-        SearchByWord(entry.Word!)
-            .Union(_entriesByCode.Search(entry.Code!, true))
-            .Where(e => e != entry);
+    public IReadOnlyList<Line> SearchByWord(string word) =>
+        _entriesByWord.TryGetValue(word, out var list)
+            ? list
+            : [];
 
     /// <summary> 保存词库 </summary>
     /// <param name="path"> 保存路径：null时覆写 </param>
