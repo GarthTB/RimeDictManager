@@ -18,7 +18,7 @@ internal class RimeDict
     /// <summary> 词库路径 </summary>
     private readonly string _srcPath;
 
-    /// <summary> 载入RIME词库文件（.dict.yaml） </summary>
+    /// <summary> 加载RIME词库文件（.dict.yaml） </summary>
     /// <param name="dictPath"> 词库路径 </param>
     /// <remarks> 格式标准见 https://github.com/rime/home/wiki/RimeWithSchemata </remarks>
     public RimeDict(string dictPath) {

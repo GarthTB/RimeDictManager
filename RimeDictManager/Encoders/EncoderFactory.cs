@@ -14,11 +14,11 @@ internal class EncoderFactory
         ["星空键道6"] = static dictPath => new Xkjd6(dictPath)
     };
 
-    /// <summary> 可用编码器的名称 </summary>
+    /// <summary> 可用编码方案名 </summary>
     public static IReadOnlyList<string> Names => Encoders.Keys.ToList();
 
-    /// <summary> 构造指定名称的编码器 </summary>
-    /// <param name="name"> 编码器名称 </param>
+    /// <summary> 构造指定方案的编码器 </summary>
+    /// <param name="name"> 编码方案名 </param>
     /// <param name="dictPath"> 单字词库路径 </param>
     /// <returns> 构造好的编码器，待检验覆盖字数 </returns>
     public static IEncoder Create(string name, string dictPath) =>
