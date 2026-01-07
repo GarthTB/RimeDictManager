@@ -23,12 +23,13 @@ internal sealed partial class LogViewModel: ObservableObject
             static () => {
                 SaveFileDialog dialog = new() {
                     Title = "将日志保存到...",
+                    DefaultExt = "log",
                     FileName = $"RDM_{DateTime.Now:yyMMdd-HHmmss}.log",
-                    Filter = "日志文件 (*.log)|*.log|所有文件 (*.*)|*.*",
-                    DefaultExt = "log"
+                    Filter = "日志文件 (*.log)|*.log|所有文件 (*.*)|*.*"
                 };
                 if (dialog.ShowDialog() != true)
                     return;
+
                 AuditLogger.Save(dialog.FileName);
                 VmHelper.ShowInfo("成功", $"已将{AuditLogger.Entries.Count}条日志保存到 {dialog.FileName}");
             });

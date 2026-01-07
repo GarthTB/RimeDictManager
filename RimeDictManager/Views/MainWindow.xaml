@@ -12,5 +12,271 @@
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
-    <Grid />
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#E8E8E8" />
+        </Style>
+    </Window.Resources>
+    <Grid Margin="12, 11">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="12*" />
+            <ColumnDefinition Width="12" />
+            <ColumnDefinition Width="13*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="11" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="11" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="11" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="11" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="11" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="11" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="11" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Button
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Command="{Binding OpenCommand}"
+                Content="打开词库"
+                ToolTip="打开RIME词库文件（.dict.yaml）" />
+            <Button
+                Grid.Column="2"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Foreground="Crimson"
+                Command="{Binding SaveCommand}"
+                Content="保存词库"
+                ToolTip="保存修改并覆写原词库文件" />
+            <Button
+                Grid.Column="4"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Command="{Binding SaveAsCommand}"
+                Content="另存词库"
+                ToolTip="保存修改并另存为词库文件（.dict.yaml）" />
+        </Grid>
+        <TextBox
+            Grid.Column="0"
+            Grid.Row="2"
+            Grid.RowSpan="3"
+            Padding="5"
+            Text="{Binding Word, UpdateSourceTrigger=PropertyChanged}"
+            TextWrapping="Wrap"
+            ToolTip="待添加的词组" />
+        <Grid Grid.Column="0" Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="11" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="11" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Button
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Command="{Binding InsertCommand}"
+                Content="添加条目"
+                ToolTip="将以上属性添加为一个新条目" />
+            <Button
+                Grid.Column="2"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Command="{Binding RemoveCommand}"
+                Content="删除条目"
+                ToolTip="将表格里选中的条目删除" />
+            <Button
+                Grid.Column="4"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Command="{Binding ShortenCommand}"
+                Content="截短编码"
+                ToolTip="将表格里选中条目的编码截短为搜索框中的编码&#x000A;若有一个条目占用该编码，则自动加长其编码到最短的空闲位置&#x000A;需开启自动编码和编码前缀搜索；仅用于变长编码方案" />
+        </Grid>
+        <Grid Grid.Column="0" Grid.Row="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="11" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="11" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Button
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Foreground="Crimson"
+                Command="{Binding ModifyCommand}"
+                Content="应用修改"
+                ToolTip="应用在表格中的手动修改" />
+            <Button
+                Grid.Column="2"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Command="{Binding OpenLogCommand}"
+                Content="查看日志" />
+            <Grid Grid.Column="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <Label
+                    Padding="0"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Content="码" />
+                <Slider
+                    Grid.Column="1"
+                    Margin="5,0"
+                    VerticalAlignment="Center"
+                    IsSnapToTickEnabled="True"
+                    Value="{Binding SearchMode}"
+                    ToolTip="搜索模式：按编码前缀搜索，或按词组精准搜索" />
+                <Label
+                    Grid.Column="2"
+                    Padding="0"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Content="词" />
+            </Grid>
+        </Grid>
+        <Grid Grid.Column="2" Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="11" />
+                <ColumnDefinition Width="90" />
+            </Grid.ColumnDefinitions>
+            <RadioButton
+                Margin="2,0,5,0"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                GroupName="EncodeMode"
+                IsChecked="{Binding UseEncoder}"
+                Content="自动编码" />
+            <ComboBox
+                Grid.Column="1"
+                VerticalContentAlignment="Center"
+                IsEnabled="{Binding UseEncoder}"
+                ItemsSource="{Binding EncoderNames}"
+                SelectedIndex="{Binding EncoderNameIdx}"
+                ToolTip="编码方案名" />
+            <Button
+                Grid.Column="3"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Command="{Binding LoadEncoderCommand}"
+                Content="更换单字"
+                ToolTip="更换当前方案的单字词库并更新编码器" />
+        </Grid>
+        <Grid Grid.Column="2" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Slider
+                Margin="5,0,10,0"
+                VerticalAlignment="Center"
+                TickPlacement="Both"
+                IsSnapToTickEnabled="True"
+                AutoToolTipPlacement="BottomRight"
+                IsEnabled="{Binding UseEncoder}"
+                Maximum="{Binding MaxLen}"
+                Minimum="{Binding MinLen}"
+                Value="{Binding CurLen}"
+                ToolTip="自动编码的码长" />
+            <ComboBox
+                Grid.Column="1"
+                VerticalContentAlignment="Center"
+                Foreground="{Binding CodeComboColor}"
+                IsEnabled="{Binding UseEncoder}"
+                ItemsSource="{Binding AutoCodes}"
+                SelectedIndex="{Binding AutoCodeIdx}"
+                ToolTip="自动编码结果；变红表示有多个编码" />
+        </Grid>
+        <Grid Grid.Column="2" Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <RadioButton
+                Margin="2,0,5,0"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                GroupName="EncodeMode"
+                IsChecked="{Binding NotUseEncoder}"
+                Content="手动编码" />
+            <TextBox
+                Grid.Column="1"
+                Padding="5,0"
+                VerticalContentAlignment="Center"
+                IsEnabled="{Binding NotUseEncoder}"
+                Text="{Binding ManualCode, UpdateSourceTrigger=PropertyChanged}"
+                ToolTip="手动输入待添加词组的编码" />
+        </Grid>
+        <Grid Grid.Column="2" Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Label
+                Margin="5,0"
+                Padding="0"
+                VerticalContentAlignment="Center"
+                Content="权重（可选）" />
+            <TextBox
+                Grid.Column="1"
+                Padding="5,0"
+                VerticalContentAlignment="Center"
+                Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}"
+                ToolTip="权重格式为：'非负整数'或'浮点数%'" />
+        </Grid>
+        <TextBox
+            Grid.Column="2"
+            Grid.Row="8"
+            Padding="5,0"
+            VerticalContentAlignment="Center"
+            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+            ToolTip="输入要搜索的内容，匹配的词条立即显示在表格中" />
+        <DataGrid
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            Grid.Row="10"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            SelectionMode="Single"
+            ItemsSource="{Binding SearchResults}"
+            SelectedIndex="{Binding SearchResultIndex}">
+            <DataGrid.Columns>
+                <DataGridTextColumn
+                    Width="3*"
+                    IsReadOnly="True"
+                    Header="原索引" />
+                <DataGridTextColumn
+                    Width="9*"
+                    Binding="{Binding Word}"
+                    Header="词组" />
+                <DataGridTextColumn
+                    Width="8*"
+                    Binding="{Binding Code}"
+                    Header="编码" />
+                <DataGridTextColumn
+                    Width="5*"
+                    Binding="{Binding Weight}"
+                    Header="权重" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
 </Window>

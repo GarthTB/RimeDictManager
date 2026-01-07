@@ -24,6 +24,7 @@
             VerticalAlignment="Bottom"
             HorizontalContentAlignment="Center"
             VerticalContentAlignment="Center"
+            Background="#E8E8E8"
             Command="{Binding SaveCommand}"
             Content="保存为文件"
             ToolTip="将日志保存为文件" />
