@@ -47,6 +47,8 @@
             <Button
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
+                AllowDrop="True"
+                Drop="LoadDict"
                 Command="{Binding OpenCommand}"
                 Content="打开词库"
                 ToolTip="打开RIME词库文件（.dict.yaml）" />
@@ -64,7 +66,7 @@
                 VerticalContentAlignment="Center"
                 Command="{Binding SaveAsCommand}"
                 Content="另存词库"
-                ToolTip="保存修改并另存为词库文件（.dict.yaml）" />
+                ToolTip="保存修改并另存为RIME词库文件（.dict.yaml）" />
         </Grid>
         <TextBox
             Grid.Column="0"
@@ -117,13 +119,13 @@
                 Foreground="Crimson"
                 Command="{Binding ModifyCommand}"
                 Content="应用修改"
-                ToolTip="应用在表格中的手动修改" />
+                ToolTip="应用在表格中的改动" />
             <Button
                 Grid.Column="2"
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
-                Command="{Binding OpenLogCommand}"
-                Content="查看日志" />
+                Content="查看日志"
+                Click="OpenLog" />
             <Grid Grid.Column="4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="20" />
@@ -249,7 +251,7 @@
             Padding="5,0"
             VerticalContentAlignment="Center"
             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-            ToolTip="输入要搜索的内容，匹配的词条立即显示在表格中" />
+            ToolTip="输入要搜索的内容，匹配的条目立即显示在表格中" />
         <DataGrid
             Grid.Column="0"
             Grid.ColumnSpan="3"

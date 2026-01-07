@@ -4,7 +4,7 @@ using System.IO;
 using Models;
 
 /// <summary> 词库管理器 </summary>
-internal class RimeDict
+internal sealed class RimeDict
 {
     /// <summary> 前缀树：提供按编码的快速前缀搜索 </summary>
     private readonly EntryTrie _entriesByCode = new();
@@ -43,7 +43,7 @@ internal class RimeDict
     /// <summary> 条目总数 </summary>
     public uint Count { get; private set; }
 
-    /// <summary> 是否已修改（需要保存） </summary>
+    /// <summary> 是否有改动 </summary>
     public bool Modified { get; private set; }
 
     /// <summary> 插入条目 </summary>

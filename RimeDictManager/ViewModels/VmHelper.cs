@@ -11,6 +11,14 @@ internal static class VmHelper
     public static void ShowInfo(string title, string msg) =>
         MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Information);
 
+    /// <summary> 弹窗请求确认 </summary>
+    /// <param name="title"> 弹窗标题 </param>
+    /// <param name="msg"> 提示信息 </param>
+    /// <returns> 用户按Yes为true </returns>
+    public static bool ShowConfirm(string title, string msg) =>
+        MessageBox.Show(msg, title, MessageBoxButton.YesNo, MessageBoxImage.Question)
+     == MessageBoxResult.Yes;
+
     /// <summary> 尝试执行动作，静默处理打断，其他异常弹窗提示 </summary>
     /// <param name="name"> 动作名 </param>
     /// <param name="action"> 动作 </param>

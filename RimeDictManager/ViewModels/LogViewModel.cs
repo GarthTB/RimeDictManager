@@ -31,6 +31,8 @@ internal sealed partial class LogViewModel: ObservableObject
                     return;
 
                 AuditLogger.Save(dialog.FileName);
-                VmHelper.ShowInfo("成功", $"已将{AuditLogger.Entries.Count}条日志保存到 {dialog.FileName}");
+                VmHelper.ShowInfo(
+                    "成功",
+                    $"已将{AuditLogger.Entries.Count}条日志保存到\"{dialog.FileName}\"");
             });
 }

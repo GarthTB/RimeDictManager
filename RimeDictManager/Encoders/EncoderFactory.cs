@@ -3,7 +3,7 @@ namespace RimeDictManager.Encoders;
 using Impl;
 
 /// <summary> 编码器工厂 </summary>
-internal class EncoderFactory
+internal static class EncoderFactory
 {
     /// <summary> 编码器的构造函数 </summary>
     private static readonly Dictionary<string, Func<string, IEncoder>> Encoders = new() {
