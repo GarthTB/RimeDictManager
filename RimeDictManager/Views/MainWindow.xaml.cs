@@ -1,5 +1,6 @@
 ﻿namespace RimeDictManager.Views;
 
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using ViewModels;
@@ -10,9 +11,6 @@ public sealed partial class MainWindow
     /// <summary> 构造函数 </summary>
     public MainWindow() => InitializeComponent();
 
-    /// <summary> 打开日志窗口 </summary>
-    private void OpenLog(object _, RoutedEventArgs e) => new LogWindow().ShowDialog();
-
     /// <summary> 加载RIME词库文件（.dict.yaml） </summary>
     private void LoadDict(object _, DragEventArgs e) {
         if (DataContext is MainViewModel vm
@@ -21,4 +19,11 @@ public sealed partial class MainWindow
          && !vm.KeepModification)
             vm.LoadDict(paths[0]);
     }
+
+    /// <summary> 打开日志窗口 </summary>
+    private void OpenLog(object _, RoutedEventArgs e) => new LogWindow().ShowDialog();
+
+    /// <summary> 在关闭时警告词库改动未保存 </summary>
+    private void WarnModificationAtClosing(object _, CancelEventArgs e) =>
+        e.Cancel = DataContext is MainViewModel { KeepModification: true };
 }

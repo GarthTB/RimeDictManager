@@ -8,7 +8,8 @@
     Height="480"
     Width="640"
     AllowDrop="True"
-    UseLayoutRounding="True">
+    UseLayoutRounding="True"
+    Closing="WarnModificationAtClosing">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
@@ -48,10 +49,10 @@
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
                 AllowDrop="True"
-                Drop="LoadDict"
                 Command="{Binding OpenCommand}"
                 Content="打开词库"
-                ToolTip="打开RIME词库文件（.dict.yaml）" />
+                ToolTip="打开RIME词库文件（.dict.yaml）"
+                Drop="LoadDict" />
             <Button
                 Grid.Column="2"
                 HorizontalContentAlignment="Center"
