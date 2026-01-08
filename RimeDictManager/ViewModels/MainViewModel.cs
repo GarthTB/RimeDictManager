@@ -28,7 +28,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
                 OpenFileDialog dialog = new() {
                     Title = "打开RIME词库文件",
-                    Filter = "Rime词库文件 (*.dict.yaml)|*.dict.yaml|所有文件 (*.*)|*.*"
+                    Filter = "RIME词库文件 (*.dict.yaml)|*.dict.yaml|所有文件 (*.*)|*.*"
                 };
                 if (dialog.ShowDialog() == true)
                     LoadDict(dialog.FileName);

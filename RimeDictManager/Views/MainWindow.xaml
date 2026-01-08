@@ -261,7 +261,7 @@
             CanUserAddRows="False"
             SelectionMode="Single"
             ItemsSource="{Binding SearchResults}"
-            SelectedIndex="{Binding SearchResultIndex}">
+            SelectedIndex="{Binding SearchResultIdx}">
             <DataGrid.Columns>
                 <DataGridTextColumn
                     Width="3*"

@@ -7,32 +7,22 @@ internal sealed class EntryTrie
     private readonly Node _root = new(new(8105), []); // 假设覆盖通规
 
     /// <summary> 插入条目 </summary>
-    /// <param name="entry"> 待插入的条目 </param>
-    public void Insert(Line entry) {
-        if (entry.Word is { Length: 0 } || entry.Comment is {})
-            throw new ArgumentException("待插入的条目异常", nameof(entry));
-
-        var node = (entry.Code ?? "").Aggregate( // 无编码的条目插入根节点
+    /// <param name="entry"> 待插入的条目：必须为条目行 </param>
+    public void Insert(Line entry) =>
+        (entry.Code ?? "").Aggregate( // 无编码的条目插入根节点
             _root,
             static (node, c) => node.Children.TryGetValue(c, out var child)
                 ? child
-                : node.Children[c] = new([], []));
-        if (node.Entries.Any(l =>
-            l.Word == entry.Word && l.Code == entry.Code && l.Weight == entry.Weight))
-            throw new ArgumentException("试图插入重复条目", nameof(entry));
-        node.Entries.Add(entry);
-    }
+                : node.Children[c] = new([], []))
+        .Entries.Add(entry);
 
     /// <summary> 删除条目 </summary>
-    /// <param name="entry"> 待删除的条目 </param>
+    /// <param name="entry"> 待删除的条目：必须为已有条目行 </param>
     public void Remove(Line entry) {
-        if (entry.Word is { Length: 0 } || entry.Comment is {})
-            throw new ArgumentException("待删除的条目异常", nameof(entry));
-
         var node = _root;
         if ((entry.Code ?? "").Any(c => !node.Children.TryGetValue(c, out node))
          || !node.Entries.Remove(entry))
-            throw new ArgumentException("试图删除不存在的条目", nameof(entry));
+            throw new ArgumentException("Trie试图删除不存在的条目", nameof(entry));
     }
 
     /// <summary> 按编码搜索条目 </summary>
@@ -41,7 +31,7 @@ internal sealed class EntryTrie
     /// <returns> 无重、无序的条目 </returns>
     public IReadOnlyList<Line> Search(string code, bool exact) {
         var node = _root;
-        if (code.Any(c => !node.Children.TryGetValue(c, out node)))
+        if (code.Length == 0 || code.Any(c => !node.Children.TryGetValue(c, out node)))
             return [];
         if (exact)
             return node.Entries;
