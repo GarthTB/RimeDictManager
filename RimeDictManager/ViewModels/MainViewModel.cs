@@ -2,8 +2,10 @@
 
 namespace RimeDictManager.ViewModels;
 
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Encoders;
 using Microsoft.Win32;
 using Services;
 using static VmHelper;
@@ -16,6 +18,8 @@ internal sealed partial class MainViewModel: ObservableObject
     /// <summary> RIME词库 </summary>
     [ObservableProperty]
     private RimeDict? _dict;
+
+    partial void OnDictChanged(RimeDict? value) => Search();
 
     /// <summary> 词库改动未保存且选择保留时为true </summary>
     public bool KeepModification => Dict?.Modified == true && !ShowConfirm("警告", "词库改动未保存，是否丢弃？");
@@ -93,12 +97,105 @@ internal sealed partial class MainViewModel: ObservableObject
 
     #endregion 保存词库
 
-    #region 属性变更响应
+    #region 条目属性
 
-    partial void OnDictChanged(RimeDict? value) => Search();
+    /// <summary> 字词 </summary>
+    [ObservableProperty]
+    private string _word = "";
+
+    /// <summary> 手动编码 </summary>
+    [ObservableProperty]
+    private string _manualCode = "";
+
+    /// <summary> 权重 </summary>
+    [ObservableProperty]
+    private string _weight = "";
+
+    /// <summary> 自动编码结果 </summary>
+    public ObservableCollection<string> AutoCodes { get; } = [];
+
+    /// <summary> 自动编码结果颜色 </summary>
+    [ObservableProperty]
+    private string _autoCodeColor = "Black";
+
+    /// <summary> 自动编码结果索引 </summary>
+    [ObservableProperty]
+    private int _autoCodeIdx = -1;
+
+    #endregion 条目属性
+
+    #region 自动编码
+
+    /// <summary> 是否使用自动编码 </summary>
+    [ObservableProperty]
+    private bool _useEncoder, _notUseEncoder = true;
+
+    /// <summary> 可用编码方案名 </summary>
+    public IReadOnlyList<string> EncoderNames { get; } = EncoderFactory.Names;
+
+    /// <summary> 编码方案名索引 </summary>
+    [ObservableProperty]
+    private int _encoderNameIdx = -1;
+
+    /// <summary> 编码器 </summary>
+    [ObservableProperty]
+    private IEncoder? _encoder;
+
+    /// <summary> 更换当前方案的单字词库并更新编码器 </summary>
+    [RelayCommand]
+    private static void ChangeEncoder() =>
+        TryOrShowEx("更换单字", static () => throw new NotImplementedException());
+
+    /// <summary> 自动编码的码长 </summary>
+    [ObservableProperty]
+    private byte _maxLen = 4, _minLen = 4, _curLen = 4;
+
+    #endregion 自动编码
+
+    #region 搜索
+
+    /// <summary> 搜索模式：0按编码前缀搜索，1按词组精准搜索 </summary>
+    [ObservableProperty]
+    private byte _searchMode;
+
+    /// <summary> 搜索内容 </summary>
+    [ObservableProperty]
+    private string _searchText = "";
+
+    /// <summary> 搜索结果 </summary>
+    public ObservableCollection<MutEntry> SearchResults { get; } = [];
+
+    /// <summary> 搜索结果索引 </summary>
+    [ObservableProperty]
+    private int _searchResultIdx = -1;
 
     /// <summary> 搜索并填充SearchResults </summary>
     private static void Search() => throw new NotImplementedException();
 
-    #endregion 属性变更响应
+    #endregion 搜索
+
+    #region 词库操作
+
+    /// <summary> 将各属性添加为一个新条目 </summary>
+    [RelayCommand]
+    private static void Insert() =>
+        TryOrShowEx("添加条目", static () => throw new NotImplementedException());
+
+    /// <summary> 将表格里选中的条目删除 </summary>
+    [RelayCommand]
+    private static void Remove() =>
+        TryOrShowEx("删除条目", static () => throw new NotImplementedException());
+
+    /// <summary> 将表格里选中条目的编码截短为搜索框中的编码；若有一个条目占用该编码，则自动加长其编码到最短的空闲位置 </summary>
+    /// <remarks> 需开启自动编码和编码前缀搜索；仅用于变长编码方案 </remarks>
+    [RelayCommand]
+    private static void Shorten() =>
+        TryOrShowEx("截短编码", static () => throw new NotImplementedException());
+
+    /// <summary> 应用在表格中的改动 </summary>
+    [RelayCommand]
+    private static void Modify() =>
+        TryOrShowEx("应用修改", static () => throw new NotImplementedException());
+
+    #endregion 词库操作
 }

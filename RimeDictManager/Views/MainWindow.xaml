@@ -171,6 +171,7 @@
                 Content="自动编码" />
             <ComboBox
                 Grid.Column="1"
+                Padding="8,0"
                 VerticalContentAlignment="Center"
                 IsEnabled="{Binding UseEncoder}"
                 ItemsSource="{Binding EncoderNames}"
@@ -180,7 +181,7 @@
                 Grid.Column="3"
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
-                Command="{Binding LoadEncoderCommand}"
+                Command="{Binding ChangeEncoderCommand}"
                 Content="更换单字"
                 ToolTip="更换当前方案的单字词库并更新编码器" />
         </Grid>
@@ -202,8 +203,9 @@
                 ToolTip="自动编码的码长" />
             <ComboBox
                 Grid.Column="1"
+                Padding="8,0"
                 VerticalContentAlignment="Center"
-                Foreground="{Binding CodeComboColor}"
+                Foreground="{Binding AutoCodeColor}"
                 IsEnabled="{Binding UseEncoder}"
                 ItemsSource="{Binding AutoCodes}"
                 SelectedIndex="{Binding AutoCodeIdx}"
