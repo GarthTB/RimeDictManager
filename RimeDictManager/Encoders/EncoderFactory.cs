@@ -24,5 +24,5 @@ internal static class EncoderFactory
     public static IEncoder Create(string name, string dictPath) =>
         Encoders.TryGetValue(name, out var create)
             ? create(dictPath)
-            : throw new KeyNotFoundException($"不支持'{name}'编码器");
+            : throw new KeyNotFoundException($"不支持\"{name}\"的编码器");
 }

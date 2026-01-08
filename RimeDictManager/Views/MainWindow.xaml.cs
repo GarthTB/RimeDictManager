@@ -10,11 +10,18 @@ public sealed partial class MainWindow
     /// <summary> 构造函数 </summary>
     public MainWindow() => InitializeComponent();
 
-    /// <summary> 加载RIME词库文件（.dict.yaml） </summary>
-    private void LoadDict(object _, DragEventArgs e) {
+    /// <summary> 拖放词库路径 </summary>
+    private void DropDict(object _, DragEventArgs e) {
         if (DataContext is MainViewModel { KeepModification: false } vm
          && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths)
             vm.LoadDict(paths[0]);
+    }
+
+    /// <summary> 拖放单字路径 </summary>
+    private void DropCharsDict(object _, DragEventArgs e) {
+        if (DataContext is MainViewModel { KeepModification: false } vm
+         && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths)
+            vm.LoadEncoder(paths[0]);
     }
 
     /// <summary> 打开日志窗口 </summary>

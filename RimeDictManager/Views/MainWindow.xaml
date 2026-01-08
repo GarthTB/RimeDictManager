@@ -7,7 +7,6 @@
     FontSize="14"
     Height="480"
     Width="640"
-    AllowDrop="True"
     UseLayoutRounding="True"
     Closing="WarnModificationAtClosing">
     <Window.DataContext>
@@ -51,8 +50,8 @@
                 AllowDrop="True"
                 Command="{Binding OpenCommand}"
                 Content="打开词库"
-                ToolTip="打开RIME词库文件（.dict.yaml）"
-                Drop="LoadDict" />
+                ToolTip="打开RIME词库文件（.dict.yaml），可以拽进来"
+                Drop="DropDict" />
             <Button
                 Grid.Column="2"
                 HorizontalContentAlignment="Center"
@@ -158,11 +157,32 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="96" />
                 <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <RadioButton
+                Margin="3,0,5,0"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                GroupName="EncodeMode"
+                IsChecked="{Binding NotUseEncoder}"
+                Content="手动编码" />
+            <TextBox
+                Grid.Column="1"
+                Padding="5,0"
+                VerticalContentAlignment="Center"
+                IsEnabled="{Binding NotUseEncoder}"
+                Text="{Binding ManualCode, UpdateSourceTrigger=PropertyChanged}"
+                ToolTip="手动输入待添加词组的编码" />
+        </Grid>
+        <Grid Grid.Column="2" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition />
                 <ColumnDefinition Width="11" />
                 <ColumnDefinition Width="90" />
             </Grid.ColumnDefinitions>
             <RadioButton
-                Margin="2,0,5,0"
+                Margin="3,0,5,0"
                 Padding="0"
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
@@ -181,17 +201,19 @@
                 Grid.Column="3"
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
+                AllowDrop="True"
                 Command="{Binding ChangeEncoderCommand}"
                 Content="更换单字"
-                ToolTip="更换当前方案的单字词库并更新编码器" />
+                ToolTip="更换当前方案的单字词库并更新编码器，可以拽进来"
+                Drop="DropCharsDict" />
         </Grid>
-        <Grid Grid.Column="2" Grid.Row="2">
+        <Grid Grid.Column="2" Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="96" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <Slider
-                Margin="5,0,10,0"
+                Margin="4,0,15,0"
                 VerticalAlignment="Center"
                 TickPlacement="Both"
                 IsSnapToTickEnabled="True"
@@ -211,27 +233,6 @@
                 SelectedIndex="{Binding AutoCodeIdx}"
                 ToolTip="自动编码结果；变红表示有多个编码" />
         </Grid>
-        <Grid Grid.Column="2" Grid.Row="4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="96" />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <RadioButton
-                Margin="2,0,5,0"
-                Padding="0"
-                HorizontalContentAlignment="Center"
-                VerticalContentAlignment="Center"
-                GroupName="EncodeMode"
-                IsChecked="{Binding NotUseEncoder}"
-                Content="手动编码" />
-            <TextBox
-                Grid.Column="1"
-                Padding="5,0"
-                VerticalContentAlignment="Center"
-                IsEnabled="{Binding NotUseEncoder}"
-                Text="{Binding ManualCode, UpdateSourceTrigger=PropertyChanged}"
-                ToolTip="手动输入待添加词组的编码" />
-        </Grid>
         <Grid Grid.Column="2" Grid.Row="6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="96" />
@@ -247,7 +248,7 @@
                 Padding="5,0"
                 VerticalContentAlignment="Center"
                 Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}"
-                ToolTip="权重格式为：'非负整数'或'浮点数%'" />
+                ToolTip="权重格式为'非负整数'或'浮点数%'" />
         </Grid>
         <TextBox
             Grid.Column="2"
@@ -272,15 +273,15 @@
                     Header="原索引" />
                 <DataGridTextColumn
                     Width="9*"
-                    Binding="{Binding Word}"
+                    Binding="{Binding Word, UpdateSourceTrigger=PropertyChanged}"
                     Header="词组" />
                 <DataGridTextColumn
                     Width="8*"
-                    Binding="{Binding Code}"
+                    Binding="{Binding Code, UpdateSourceTrigger=PropertyChanged}"
                     Header="编码" />
                 <DataGridTextColumn
                     Width="5*"
-                    Binding="{Binding Weight}"
+                    Binding="{Binding Weight, UpdateSourceTrigger=PropertyChanged}"
                     Header="权重" />
             </DataGrid.Columns>
         </DataGrid>
