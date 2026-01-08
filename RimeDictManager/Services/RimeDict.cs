@@ -18,26 +18,33 @@ internal sealed class RimeDict
     /// <summary> 词库路径 </summary>
     private readonly string _srcPath;
 
+    /// <summary> 非条目的行 </summary>
+    private readonly List<Line> _trivia = [];
+
     /// <summary> 加载RIME词库文件（.dict.yaml） </summary>
     /// <param name="dictPath"> 词库路径 </param>
     /// <remarks> 格式标准见 https://github.com/rime/home/wiki/RimeWithSchemata </remarks>
     public RimeDict(string dictPath) {
-        var headerClosed = false;
-        var idx = 0u;
+        var (headerClosed, idx) = (false, 0u);
         foreach (var rawLine in File.ReadLines(dictPath)) {
             if (!headerClosed) {
                 _header.Add(rawLine);
                 if (rawLine == "...")
                     headerClosed = true;
-            } else
-                Insert(Line.FromString(idx, rawLine));
+            } else {
+                var lineObj = Line.FromString(idx, rawLine);
+                if (lineObj.IsEntry == true) // 只插入条目，其他放trivia
+                    Insert(lineObj);
+                else
+                    _trivia.Add(lineObj);
+            }
             idx++;
         }
-        Modified = false; // 纠正Insert副作用
 
         if (_header.Count < 2)
             throw new FormatException("词库缺失文件头");
         _srcPath = dictPath;
+        Modified = false; // 纠正Insert副作用
     }
 
     /// <summary> 条目总数 </summary>
@@ -47,9 +54,9 @@ internal sealed class RimeDict
     public bool Modified { get; private set; }
 
     /// <summary> 插入条目 </summary>
-    /// <param name="entry"> 待插入的条目 </param>
+    /// <param name="entry"> 待插入的条目：必须为条目行 </param>
     public void Insert(Line entry) {
-        _entriesByCode.Insert(entry); // 保证无重且Word非null
+        _entriesByCode.Insert(entry);
         if (_entriesByWord.TryGetValue(entry.Word!, out var list))
             list.Add(entry);
         else
@@ -60,7 +67,7 @@ internal sealed class RimeDict
     }
 
     /// <summary> 删除条目 </summary>
-    /// <param name="entry"> 待删除的条目 </param>
+    /// <param name="entry"> 待删除的条目：必须为已有条目行 </param>
     public void Remove(Line entry) {
         _entriesByCode.Remove(entry); // 保证现有
         if (!_entriesByWord[entry.Word!].Remove(entry))
@@ -87,15 +94,15 @@ internal sealed class RimeDict
 
     /// <summary> 保存词库 </summary>
     /// <param name="path"> 保存路径：null时覆写 </param>
-    /// <param name="sort"> true时条目按编码升序，编码相同则原序，注释原序放在末尾，空行删除； false时保留原序，新条目按Code升序放在末尾 </param>
+    /// <param name="sort"> true时条目按编码升序，编码相同则原序，注释原序放在末尾，空行删除；false时保留原序，新条目按Code升序放在末尾 </param>
     public void Save(string? path, bool sort) {
-        var entries = _entriesByWord.Values.SelectMany(static list => list).ToArray();
+        var entries = _entriesByWord.Values.SelectMany(static list => list).ToArray(); // 必为条目
         var orderedEntries = sort
-            ? entries.Where(static e => e.Word is { Length: > 0 })
-                .OrderBy(static e => e.Code)
+            ? entries.OrderBy(static e => e.Code)
                 .ThenBy(static e => e.Idx ?? uint.MaxValue)
-                .Concat(entries.Where(static e => e.Comment is {}).OrderBy(static e => e.Idx))
+                .Concat(_trivia.Where(static l => l.IsEntry == false)) // 注释本来就原序
             : entries.Where(static e => e.Idx is {})
+                .Concat(_trivia)
                 .OrderBy(static e => e.Idx)
                 .Concat(entries.Where(static e => e.Idx is null).OrderBy(static e => e.Code));
 
