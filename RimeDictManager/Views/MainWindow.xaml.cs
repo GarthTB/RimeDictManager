@@ -1,7 +1,6 @@
 ﻿namespace RimeDictManager.Views;
 
 using System.ComponentModel;
-using System.IO;
 using System.Windows;
 using ViewModels;
 
@@ -13,10 +12,8 @@ public sealed partial class MainWindow
 
     /// <summary> 加载RIME词库文件（.dict.yaml） </summary>
     private void LoadDict(object _, DragEventArgs e) {
-        if (DataContext is MainViewModel vm
-         && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths
-         && File.Exists(paths[0])
-         && !vm.KeepModification)
+        if (DataContext is MainViewModel { KeepModification: false } vm
+         && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths)
             vm.LoadDict(paths[0]);
     }
 

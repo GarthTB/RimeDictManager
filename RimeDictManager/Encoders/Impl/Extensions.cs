@@ -28,7 +28,6 @@ internal static class Extensions
                 codes.Add(arr);
         if (codes.Count < 4)
             return codes;
-
         for (var (i, ori) = (word.Length - 1, codes[3]); i >= 4 && codes[3] == ori; i--)
             if (charsDict.TryGetValue(word[i], out var arr))
                 codes[3] = arr;

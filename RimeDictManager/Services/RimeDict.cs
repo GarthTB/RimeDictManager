@@ -40,7 +40,6 @@ internal sealed class RimeDict
             }
             idx++;
         }
-
         if (_header.Count < 2)
             throw new FormatException("词库缺失文件头");
         _srcPath = dictPath;
@@ -61,7 +60,6 @@ internal sealed class RimeDict
             list.Add(entry);
         else
             _entriesByWord[entry.Word!] = [entry];
-
         Count++;
         Modified = true;
     }
@@ -71,8 +69,7 @@ internal sealed class RimeDict
     public void Remove(Line entry) {
         _entriesByCode.Remove(entry); // 保证现有
         if (!_entriesByWord[entry.Word!].Remove(entry))
-            throw new InvalidOperationException("trie和dict不一致，请报告异常");
-
+            throw new InvalidOperationException("Trie和Dict不一致，请报告异常");
         Count--;
         Modified = true;
     }
@@ -94,7 +91,7 @@ internal sealed class RimeDict
 
     /// <summary> 保存词库 </summary>
     /// <param name="path"> 保存路径：null时覆写 </param>
-    /// <param name="sort"> true时条目按编码升序，编码相同则原序，注释原序放在末尾，空行删除；false时保留原序，新条目按Code升序放在末尾 </param>
+    /// <param name="sort"> true时条目按编码升序，编码相同则原序，注释原序放在末尾，空行删除；false时保留原序，新条目按编码升序放在末尾 </param>
     public void Save(string? path, bool sort) {
         var entries = _entriesByWord.Values.SelectMany(static list => list).ToArray(); // 必为条目
         var orderedEntries = sort
@@ -105,7 +102,6 @@ internal sealed class RimeDict
                 .Concat(_trivia)
                 .OrderBy(static e => e.Idx)
                 .Concat(entries.Where(static e => e.Idx is null).OrderBy(static e => e.Code));
-
         var lines = _header.Concat(orderedEntries.Select(static e => $"{e}"));
         File.WriteAllLines(path ?? _srcPath, lines);
         Modified = false;

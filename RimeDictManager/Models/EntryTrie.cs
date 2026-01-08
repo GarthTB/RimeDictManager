@@ -22,7 +22,7 @@ internal sealed class EntryTrie
         var node = _root;
         if ((entry.Code ?? "").Any(c => !node.Children.TryGetValue(c, out node))
          || !node.Entries.Remove(entry))
-            throw new ArgumentException("Trie试图删除不存在的条目", nameof(entry));
+            throw new ArgumentException("试图删除不存在的条目", nameof(entry));
     }
 
     /// <summary> 按编码搜索条目 </summary>

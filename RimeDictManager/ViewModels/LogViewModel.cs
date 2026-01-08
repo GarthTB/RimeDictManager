@@ -29,7 +29,6 @@ internal sealed partial class LogViewModel: ObservableObject
                 };
                 if (dialog.ShowDialog() != true)
                     return;
-
                 AuditLogger.Save(dialog.FileName);
                 VmHelper.ShowInfo(
                     "成功",
