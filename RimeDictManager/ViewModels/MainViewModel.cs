@@ -16,21 +16,11 @@ internal sealed partial class MainViewModel: ObservableObject
 {
     #region 打开词库
 
-    [ObservableProperty,
-     NotifyCanExecuteChangedFor(
-         nameof(SaveCommand),
-         nameof(SaveAsCommand),
-         nameof(InsertCommand),
-         nameof(RemoveCommand),
-         nameof(ShortenCommand),
-         nameof(ModifyCommand))]
     private RimeDict? _rimeDict;
-
-    partial void OnRimeDictChanged(RimeDict? value) => UpdateSearchResults();
 
     /// <summary> 词库改动未保存且选择保留时为true </summary>
     public bool KeepModification =>
-        RimeDict?.Modified == true && !ShowConfirm("警告", "词库改动未保存，是否丢弃？");
+        _rimeDict?.Modified == true && !ShowConfirm("警告", "词库改动未保存，是否丢弃？");
 
     /// <summary> 打开RIME词库文件（.dict.yaml） </summary>
     [RelayCommand]
@@ -54,9 +44,16 @@ internal sealed partial class MainViewModel: ObservableObject
         TryOrShowEx(
             "加载词库",
             () => {
-                RimeDict = new(path);
+                _rimeDict = new(path);
+                SaveCommand.NotifyCanExecuteChanged();
+                SaveAsCommand.NotifyCanExecuteChanged();
+                InsertCommand.NotifyCanExecuteChanged();
+                RemoveCommand.NotifyCanExecuteChanged();
+                ShortenCommand.NotifyCanExecuteChanged();
+                ModifyCommand.NotifyCanExecuteChanged();
+                UpdateSearchResults();
                 var msg1 = $"已加载词库\"{path}\"";
-                var msg2 = $"共有{RimeDict.Count}个条目";
+                var msg2 = $"共有{_rimeDict.Count}个条目";
                 AuditLogger.Log($"{msg1}，{msg2}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}");
             });
@@ -65,7 +62,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
     #region 保存词库
 
-    private bool CanSave => RimeDict?.Modified == true;
+    private bool CanSave => _rimeDict?.Modified == true;
 
     /// <summary> 保存修改并覆写原词库文件 </summary>
     [RelayCommand(CanExecute = nameof(CanSave))]
@@ -76,15 +73,15 @@ internal sealed partial class MainViewModel: ObservableObject
                 var sort = ShowConfirm(
                     "选择排序策略",
                     "请选择排序策略：\n是：条目按编码升序，编码相同则原序，注释原序放在末尾，空行删除\n否：保留原序，新条目按编码升序放在末尾");
-                RimeDict!.Save(path, sort);
+                _rimeDict!.Save(path, sort);
                 SaveCommand.NotifyCanExecuteChanged();
                 var msg1 = $"已保存词库到\"{path}\"";
-                var msg2 = $"共有{RimeDict.Count}个条目";
+                var msg2 = $"共有{_rimeDict.Count}个条目";
                 AuditLogger.Log($"{msg1}，{msg2}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}");
             });
 
-    private bool CanSaveAs => RimeDict is {};
+    private bool CanSaveAs => _rimeDict is {};
 
     /// <summary> 保存修改并另存为RIME词库文件（.dict.yaml） </summary>
     [RelayCommand(CanExecute = nameof(CanSaveAs))]
@@ -142,14 +139,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
     #region 自动编码
 
-    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     private IEncoder? _encoder;
-
-    partial void OnEncoderChanged(IEncoder? value) {
-        (MinLen, MaxLen) = value?.LenRange ?? (4, 4);
-        CurLen = MinLen;
-        UpdateAutoCodes(true);
-    }
 
     private bool CanSetEncoder => UseEncoder && SelectedEncoderName is {};
 
@@ -176,10 +166,14 @@ internal sealed partial class MainViewModel: ObservableObject
                 var encoder = EncoderFactory.Create(SelectedEncoderName!, path);
                 if (encoder.Chars == 0)
                     throw new InvalidOperationException("单字词库无效");
-                Encoder = encoder;
+                _encoder = encoder;
+                (MinLen, MaxLen) = encoder.LenRange;
+                CurLen = MinLen;
+                ShortenCommand.NotifyCanExecuteChanged();
+                UpdateAutoCodes(true);
                 var msg1 = $"已启用\"{SelectedEncoderName}\"的编码器";
                 var msg2 = $"使用单字词库\"{path}\"";
-                var msg3 = $"覆盖{Encoder.Chars}个单字";
+                var msg3 = $"覆盖{_encoder.Chars}个单字";
                 AuditLogger.Log($"{msg1}，{msg2}，{msg3}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}\n{msg3}");
             });
@@ -195,7 +189,7 @@ internal sealed partial class MainViewModel: ObservableObject
                 var oldSelected = SelectedAutoCode ?? "";
                 AutoCodes.Clear();
                 if (changeFullCode)
-                    _fullAutoCodes = Encoder?.Encode(Word.Trim()).ToArray() ?? [];
+                    _fullAutoCodes = _encoder?.Encode(Word.Trim()).ToArray() ?? [];
                 if (_fullAutoCodes.Length == 0)
                     return;
                 var codes = MaxLen == MinLen || CurLen == MaxLen
@@ -238,10 +232,10 @@ internal sealed partial class MainViewModel: ObservableObject
             "搜索条目",
             () => {
                 SearchResults.Clear();
-                var entries = RimeDict is { Count: > 0 }
+                var entries = _rimeDict is { Count: > 0 }
                     ? SearchMode == 0
-                        ? RimeDict.SearchByCode(SearchText, false)
-                        : RimeDict.SearchByWord(SearchText)
+                        ? _rimeDict.SearchByCode(SearchText, false)
+                        : _rimeDict.SearchByWord(SearchText)
                     : [];
                 foreach (var entry in entries.OrderBy(static e => e.Code))
                     SearchResults.Add(new(entry));
@@ -252,7 +246,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
     #region 词库操作
 
-    private bool CanInsert => RimeDict is {} && CurEntry.Type == 2;
+    private bool CanInsert => _rimeDict is {} && CurEntry.Type == 2;
 
     /// <summary> 将各属性添加为一个新条目 </summary>
     [RelayCommand(CanExecute = nameof(CanInsert))]
@@ -261,15 +255,15 @@ internal sealed partial class MainViewModel: ObservableObject
             "添加条目",
             () => {
                 var curEntry = CurEntry;
-                var related = RimeDict!.SearchByWord(curEntry.Word!)
-                    .Union(RimeDict.SearchByCode(curEntry.Code, true))
+                var related = _rimeDict!.SearchByWord(curEntry.Word!)
+                    .Union(_rimeDict.SearchByCode(curEntry.Code, true))
                     .OrderBy(static e => e.Code)
                     .Select(static e => $"\"{e}\"")
                     .ToArray();
                 if (related.Length > 0
                  && !ShowConfirm("警告", $"词库已有以下条目，是否仍要添加？\n{string.Join('\n', related)}"))
                     return;
-                RimeDict.Insert(curEntry);
+                _rimeDict.Insert(curEntry);
                 SaveCommand.NotifyCanExecuteChanged();
 
                 // 如果在搜索，更新表格
@@ -277,7 +271,7 @@ internal sealed partial class MainViewModel: ObservableObject
                 // 弹窗
             });
 
-    private bool CanRemove => RimeDict is {} && SelectedSearchResult is { Modified: false };
+    private bool CanRemove => _rimeDict is {} && SelectedSearchResult is { Modified: false };
 
     /// <summary> 将表格里选中的条目删除 </summary>
     [RelayCommand(CanExecute = nameof(CanRemove))]
@@ -288,14 +282,14 @@ internal sealed partial class MainViewModel: ObservableObject
                 var entry = SelectedSearchResult!.ToLine();
                 if (!ShowConfirm("警告", $"确定删除\"{entry}\"？"))
                     return;
-                RimeDict!.Remove(entry);
+                _rimeDict!.Remove(entry);
                 SaveCommand.NotifyCanExecuteChanged();
                 SearchResults.Remove(SelectedSearchResult); // 这里看得见，不必弹窗
                 AuditLogger.Log("删除", entry);
             });
 
     private bool CanShorten =>
-        RimeDict is {}
+        _rimeDict is {}
      && UseEncoder
      && MaxLen != MinLen
      && SearchMode == 0
@@ -308,7 +302,7 @@ internal sealed partial class MainViewModel: ObservableObject
     private static void Shorten() =>
         TryOrShowEx("截短编码", static () => throw new NotImplementedException());
 
-    private bool CanModify => RimeDict is {} && SearchResults.Count > 0;
+    private bool CanModify => _rimeDict is {} && SearchResults.Count > 0;
 
     /// <summary> 应用在表格中的改动 </summary>
     [RelayCommand(CanExecute = nameof(CanModify))]
