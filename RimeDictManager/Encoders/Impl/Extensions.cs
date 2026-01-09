@@ -1,6 +1,6 @@
 namespace RimeDictManager.Encoders.Impl;
 
-/// <summary> 编码器工具 </summary>
+/// <summary> 编码器扩展工具 </summary>
 internal static class Extensions
 {
     /// <summary> 将单字词库加载为字典 </summary>
@@ -28,9 +28,10 @@ internal static class Extensions
                 codes.Add(arr);
         if (codes.Count < 4)
             return codes;
-        for (var (i, ori) = (word.Length - 1, codes[3]); i >= 4 && codes[3] == ori; i--)
+
+        for (var (i, found) = (word.Length - 1, false); i >= 4 && !found; i--)
             if (charsDict.TryGetValue(word[i], out var arr))
-                codes[3] = arr;
+                (codes[3], found) = (arr, true);
         return codes;
     }
 }

@@ -29,10 +29,15 @@ internal sealed class EntryTrie
     /// <param name="code"> 编码 </param>
     /// <param name="exact"> true时精确搜索，false时前缀搜索 </param>
     /// <returns> 无序的条目 </returns>
-    public IReadOnlyList<Line> Search(string code, bool exact) {
+    /// <remarks> null或空编码始终为精确搜索 </remarks>
+    public IReadOnlyList<Line> Search(string? code, bool exact) {
+        if (code is not { Length: > 0 })
+            return _root.Entries;
+
         var node = _root;
-        if (code.Length == 0 || code.Any(c => !node.Children.TryGetValue(c, out node)))
+        if (code.Any(c => !node.Children.TryGetValue(c, out node)))
             return [];
+
         if (exact)
             return node.Entries;
 

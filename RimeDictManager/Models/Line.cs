@@ -27,6 +27,7 @@ internal sealed record Line(uint? Idx, string? Word, string? Code, string? Weigh
             return new(idx, null, null, null, null);
         if (line[0] == '#') // 注释行的行首为#
             return new(idx, null, null, null, line);
+
         if (line.Split('\t', 4) is { Length: < 4 } parts // 条目行最多3列
          && parts.ElementAtOrDefault(0) is { Length: > 0 } word) // 且必须有字词
             return new(idx, word, parts.ElementAtOrDefault(1), parts.ElementAtOrDefault(2), null);

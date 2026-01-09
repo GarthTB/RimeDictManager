@@ -256,15 +256,43 @@ internal sealed partial class MainViewModel: ObservableObject
 
     /// <summary> 将各属性添加为一个新条目 </summary>
     [RelayCommand(CanExecute = nameof(CanInsert))]
-    private static void Insert() =>
-        TryOrShowEx("添加条目", static () => throw new NotImplementedException());
+    private void Insert() =>
+        TryOrShowEx(
+            "添加条目",
+            () => {
+                var curEntry = CurEntry;
+                var related = RimeDict!.SearchByWord(curEntry.Word!)
+                    .Union(RimeDict.SearchByCode(curEntry.Code, true))
+                    .OrderBy(static e => e.Code)
+                    .Select(static e => $"\"{e}\"")
+                    .ToArray();
+                if (related.Length > 0
+                 && !ShowConfirm("警告", $"词库已有以下条目，是否仍要添加？\n{string.Join('\n', related)}"))
+                    return;
+                RimeDict.Insert(curEntry);
+                SaveCommand.NotifyCanExecuteChanged();
 
-    private bool CanRemove => RimeDict is {} && SelectedSearchResult is {};
+                // 如果在搜索，更新表格
+                // 写日志
+                // 弹窗
+            });
+
+    private bool CanRemove => RimeDict is {} && SelectedSearchResult is { Modified: false };
 
     /// <summary> 将表格里选中的条目删除 </summary>
     [RelayCommand(CanExecute = nameof(CanRemove))]
-    private static void Remove() =>
-        TryOrShowEx("删除条目", static () => throw new NotImplementedException());
+    private void Remove() =>
+        TryOrShowEx(
+            "删除条目",
+            () => {
+                var entry = SelectedSearchResult!.ToLine();
+                if (!ShowConfirm("警告", $"确定删除\"{entry}\"？"))
+                    return;
+                RimeDict!.Remove(entry);
+                SaveCommand.NotifyCanExecuteChanged();
+                SearchResults.Remove(SelectedSearchResult); // 这里看得见，不必弹窗
+                AuditLogger.Log("删除", entry);
+            });
 
     private bool CanShorten =>
         RimeDict is {}

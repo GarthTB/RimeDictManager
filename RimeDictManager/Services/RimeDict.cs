@@ -40,8 +40,10 @@ internal sealed class RimeDict
             }
             idx++;
         }
+
         if (_header.Count < 2)
             throw new FormatException("词库缺失文件头");
+
         _srcPath = dictPath;
         Modified = false; // 纠正Insert副作用
     }
@@ -60,6 +62,7 @@ internal sealed class RimeDict
             list.Add(entry);
         else
             _entriesByWord[entry.Word!] = [entry];
+
         Count++;
         Modified = true;
     }
@@ -70,6 +73,7 @@ internal sealed class RimeDict
         _entriesByCode.Remove(entry); // 保证现有
         if (!_entriesByWord[entry.Word!].Remove(entry))
             throw new InvalidOperationException("Trie和Dict不一致，请报告异常");
+
         Count--;
         Modified = true;
     }
@@ -78,7 +82,8 @@ internal sealed class RimeDict
     /// <param name="code"> 编码 </param>
     /// <param name="exact"> true时精确搜索，false时前缀搜索 </param>
     /// <returns> 无序的条目 </returns>
-    public IReadOnlyList<Line> SearchByCode(string code, bool exact) =>
+    /// <remarks> null或空编码始终为精确搜索 </remarks>
+    public IReadOnlyList<Line> SearchByCode(string? code, bool exact) =>
         _entriesByCode.Search(code, exact);
 
     /// <summary> 按字词精确搜索条目 </summary>
@@ -102,6 +107,7 @@ internal sealed class RimeDict
                 .Concat(_trivia)
                 .OrderBy(static e => e.Idx)
                 .Concat(entries.Where(static e => e.Idx is null).OrderBy(static e => e.Code));
+
         var lines = _header.Concat(orderedEntries.Select(static e => $"{e}"));
         File.WriteAllLines(path ?? _srcPath, lines);
         Modified = false;

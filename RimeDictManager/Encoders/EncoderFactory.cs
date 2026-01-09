@@ -21,8 +21,5 @@ internal static class EncoderFactory
     /// <param name="name"> 编码方案名 </param>
     /// <param name="dictPath"> 单字词库路径 </param>
     /// <returns> 构造好的编码器，待检验覆盖字数 </returns>
-    public static IEncoder Create(string name, string dictPath) =>
-        Encoders.TryGetValue(name, out var create)
-            ? create(dictPath)
-            : throw new KeyNotFoundException($"不支持\"{name}\"的编码器");
+    public static IEncoder Create(string name, string dictPath) => Encoders[name](dictPath);
 }
