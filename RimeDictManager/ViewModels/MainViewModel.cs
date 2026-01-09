@@ -292,13 +292,12 @@ internal sealed partial class MainViewModel: ObservableObject
         TryOrShowEx(
             "删除条目",
             () => {
-                if (SelectedSearchResult!.Modified)
-                    throw new InvalidOperationException("不能删除有改动的条目");
-                if (!ShowConfirm("确认", $"确认删除\"{SelectedSearchResult.Src}\"？"))
+                var toRemove = SelectedSearchResult!.Src;
+                if (!ShowConfirm("确认", $"确认删除\"{toRemove}\"？"))
                     return;
-                _rimeDict!.Remove(SelectedSearchResult.Src);
+                _rimeDict!.Remove(toRemove);
                 SaveCommand.NotifyCanExecuteChanged();
-                AuditLogger.Log("删除", SelectedSearchResult.Src);
+                AuditLogger.Log("删除", toRemove);
                 SearchResults.Remove(SelectedSearchResult);
             });
 
@@ -307,7 +306,9 @@ internal sealed partial class MainViewModel: ObservableObject
      && UseEncoder
      && MaxLen != MinLen
      && SearchMode == 0
-     && SelectedSearchResult is {};
+     && SearchText.Length >= MinLen
+     && SelectedSearchResult is {}
+     && SelectedSearchResult.Src.Code?.Length > SearchText.Length;
 
     /// <summary> 将表格里选中条目的编码截短为搜索框中的编码；若有一个条目占用该编码，则自动加长其编码到最短的空闲位置 </summary>
     /// <remarks> 需开启自动编码和编码前缀搜索；仅用于变长编码方案 </remarks>
@@ -316,8 +317,73 @@ internal sealed partial class MainViewModel: ObservableObject
         TryOrShowEx(
             "截短编码",
             () => {
-                if (SelectedSearchResult!.Modified)
-                    throw new InvalidOperationException("不能截短有改动的条目");
+                var toShorten = SelectedSearchResult!;
+                var shortened = toShorten.Src with { Code = SearchText };
+                if (shortened.Type != 2)
+                    throw new InvalidOperationException("编码截短后条目无效");
+
+                var toLengthens = SearchResults.Where(me => me.Src.Code == SearchText).ToArray();
+                if (toLengthens.Length > 1)
+                    throw new InvalidOperationException("有多个条目占用短编码");
+                var toLengthen = toLengthens.ElementAtOrDefault(0);
+                var lengthened = toLengthen is {}
+                    ? GetLengthened()
+                    : null;
+
+                var msg1 = $"\"{toShorten.Src}\"\t=>\t\"{shortened}\"";
+                var msg2 = $"\"{toLengthen?.Src}\"\t=>\t\"{lengthened}\"";
+                if (toLengthen is null
+                    ? !ShowConfirm("确认", $"确认以下修改？\n{msg1}")
+                    : !ShowConfirm("确认", $"确认以下修改？\n{msg1}\n{msg2}"))
+                    return;
+
+                if (SearchResults.Any(me =>
+                        me.Src.Code!.Length > toShorten.Src.Code!.Length
+                     && me.Src.Code.StartsWith(toShorten.Src.Code, StringComparison.Ordinal))
+                 && !ShowConfirm("提示", "选中条目的编码将会空缺，是否仍要截短？"))
+                    return;
+
+                _rimeDict!.Remove(toShorten.Src);
+                AuditLogger.Log("截短前", toShorten.Src);
+                SearchResults.Remove(toShorten);
+                _rimeDict.Insert(shortened);
+                AuditLogger.Log("截短后", shortened);
+                SearchResults.Add(new(shortened));
+                if (toLengthen is {}) {
+                    _rimeDict!.Remove(toLengthen.Src);
+                    AuditLogger.Log("加长前", toLengthen.Src);
+                    SearchResults.Remove(toLengthen);
+                    _rimeDict.Insert(lengthened!);
+                    AuditLogger.Log("加长后", lengthened!);
+                    SearchResults.Add(new(lengthened!));
+                }
+                SaveCommand.NotifyCanExecuteChanged();
+
+                Line GetLengthened() {
+                    var fullCodes = _encoder!.Encode(toLengthen.Src.Word!)
+                        .Where(code => code.StartsWith(SearchText, StringComparison.Ordinal))
+                        .ToArray();
+                    if (fullCodes.Length == 0)
+                        throw new InvalidOperationException("占位条目的长编码不匹配");
+                    var longCode = fullCodes.Select(code => code[..toShorten.Src.Code!.Length])
+                        .Contains(toShorten.Src.Code)
+                        ? toShorten.Src.Code! // 直接交换编码
+                        : GetLongCode(fullCodes);
+                    return toLengthen.Src with { Code = longCode } is { Type: 2 } result
+                        ? result
+                        : throw new InvalidOperationException("占位条目加长后无效");
+                }
+
+                string GetLongCode(string[] fullCodes) {
+                    for (var len = SearchText.Length + 1; len <= MaxLen; len++) {
+                        var codes = fullCodes.Select(code => code[..len]).Distinct().ToArray();
+                        if (codes.Length > 1)
+                            throw new InvalidOperationException("占位条目的长编码不唯一");
+                        if (_rimeDict!.SearchByCode(codes[0], true).Count == 0)
+                            return codes[0];
+                    }
+                    throw new InvalidOperationException("占位条目没有空闲的长编码");
+                }
             });
 
     private bool CanModify => _rimeDict is {} && SearchResults.Count > 0;
@@ -328,25 +394,26 @@ internal sealed partial class MainViewModel: ObservableObject
         TryOrShowEx(
             "应用修改",
             () => {
-                List<(Line Old, Line New)> mods = new(SearchResults.Count);
+                List<(MutEntry Old, Line New)> mods = new(SearchResults.Count);
                 foreach (var me in SearchResults)
-                    if (me.Modified && me.ToLine() is { Type: 2 } newEntry)
-                        mods.Add((me.Src, newEntry));
+                    if (me.ToNewEntry(out var entry))
+                        mods.Add((me, entry!));
                 if (mods.Count == 0)
                     throw new InvalidOperationException("没有有效的改动，什么都没做");
 
-                var msg = mods.Select(static mod => $"\"{mod.Old}\" => \"{mod.New}\"");
-                if (!ShowConfirm("确认", $"确认应用以下修改？\n{string.Join('\n', msg)}"))
+                var msg = mods.Select(static mod => $"\"{mod.Old}\"\t=>\t\"{mod.New}\"");
+                if (!ShowConfirm("确认", $"确认以下修改？\n{string.Join('\n', msg)}"))
                     return;
 
                 foreach (var mod in mods) {
-                    _rimeDict!.Remove(mod.Old);
-                    AuditLogger.Log("改前", mod.Old);
+                    _rimeDict!.Remove(mod.Old.Src);
+                    AuditLogger.Log("改前", mod.Old.Src);
+                    SearchResults.Remove(mod.Old);
                     _rimeDict.Insert(mod.New);
                     AuditLogger.Log("改后", mod.New);
+                    SearchResults.Add(new(mod.New));
                 }
                 SaveCommand.NotifyCanExecuteChanged();
-                UpdateSearchResults();
             });
 
     #endregion 词库操作

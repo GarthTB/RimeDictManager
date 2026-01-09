@@ -12,21 +12,20 @@ internal sealed class MutEntry(Line src)
     public string Code { get; set; } = src.Code ?? "";
     public string Weight { get; set; } = src.Weight ?? "";
 
-    private string? CurCode =>
-        Code.Trim() is { Length: > 0 } code
-            ? code
+    /// <summary> 将可变副本构造为新条目行 </summary>
+    /// <param name="entry"> 新条目行：无改动则为null </param>
+    /// <returns> 是否有改动 </returns>
+    public bool ToNewEntry(out Line? entry) {
+        var (word, code, weight) = (Word.Trim(), Code.Trim(), Weight.Trim());
+        if (code.Length == 0)
+            code = null;
+        if (weight.Length == 0)
+            weight = null;
+
+        var modified = word != Src.Word || code != Src.Code || weight != Src.Weight;
+        entry = modified
+            ? Src with { Word = word, Code = code, Weight = weight }
             : null;
-
-    private string? CurWeight =>
-        Weight.Trim() is { Length: > 0 } weight
-            ? weight
-            : null;
-
-    /// <summary> 是否有改动 </summary>
-    public bool Modified =>
-        Word.Trim() != Src.Word! || CurCode != Src.Code || CurWeight != Src.Weight;
-
-    /// <summary> 将可变副本构造为条目行 </summary>
-    /// <returns> 新条目，待检验有效性 </returns>
-    public Line ToLine() => Src with { Word = Word.Trim(), Code = CurCode, Weight = CurWeight };
+        return modified;
+    }
 }
