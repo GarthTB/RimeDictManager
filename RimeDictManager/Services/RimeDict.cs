@@ -33,7 +33,7 @@ internal sealed class RimeDict
                     headerClosed = true;
             } else {
                 var lineObj = Line.FromString(idx, rawLine);
-                if (lineObj.IsEntry == true) // 只插入条目，其他放trivia
+                if (lineObj.Type == 2) // 只插入条目，其他放trivia
                     Insert(lineObj);
                 else
                     _trivia.Add(lineObj);
@@ -97,7 +97,7 @@ internal sealed class RimeDict
         var orderedEntries = sort
             ? entries.OrderBy(static e => e.Code)
                 .ThenBy(static e => e.Idx ?? uint.MaxValue)
-                .Concat(_trivia.Where(static l => l.IsEntry == false)) // 注释本来就原序
+                .Concat(_trivia.Where(static l => l.Type == 1)) // 注释本来就原序
             : entries.Where(static e => e.Idx is {})
                 .Concat(_trivia)
                 .OrderBy(static e => e.Idx)

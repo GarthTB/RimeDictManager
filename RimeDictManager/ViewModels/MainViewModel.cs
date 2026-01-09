@@ -207,7 +207,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
     #region 词库操作
 
-    private bool CanInsert => RimeDict is {} && CurEntry.IsEntry == true;
+    private bool CanInsert => RimeDict is {} && CurEntry.Type == 2;
 
     /// <summary> 将各属性添加为一个新条目 </summary>
     [RelayCommand(CanExecute = nameof(CanInsert))]

@@ -9,13 +9,13 @@ namespace RimeDictManager.Models;
 /// <remarks> 格式标准见 https://github.com/rime/home/wiki/RimeWithSchemata </remarks>
 internal sealed record Line(uint? Idx, string? Word, string? Code, string? Weight, string? Comment)
 {
-    /// <summary> 空行为null，注释行为false，条目行为true，格式错误则抛出 </summary>
-    public bool? IsEntry =>
+    /// <summary> 0为空行，1为注释行，2为条目行，3为异常行 </summary>
+    public byte Type =>
         (Idx, Word, Comment) switch {
-            ({}, null, null) => null, // 空行
-            ({}, null, { Length: > 0 }) => false, // 注释行
-            (_, { Length: > 0 }, null) => true, // 条目行
-            _ => throw new FormatException("条目格式错误，请报告异常")
+            ({}, null, null) => 0,
+            ({}, null, { Length: > 0 }) => 1,
+            (_, { Length: > 0 }, null) => 2,
+            _ => 3
         };
 
     /// <summary> 将字符串解析为对象 </summary>
@@ -36,12 +36,11 @@ internal sealed record Line(uint? Idx, string? Word, string? Code, string? Weigh
     /// <summary> 将对象转换为字符串 </summary>
     /// <remarks> 需与FromString可逆 </remarks>
     public override string ToString() =>
-        IsEntry != true
-            ? Comment ?? "" // 空行或注释行
-            : (Code, Weight) switch { // 条目行
-                (null, null) => Word!,
-                ({}, null) => $"{Word}\t{Code}",
-                ({}, {}) => $"{Word}\t{Code}\t{Weight}",
-                _ => throw new FormatException("条目格式错误，请报告异常")
-            };
+        (Type, Code, Weight) switch {
+            (0 or 1, _, _) => Comment ?? "",
+            (2, null, null) => Word!,
+            (2, {}, null) => $"{Word}\t{Code}",
+            (2, {}, {}) => $"{Word}\t{Code}\t{Weight}",
+            _ => throw new FormatException("词库格式错误，请报告异常")
+        };
 }
