@@ -52,6 +52,7 @@ internal sealed partial class MainViewModel: ObservableObject
                 ShortenCommand.NotifyCanExecuteChanged();
                 ModifyCommand.NotifyCanExecuteChanged();
                 UpdateSearchResults();
+
                 var msg1 = $"已加载词库\"{path}\"";
                 var msg2 = $"共有{_rimeDict.Count}个条目";
                 AuditLogger.Log($"{msg1}，{msg2}", null);
@@ -75,6 +76,7 @@ internal sealed partial class MainViewModel: ObservableObject
                     "请选择排序策略：\n是：条目按编码升序，编码相同则原序，注释原序放在末尾，空行删除\n否：保留原序，新条目按编码升序放在末尾");
                 _rimeDict!.Save(path, sort);
                 SaveCommand.NotifyCanExecuteChanged();
+
                 var msg1 = $"已保存词库到\"{path}\"";
                 var msg2 = $"共有{_rimeDict.Count}个条目";
                 AuditLogger.Log($"{msg1}，{msg2}", null);
@@ -130,10 +132,17 @@ internal sealed partial class MainViewModel: ObservableObject
     private string? CurCode =>
         UseEncoder
             ? SelectedAutoCode
-            : ManualCode.Trim();
+            : ManualCode.Trim() is { Length: > 0 } code
+                ? code
+                : null;
+
+    private string? CurWeight =>
+        Weight.Trim() is { Length: > 0 } weight
+            ? weight
+            : null;
 
     /// <summary> 用当前各属性构造的新条目 </summary>
-    private Line CurEntry => new(null, Word.Trim(), CurCode, Weight.Trim(), null);
+    private Line CurEntry => new(null, Word.Trim(), CurCode, CurWeight, null);
 
     #endregion 条目属性
 
@@ -166,11 +175,13 @@ internal sealed partial class MainViewModel: ObservableObject
                 var encoder = EncoderFactory.Create(SelectedEncoderName!, path);
                 if (encoder.Chars == 0)
                     throw new InvalidOperationException("单字词库无效");
+
                 _encoder = encoder;
                 (MinLen, MaxLen) = encoder.LenRange;
                 CurLen = MinLen;
                 ShortenCommand.NotifyCanExecuteChanged();
                 UpdateAutoCodes(true);
+
                 var msg1 = $"已启用\"{SelectedEncoderName}\"的编码器";
                 var msg2 = $"使用单字词库\"{path}\"";
                 var msg3 = $"覆盖{_encoder.Chars}个单字";
@@ -192,11 +203,13 @@ internal sealed partial class MainViewModel: ObservableObject
                     _fullAutoCodes = _encoder?.Encode(Word.Trim()).ToArray() ?? [];
                 if (_fullAutoCodes.Length == 0)
                     return;
+
                 var codes = MaxLen == MinLen || CurLen == MaxLen
                     ? _fullAutoCodes
                     : _fullAutoCodes.Select(code => code[..CurLen]).Distinct();
                 foreach (var code in codes.Order())
                     AutoCodes.Add(code);
+
                 SelectedAutoCode = AutoCodes.FirstOrDefault(code =>
                                        code.StartsWith(oldSelected, StringComparison.Ordinal)
                                     || oldSelected.StartsWith(code, StringComparison.Ordinal))
@@ -255,23 +268,23 @@ internal sealed partial class MainViewModel: ObservableObject
             "添加条目",
             () => {
                 var curEntry = CurEntry;
-                var related = _rimeDict!.SearchByWord(curEntry.Word!)
-                    .Union(_rimeDict.SearchByCode(curEntry.Code, true))
-                    .OrderBy(static e => e.Code)
-                    .Select(static e => $"\"{e}\"")
+
+                var related = (curEntry.Code is {} // 非null则有码
+                        ? _rimeDict!.SearchByWord(curEntry.Word!)
+                            .Union(_rimeDict.SearchByCode(curEntry.Code, true))
+                        : _rimeDict!.SearchByWord(curEntry.Word!)).Select(static e => $"\"{e}\"")
                     .ToArray();
                 if (related.Length > 0
                  && !ShowConfirm("警告", $"词库已有以下条目，是否仍要添加？\n{string.Join('\n', related)}"))
                     return;
+
                 _rimeDict.Insert(curEntry);
                 SaveCommand.NotifyCanExecuteChanged();
-
-                // 如果在搜索，更新表格
-                // 写日志
-                // 弹窗
+                (SearchMode, SearchText) = (1, curEntry.Word!); // 精确出现在表格
+                AuditLogger.Log("添加", curEntry);
             });
 
-    private bool CanRemove => _rimeDict is {} && SelectedSearchResult is { Modified: false };
+    private bool CanRemove => _rimeDict is {} && SelectedSearchResult is {};
 
     /// <summary> 将表格里选中的条目删除 </summary>
     [RelayCommand(CanExecute = nameof(CanRemove))]
@@ -279,12 +292,16 @@ internal sealed partial class MainViewModel: ObservableObject
         TryOrShowEx(
             "删除条目",
             () => {
+                if (SelectedSearchResult!.Modified)
+                    throw new InvalidOperationException("不能删除有改动的条目");
+
                 var entry = SelectedSearchResult!.ToLine();
                 if (!ShowConfirm("警告", $"确定删除\"{entry}\"？"))
                     return;
+
                 _rimeDict!.Remove(entry);
                 SaveCommand.NotifyCanExecuteChanged();
-                SearchResults.Remove(SelectedSearchResult); // 这里看得见，不必弹窗
+                SearchResults.Remove(SelectedSearchResult);
                 AuditLogger.Log("删除", entry);
             });
 
@@ -293,8 +310,7 @@ internal sealed partial class MainViewModel: ObservableObject
      && UseEncoder
      && MaxLen != MinLen
      && SearchMode == 0
-     && SelectedSearchResult is { Modified: false }
-     && SelectedSearchResult.Code.Length > SearchText.Length;
+     && SelectedSearchResult is {};
 
     /// <summary> 将表格里选中条目的编码截短为搜索框中的编码；若有一个条目占用该编码，则自动加长其编码到最短的空闲位置 </summary>
     /// <remarks> 需开启自动编码和编码前缀搜索；仅用于变长编码方案 </remarks>

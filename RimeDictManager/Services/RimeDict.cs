@@ -82,7 +82,7 @@ internal sealed class RimeDict
     /// <param name="code"> 编码 </param>
     /// <param name="exact"> true时精确搜索，false时前缀搜索 </param>
     /// <returns> 无序的条目 </returns>
-    /// <remarks> null或空编码始终为精确搜索 </remarks>
+    /// <remarks> NullOrEmpty时始终为精确搜索 </remarks>
     public IReadOnlyList<Line> SearchByCode(string? code, bool exact) =>
         _entriesByCode.Search(code, exact);
 
