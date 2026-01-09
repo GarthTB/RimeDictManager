@@ -280,8 +280,8 @@ internal sealed partial class MainViewModel: ObservableObject
 
                 _rimeDict.Insert(curEntry);
                 SaveCommand.NotifyCanExecuteChanged();
-                (SearchMode, SearchText) = (1, curEntry.Word!); // 精确出现在表格
                 AuditLogger.Log("添加", curEntry);
+                (SearchMode, SearchText) = (1, curEntry.Word!); // 精确出现在表格
             });
 
     private bool CanRemove => _rimeDict is {} && SelectedSearchResult is {};
@@ -294,15 +294,12 @@ internal sealed partial class MainViewModel: ObservableObject
             () => {
                 if (SelectedSearchResult!.Modified)
                     throw new InvalidOperationException("不能删除有改动的条目");
-
-                var entry = SelectedSearchResult!.ToLine();
-                if (!ShowConfirm("警告", $"确定删除\"{entry}\"？"))
+                if (!ShowConfirm("确认", $"确认删除\"{SelectedSearchResult.Src}\"？"))
                     return;
-
-                _rimeDict!.Remove(entry);
+                _rimeDict!.Remove(SelectedSearchResult.Src);
                 SaveCommand.NotifyCanExecuteChanged();
+                AuditLogger.Log("删除", SelectedSearchResult.Src);
                 SearchResults.Remove(SelectedSearchResult);
-                AuditLogger.Log("删除", entry);
             });
 
     private bool CanShorten =>
@@ -315,15 +312,42 @@ internal sealed partial class MainViewModel: ObservableObject
     /// <summary> 将表格里选中条目的编码截短为搜索框中的编码；若有一个条目占用该编码，则自动加长其编码到最短的空闲位置 </summary>
     /// <remarks> 需开启自动编码和编码前缀搜索；仅用于变长编码方案 </remarks>
     [RelayCommand(CanExecute = nameof(CanShorten))]
-    private static void Shorten() =>
-        TryOrShowEx("截短编码", static () => throw new NotImplementedException());
+    private void Shorten() =>
+        TryOrShowEx(
+            "截短编码",
+            () => {
+                if (SelectedSearchResult!.Modified)
+                    throw new InvalidOperationException("不能截短有改动的条目");
+            });
 
     private bool CanModify => _rimeDict is {} && SearchResults.Count > 0;
 
     /// <summary> 应用在表格中的改动 </summary>
     [RelayCommand(CanExecute = nameof(CanModify))]
-    private static void Modify() =>
-        TryOrShowEx("应用修改", static () => throw new NotImplementedException());
+    private void Modify() =>
+        TryOrShowEx(
+            "应用修改",
+            () => {
+                List<(Line Old, Line New)> mods = new(SearchResults.Count);
+                foreach (var me in SearchResults)
+                    if (me.Modified && me.ToLine() is { Type: 2 } newEntry)
+                        mods.Add((me.Src, newEntry));
+                if (mods.Count == 0)
+                    throw new InvalidOperationException("没有有效的改动，什么都没做");
+
+                var msg = mods.Select(static mod => $"\"{mod.Old}\" => \"{mod.New}\"");
+                if (!ShowConfirm("确认", $"确认应用以下修改？\n{string.Join('\n', msg)}"))
+                    return;
+
+                foreach (var mod in mods) {
+                    _rimeDict!.Remove(mod.Old);
+                    AuditLogger.Log("改前", mod.Old);
+                    _rimeDict.Insert(mod.New);
+                    AuditLogger.Log("改后", mod.New);
+                }
+                SaveCommand.NotifyCanExecuteChanged();
+                UpdateSearchResults();
+            });
 
     #endregion 词库操作
 }
