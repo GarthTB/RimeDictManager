@@ -15,7 +15,7 @@ internal static class EncoderFactory
     };
 
     /// <summary> 可用编码方案名 </summary>
-    public static IReadOnlyList<string> Names => Encoders.Keys.ToList();
+    public static IReadOnlyCollection<string> Names => Encoders.Keys;
 
     /// <summary> 构造指定方案的编码器 </summary>
     /// <param name="name"> 编码方案名 </param>

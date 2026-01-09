@@ -116,16 +116,16 @@
             <Button
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
-                Foreground="Crimson"
-                Command="{Binding ModifyCommand}"
-                Content="应用修改"
-                ToolTip="应用在表格中的改动" />
+                Content="查看日志"
+                Click="OpenLog" />
             <Button
                 Grid.Column="2"
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
-                Content="查看日志"
-                Click="OpenLog" />
+                Foreground="Crimson"
+                Command="{Binding ModifyCommand}"
+                Content="应用修改"
+                ToolTip="应用在表格中的改动" />
             <Grid Grid.Column="4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="20" />
@@ -195,7 +195,7 @@
                 VerticalContentAlignment="Center"
                 IsEnabled="{Binding UseEncoder}"
                 ItemsSource="{Binding EncoderNames}"
-                SelectedIndex="{Binding EncoderNameIdx}"
+                SelectedItem="{Binding SelectedEncoderName}"
                 ToolTip="编码方案名" />
             <Button
                 Grid.Column="3"
@@ -230,7 +230,7 @@
                 Foreground="{Binding AutoCodeColor}"
                 IsEnabled="{Binding UseEncoder}"
                 ItemsSource="{Binding AutoCodes}"
-                SelectedIndex="{Binding AutoCodeIdx}"
+                SelectedItem="{Binding SelectedAutoCode}"
                 ToolTip="自动编码结果；变红表示有多个编码" />
         </Grid>
         <Grid Grid.Column="2" Grid.Row="6">
@@ -265,14 +265,14 @@
             CanUserAddRows="False"
             SelectionMode="Single"
             ItemsSource="{Binding SearchResults}"
-            SelectedIndex="{Binding SearchResultIdx}">
+            SelectedItem="{Binding SelectedSearchResult}">
             <DataGrid.Columns>
                 <DataGridTextColumn
-                    Width="3*"
+                    Width="4*"
                     IsReadOnly="True"
                     Header="原索引" />
                 <DataGridTextColumn
-                    Width="9*"
+                    Width="8*"
                     Binding="{Binding Word, UpdateSourceTrigger=PropertyChanged}"
                     Header="词组" />
                 <DataGridTextColumn
