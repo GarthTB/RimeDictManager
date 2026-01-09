@@ -16,7 +16,6 @@ internal sealed partial class MainViewModel: ObservableObject
 {
     #region 打开词库
 
-    /// <summary> RIME词库 </summary>
     [ObservableProperty,
      NotifyCanExecuteChangedFor(
          nameof(SaveCommand),
@@ -25,12 +24,13 @@ internal sealed partial class MainViewModel: ObservableObject
          nameof(RemoveCommand),
          nameof(ShortenCommand),
          nameof(ModifyCommand))]
-    private RimeDict? _dict;
+    private RimeDict? _rimeDict;
 
-    partial void OnDictChanged(RimeDict? value) => Search();
+    partial void OnRimeDictChanged(RimeDict? value) => Search();
 
     /// <summary> 词库改动未保存且选择保留时为true </summary>
-    public bool KeepModification => Dict?.Modified == true && !ShowConfirm("警告", "词库改动未保存，是否丢弃？");
+    public bool KeepModification =>
+        RimeDict?.Modified == true && !ShowConfirm("警告", "词库改动未保存，是否丢弃？");
 
     /// <summary> 打开RIME词库文件（.dict.yaml） </summary>
     [RelayCommand]
@@ -54,9 +54,9 @@ internal sealed partial class MainViewModel: ObservableObject
         TryOrShowEx(
             "加载词库",
             () => {
-                Dict = new(path);
+                RimeDict = new(path);
                 var msg1 = $"已加载词库\"{path}\"";
-                var msg2 = $"共有{Dict.Count}个条目";
+                var msg2 = $"共有{RimeDict.Count}个条目";
                 AuditLogger.Log($"{msg1}，{msg2}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}");
             });
@@ -65,7 +65,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
     #region 保存词库
 
-    private bool CanSave => Dict?.Modified == true;
+    private bool CanSave => RimeDict?.Modified == true;
 
     /// <summary> 保存修改并覆写原词库文件 </summary>
     [RelayCommand(CanExecute = nameof(CanSave))]
@@ -76,15 +76,15 @@ internal sealed partial class MainViewModel: ObservableObject
                 var sort = ShowConfirm(
                     "选择排序策略",
                     "请选择排序策略：\n是：条目按编码升序，编码相同则原序，注释原序放在末尾，空行删除\n否：保留原序，新条目按编码升序放在末尾");
-                Dict!.Save(path, sort);
+                RimeDict!.Save(path, sort);
                 SaveCommand.NotifyCanExecuteChanged();
                 var msg1 = $"已保存词库到\"{path}\"";
-                var msg2 = $"共有{Dict.Count}个条目";
+                var msg2 = $"共有{RimeDict.Count}个条目";
                 AuditLogger.Log($"{msg1}，{msg2}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}");
             });
 
-    private bool CanSaveAs => Dict is {};
+    private bool CanSaveAs => RimeDict is {};
 
     /// <summary> 保存修改并另存为RIME词库文件（.dict.yaml） </summary>
     [RelayCommand(CanExecute = nameof(CanSaveAs))]
@@ -93,7 +93,7 @@ internal sealed partial class MainViewModel: ObservableObject
             "另存词库",
             () => {
                 SaveFileDialog dialog = new() {
-                    Title = "将词库保存到...",
+                    Title = "将词库另存到...",
                     DefaultExt = ".dict.yaml",
                     Filter = "RIME词库文件 (*.dict.yaml)|*.dict.yaml|所有文件 (*.*)|*.*"
                 };
@@ -105,47 +105,9 @@ internal sealed partial class MainViewModel: ObservableObject
 
     #region 条目属性
 
-    /// <summary> 字词 </summary>
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
-    private string _word = "";
+    private string _word = "", _manualCode = "", _weight = "", _autoCodeColor = "Black";
 
-    /// <summary> 手动编码 </summary>
-    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
-    private string _manualCode = "";
-
-    /// <summary> 权重 </summary>
-    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
-    private string _weight = "";
-
-    /// <summary> 自动编码结果颜色 </summary>
-    [ObservableProperty]
-    private string _autoCodeColor = "Black";
-
-    /// <summary> 自动编码结果 </summary>
-    public ObservableCollection<string> AutoCodes { get; } = [];
-
-    /// <summary> 自动编码结果索引 </summary>
-    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
-    private int _autoCodeIdx = -1;
-
-    private string? SelectedAutoCode =>
-        AutoCodeIdx >= 0 && AutoCodeIdx < AutoCodes.Count
-            ? AutoCodes[AutoCodeIdx]
-            : null;
-
-    private string? CurCode =>
-        UseEncoder
-            ? SelectedAutoCode
-            : ManualCode.Trim();
-
-    /// <summary> 用当前各属性构造的新条目 </summary>
-    private Line CurEntry => new(null, Word, CurCode, Weight, null);
-
-    #endregion 条目属性
-
-    #region 自动编码
-
-    /// <summary> 是否使用自动编码 </summary>
     [ObservableProperty,
      NotifyCanExecuteChangedFor(
          nameof(ChangeEncoderCommand),
@@ -153,19 +115,28 @@ internal sealed partial class MainViewModel: ObservableObject
          nameof(ShortenCommand))]
     private bool _useEncoder, _notUseEncoder = true;
 
-    /// <summary> 可用编码方案名 </summary>
-    public IReadOnlyList<string> EncoderNames { get; } = EncoderFactory.Names;
+    public IReadOnlyCollection<string> EncoderNames { get; } = EncoderFactory.Names;
 
-    /// <summary> 编码方案名索引 </summary>
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ChangeEncoderCommand))]
-    private int _encoderNameIdx = -1;
+    private string? _selectedEncoderName;
 
-    private string? SelectedEncoderName =>
-        EncoderNameIdx >= 0 && EncoderNameIdx < EncoderNames.Count
-            ? EncoderNames[EncoderNameIdx]
-            : null;
+    public ObservableCollection<string> AutoCodes { get; } = []; // 刷新时需取消选中项
 
-    /// <summary> 编码器 </summary>
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
+    private string? _selectedAutoCode;
+
+    private string? CurCode =>
+        UseEncoder
+            ? SelectedAutoCode
+            : ManualCode.Trim();
+
+    /// <summary> 用当前各属性构造的新条目 </summary>
+    private Line CurEntry => new(null, Word.Trim(), CurCode, Weight.Trim(), null);
+
+    #endregion 条目属性
+
+    #region 自动编码
+
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     private IEncoder? _encoder;
 
@@ -208,9 +179,7 @@ internal sealed partial class MainViewModel: ObservableObject
                 ShowInfo("成功", $"{msg1}\n{msg2}\n{msg3}");
             });
 
-    /// <summary> 自动编码的码长 </summary>
-    [ObservableProperty]
-    private byte _maxLen = 4, _minLen = 4, _curLen = 4;
+    [ObservableProperty] private byte _maxLen = 4, _minLen = 4, _curLen = 4;
 
     /// <summary> 执行自动编码 </summary>
     private static void Encode() => throw new NotImplementedException();
@@ -223,21 +192,13 @@ internal sealed partial class MainViewModel: ObservableObject
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     private byte _searchMode;
 
-    /// <summary> 搜索内容 </summary>
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     private string _searchText = "";
 
-    /// <summary> 搜索结果 </summary>
-    public ObservableCollection<MutEntry> SearchResults { get; } = [];
+    public ObservableCollection<MutEntry> SearchResults { get; } = []; // 刷新时需取消选中项
 
-    /// <summary> 搜索结果索引 </summary>
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
-    private int _searchResultIdx = -1;
-
-    private MutEntry? SelectedSearchResult =>
-        SearchResultIdx >= 0 && SearchResultIdx < SearchResults.Count
-            ? SearchResults[SearchResultIdx]
-            : null;
+    private MutEntry? _selectedSearchResult;
 
     /// <summary> 搜索并填充SearchResults </summary>
     private static void Search() => throw new NotImplementedException();
@@ -246,14 +207,14 @@ internal sealed partial class MainViewModel: ObservableObject
 
     #region 词库操作
 
-    private bool CanInsert => Dict is {} && CurEntry.IsEntry == true;
+    private bool CanInsert => RimeDict is {} && CurEntry.IsEntry == true;
 
     /// <summary> 将各属性添加为一个新条目 </summary>
     [RelayCommand(CanExecute = nameof(CanInsert))]
     private static void Insert() =>
         TryOrShowEx("添加条目", static () => throw new NotImplementedException());
 
-    private bool CanRemove => Dict is {} && SelectedSearchResult is {};
+    private bool CanRemove => RimeDict is {} && SelectedSearchResult is {};
 
     /// <summary> 将表格里选中的条目删除 </summary>
     [RelayCommand(CanExecute = nameof(CanRemove))]
@@ -261,7 +222,7 @@ internal sealed partial class MainViewModel: ObservableObject
         TryOrShowEx("删除条目", static () => throw new NotImplementedException());
 
     private bool CanShorten =>
-        Dict is {}
+        RimeDict is {}
      && UseEncoder
      && MaxLen != MinLen
      && SearchMode == 0
@@ -274,7 +235,7 @@ internal sealed partial class MainViewModel: ObservableObject
     private static void Shorten() =>
         TryOrShowEx("截短编码", static () => throw new NotImplementedException());
 
-    private bool CanModify => Dict is {} && SearchResults.Count > 0;
+    private bool CanModify => RimeDict is {} && SearchResults.Count > 0;
 
     /// <summary> 应用在表格中的改动 </summary>
     [RelayCommand(CanExecute = nameof(CanModify))]
