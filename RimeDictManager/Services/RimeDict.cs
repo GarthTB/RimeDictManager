@@ -77,13 +77,13 @@ internal sealed class RimeDict
     /// <summary> 按编码搜索条目 </summary>
     /// <param name="code"> 编码 </param>
     /// <param name="exact"> true时精确搜索，false时前缀搜索 </param>
-    /// <returns> 无重、无序的条目 </returns>
+    /// <returns> 无序的条目 </returns>
     public IReadOnlyList<Line> SearchByCode(string code, bool exact) =>
         _entriesByCode.Search(code, exact);
 
     /// <summary> 按字词精确搜索条目 </summary>
     /// <param name="word"> 字词 </param>
-    /// <returns> 无重、无序的条目 </returns>
+    /// <returns> 无序的条目 </returns>
     public IReadOnlyList<Line> SearchByWord(string word) =>
         _entriesByWord.TryGetValue(word, out var list)
             ? list

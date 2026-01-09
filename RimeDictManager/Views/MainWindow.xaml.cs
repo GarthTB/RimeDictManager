@@ -21,7 +21,7 @@ public sealed partial class MainWindow
     private void DropCharsDict(object _, DragEventArgs e) {
         if (DataContext is MainViewModel { KeepModification: false } vm
          && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } paths)
-            vm.LoadEncoder(paths[0]);
+            vm.CreateEncoder(paths[0]);
     }
 
     /// <summary> 打开日志窗口 </summary>

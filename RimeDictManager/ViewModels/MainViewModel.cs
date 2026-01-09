@@ -26,7 +26,7 @@ internal sealed partial class MainViewModel: ObservableObject
          nameof(ModifyCommand))]
     private RimeDict? _rimeDict;
 
-    partial void OnRimeDictChanged(RimeDict? value) => Search();
+    partial void OnRimeDictChanged(RimeDict? value) => UpdateSearchResults();
 
     /// <summary> 词库改动未保存且选择保留时为true </summary>
     public bool KeepModification =>
@@ -108,19 +108,24 @@ internal sealed partial class MainViewModel: ObservableObject
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
     private string _word = "", _manualCode = "", _weight = "", _autoCodeColor = "Black";
 
+    partial void OnWordChanged(string value) => UpdateAutoCodes(true);
+
     [ObservableProperty,
      NotifyCanExecuteChangedFor(
-         nameof(ChangeEncoderCommand),
+         nameof(SetEncoderCommand),
          nameof(InsertCommand),
          nameof(ShortenCommand))]
     private bool _useEncoder, _notUseEncoder = true;
 
     public IReadOnlyCollection<string> EncoderNames { get; } = EncoderFactory.Names;
 
-    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ChangeEncoderCommand))]
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(SetEncoderCommand))]
     private string? _selectedEncoderName;
 
-    public ObservableCollection<string> AutoCodes { get; } = []; // 刷新时需取消选中项
+    partial void OnSelectedEncoderNameChanged(string? value) => SetEncoder();
+
+    private string[] _fullAutoCodes = [];
+    public ObservableCollection<string> AutoCodes { get; } = [];
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
     private string? _selectedAutoCode;
@@ -143,28 +148,28 @@ internal sealed partial class MainViewModel: ObservableObject
     partial void OnEncoderChanged(IEncoder? value) {
         (MinLen, MaxLen) = value?.LenRange ?? (4, 4);
         CurLen = MinLen;
-        Encode();
+        UpdateAutoCodes(true);
     }
 
-    private bool CanChangeEncoder => UseEncoder && SelectedEncoderName is {};
+    private bool CanSetEncoder => UseEncoder && SelectedEncoderName is {};
 
-    /// <summary> 更换当前方案的单字词库并更新编码器 </summary>
-    [RelayCommand(CanExecute = nameof(CanChangeEncoder))]
-    private void ChangeEncoder() =>
+    /// <summary> 选取当前方案的单字词库并更新编码器 </summary>
+    [RelayCommand(CanExecute = nameof(CanSetEncoder))]
+    private void SetEncoder() =>
         TryOrShowEx(
-            "更换单字",
+            "选取单字词库",
             () => {
                 OpenFileDialog dialog = new() {
                     Title = $"打开\"{SelectedEncoderName}\"的RIME单字词库文件",
                     Filter = "RIME词库文件 (*.dict.yaml)|*.dict.yaml|所有文件 (*.*)|*.*"
                 };
                 if (dialog.ShowDialog() == true)
-                    LoadEncoder(dialog.FileName);
+                    CreateEncoder(dialog.FileName);
             });
 
     /// <summary> 加载单字词库并构造编码器 </summary>
     /// <param name="path"> 单字词库路径 </param>
-    public void LoadEncoder(string path) =>
+    public void CreateEncoder(string path) =>
         TryOrShowEx(
             "加载编码器",
             () => {
@@ -180,9 +185,32 @@ internal sealed partial class MainViewModel: ObservableObject
             });
 
     [ObservableProperty] private byte _maxLen = 4, _minLen = 4, _curLen = 4;
+    partial void OnCurLenChanged(byte value) => UpdateAutoCodes(false);
 
-    /// <summary> 执行自动编码 </summary>
-    private static void Encode() => throw new NotImplementedException();
+    /// <summary> 自动编码，填充FullAutoCodes与AutoCodes </summary>
+    private void UpdateAutoCodes(bool changeFullCode) =>
+        TryOrShowEx(
+            "自动编码",
+            () => {
+                var oldSelected = SelectedAutoCode ?? "";
+                AutoCodes.Clear();
+                if (changeFullCode)
+                    _fullAutoCodes = Encoder?.Encode(Word.Trim()).ToArray() ?? [];
+                if (_fullAutoCodes.Length == 0)
+                    return;
+                var codes = MaxLen == MinLen || CurLen == MaxLen
+                    ? _fullAutoCodes
+                    : _fullAutoCodes.Select(code => code[..CurLen]).Distinct();
+                foreach (var code in codes.Order())
+                    AutoCodes.Add(code);
+                SelectedAutoCode = AutoCodes.FirstOrDefault(code =>
+                                       code.StartsWith(oldSelected, StringComparison.Ordinal)
+                                    || oldSelected.StartsWith(code, StringComparison.Ordinal))
+                                ?? AutoCodes[0];
+                AutoCodeColor = AutoCodes.Count > 1
+                    ? "Crimson"
+                    : "Black";
+            });
 
     #endregion 自动编码
 
@@ -192,16 +220,33 @@ internal sealed partial class MainViewModel: ObservableObject
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     private byte _searchMode;
 
+    partial void OnSearchModeChanged(byte value) => UpdateSearchResults();
+
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     private string _searchText = "";
 
-    public ObservableCollection<MutEntry> SearchResults { get; } = []; // 刷新时需取消选中项
+    partial void OnSearchTextChanged(string value) => UpdateSearchResults();
+
+    public ObservableCollection<MutEntry> SearchResults { get; } = [];
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
     private MutEntry? _selectedSearchResult;
 
-    /// <summary> 搜索并填充SearchResults </summary>
-    private static void Search() => throw new NotImplementedException();
+    /// <summary> 搜索条目，填充SearchResults </summary>
+    private void UpdateSearchResults() =>
+        TryOrShowEx(
+            "搜索条目",
+            () => {
+                SearchResults.Clear();
+                var entries = RimeDict is { Count: > 0 }
+                    ? SearchMode == 0
+                        ? RimeDict.SearchByCode(SearchText, false)
+                        : RimeDict.SearchByWord(SearchText)
+                    : [];
+                foreach (var entry in entries.OrderBy(static e => e.Code))
+                    SearchResults.Add(new(entry));
+                ModifyCommand.NotifyCanExecuteChanged();
+            });
 
     #endregion 搜索
 

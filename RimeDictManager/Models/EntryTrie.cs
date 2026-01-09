@@ -28,7 +28,7 @@ internal sealed class EntryTrie
     /// <summary> 按编码搜索条目 </summary>
     /// <param name="code"> 编码 </param>
     /// <param name="exact"> true时精确搜索，false时前缀搜索 </param>
-    /// <returns> 无重、无序的条目 </returns>
+    /// <returns> 无序的条目 </returns>
     public IReadOnlyList<Line> Search(string code, bool exact) {
         var node = _root;
         if (code.Length == 0 || code.Any(c => !node.Children.TryGetValue(c, out node)))

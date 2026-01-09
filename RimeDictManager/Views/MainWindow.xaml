@@ -202,7 +202,7 @@
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
                 AllowDrop="True"
-                Command="{Binding ChangeEncoderCommand}"
+                Command="{Binding SetEncoderCommand}"
                 Content="更换单字"
                 ToolTip="更换当前方案的单字词库并更新编码器，可以拽进来"
                 Drop="DropCharsDict" />
@@ -270,19 +270,20 @@
                 <DataGridTextColumn
                     Width="4*"
                     IsReadOnly="True"
-                    Header="原索引" />
+                    Header="原索引"
+                    Binding="{Binding Idx, UpdateSourceTrigger=PropertyChanged}" />
                 <DataGridTextColumn
                     Width="8*"
-                    Binding="{Binding Word, UpdateSourceTrigger=PropertyChanged}"
-                    Header="词组" />
+                    Header="词组"
+                    Binding="{Binding Word, UpdateSourceTrigger=PropertyChanged}" />
                 <DataGridTextColumn
                     Width="8*"
-                    Binding="{Binding Code, UpdateSourceTrigger=PropertyChanged}"
-                    Header="编码" />
+                    Header="编码"
+                    Binding="{Binding Code, UpdateSourceTrigger=PropertyChanged}" />
                 <DataGridTextColumn
                     Width="5*"
-                    Binding="{Binding Weight, UpdateSourceTrigger=PropertyChanged}"
-                    Header="权重" />
+                    Header="权重"
+                    Binding="{Binding Weight, UpdateSourceTrigger=PropertyChanged}" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
