@@ -107,7 +107,12 @@ internal sealed partial class MainViewModel: ObservableObject
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
     private string _word = "", _manualCode = "", _weight = "", _autoCodeColor = "Black";
 
-    partial void OnWordChanged(string value) => UpdateAutoCodes(true);
+    partial void OnWordChanged(string value) {
+        UpdateAutoCodes(true);
+        AutoSearch();
+    }
+
+    partial void OnManualCodeChanged(string value) => AutoSearch();
 
     [ObservableProperty,
      NotifyCanExecuteChangedFor(
@@ -115,6 +120,8 @@ internal sealed partial class MainViewModel: ObservableObject
          nameof(InsertCommand),
          nameof(ShortenCommand))]
     private bool _useEncoder, _notUseEncoder = true;
+
+    partial void OnUseEncoderChanged(bool value) => AutoSearch();
 
     public IReadOnlyCollection<string> EncoderNames { get; } = EncoderFactory.Names;
 
@@ -128,6 +135,8 @@ internal sealed partial class MainViewModel: ObservableObject
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
     private string? _selectedAutoCode;
+
+    partial void OnSelectedAutoCodeChanged(string? value) => AutoSearch();
 
     private string? CurCode =>
         UseEncoder
@@ -239,6 +248,14 @@ internal sealed partial class MainViewModel: ObservableObject
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
     private MutEntry? _selectedSearchResult;
 
+    /// <summary> 自动搜索当前字词或编码 </summary>
+    private void AutoSearch() {
+        if (SearchMode == 1)
+            SearchText = Word.Trim();
+        else if (CurCode is {} code)
+            SearchText = code;
+    }
+
     /// <summary> 搜索条目，填充SearchResults </summary>
     private void UpdateSearchResults() =>
         TryOrShowEx(
@@ -281,7 +298,14 @@ internal sealed partial class MainViewModel: ObservableObject
                 _rimeDict.Insert(curEntry);
                 SaveCommand.NotifyCanExecuteChanged();
                 AuditLogger.Log("添加", curEntry);
-                (SearchMode, SearchText) = (1, curEntry.Word!); // 精确出现在表格
+                if ((SearchMode == 0 && SearchText == (curEntry.Code ?? ""))
+                 || (SearchMode == 1 && SearchText == curEntry.Word))
+                    SearchResults.Add(new(curEntry));
+                else
+                    SearchText = SearchMode == 0
+                        ? curEntry.Code ?? ""
+                        : curEntry.Word!;
+                ModifyCommand.NotifyCanExecuteChanged();
             });
 
     private bool CanRemove => _rimeDict is {} && SelectedSearchResult is {};
@@ -293,7 +317,7 @@ internal sealed partial class MainViewModel: ObservableObject
             "删除条目",
             () => {
                 var toRemove = SelectedSearchResult!.Src;
-                if (!ShowConfirm("确认", $"确认删除\"{toRemove}\"？"))
+                if (!ShowConfirm("确认", $"确认删除\n\"{toRemove}\"？"))
                     return;
                 _rimeDict!.Remove(toRemove);
                 SaveCommand.NotifyCanExecuteChanged();
@@ -336,7 +360,6 @@ internal sealed partial class MainViewModel: ObservableObject
                     ? !ShowConfirm("确认", $"确认以下修改？\n{msg1}")
                     : !ShowConfirm("确认", $"确认以下修改？\n{msg1}\n{msg2}"))
                     return;
-
                 if (SearchResults.Any(me =>
                         me.Src.Code!.Length > toShorten.Src.Code!.Length
                      && me.Src.Code.StartsWith(toShorten.Src.Code, StringComparison.Ordinal))
@@ -350,7 +373,7 @@ internal sealed partial class MainViewModel: ObservableObject
                 AuditLogger.Log("截短后", shortened);
                 SearchResults.Add(new(shortened));
                 if (toLengthen is {}) {
-                    _rimeDict!.Remove(toLengthen.Src);
+                    _rimeDict.Remove(toLengthen.Src);
                     AuditLogger.Log("加长前", toLengthen.Src);
                     SearchResults.Remove(toLengthen);
                     _rimeDict.Insert(lengthened!);
@@ -367,7 +390,7 @@ internal sealed partial class MainViewModel: ObservableObject
                         throw new InvalidOperationException("占位条目的长编码不匹配");
                     var longCode = fullCodes.Select(code => code[..toShorten.Src.Code!.Length])
                         .Contains(toShorten.Src.Code)
-                        ? toShorten.Src.Code! // 直接交换编码
+                        ? toShorten.Src.Code // 直接交换编码
                         : GetLongCode(fullCodes);
                     return toLengthen.Src with { Code = longCode } is { Type: 2 } result
                         ? result
