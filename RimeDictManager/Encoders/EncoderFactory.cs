@@ -7,11 +7,11 @@ internal static class EncoderFactory
 {
     /// <summary> 编码器的构造函数 </summary>
     private static readonly Dictionary<string, Func<string, IEncoder>> Encoders = new() {
-        ["二笔 | 两笔"] = static dictPath => new Erbi(dictPath),
-        ["虎码"] = static dictPath => new Wubi(dictPath),
-        ["五笔"] = static dictPath => new Wubi(dictPath),
-        ["小鹤音形"] = static dictPath => new Wubi(dictPath),
-        ["星空键道6"] = static dictPath => new Xkjd6(dictPath)
+        ["二笔 | 两笔"] = static path => new Erbi(path),
+        ["虎码"] = static path => new Wubi(path),
+        ["五笔"] = static path => new Wubi(path),
+        ["小鹤音形"] = static path => new Wubi(path),
+        ["星空键道6"] = static path => new Xkjd6(path)
     };
 
     /// <summary> 可用编码方案名 </summary>

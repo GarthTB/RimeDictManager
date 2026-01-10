@@ -10,8 +10,7 @@ internal sealed class Xkjd6(string dictPath): IEncoder
     private readonly Dictionary<char, string[]> _charsDict
         = File.ReadLines(dictPath).ToCharsDict(3); // 只有前3码参与词组编码
 
-    public uint Chars => (uint)_charsDict.Count;
-    public (byte Min, byte Max) LenRange => (3, 6);
+    public (uint CharCnt, byte MaxLen, byte MinLen) Spec => ((uint)_charsDict.Count, 6, 3);
 
     public IEnumerable<string> Encode(string word) =>
         (_charsDict.F3L1Codes(word) switch {

@@ -107,7 +107,7 @@ internal sealed partial class MainViewModel: ObservableObject
     #region 条目属性
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
-    private string _word = "", _manualCode = "", _weight = "", _autoCodeColor = "Black";
+    private string _word = "", _manualCode = "", _weight = "", _autoCodeColor = "";
 
     partial void OnWordChanged(string value) {
         UpdateAutoCodes(true);
@@ -143,14 +143,14 @@ internal sealed partial class MainViewModel: ObservableObject
     private string? CurCode =>
         UseEncoder
             ? SelectedAutoCode
-            : ManualCode.Trim() is { Length: > 0 } code
-                ? code
-                : null;
+            : string.IsNullOrWhiteSpace(ManualCode)
+                ? null
+                : ManualCode.Trim();
 
     private string? CurWeight =>
-        Weight.Trim() is { Length: > 0 } weight
-            ? weight
-            : null;
+        string.IsNullOrWhiteSpace(Weight)
+            ? null
+            : Weight.Trim();
 
     /// <summary> 用当前各属性构造的新条目 </summary>
     private Line CurEntry => new(null, Word.Trim(), CurCode, CurWeight, null);
@@ -160,6 +160,8 @@ internal sealed partial class MainViewModel: ObservableObject
     #region 自动编码
 
     private IEncoder? _encoder;
+    [ObservableProperty] private byte _maxLen = 4, _minLen = 4, _curLen = 4;
+    partial void OnCurLenChanged(byte value) => UpdateAutoCodes(false);
 
     private bool CanSetEncoder => UseEncoder && SelectedEncoderName is {};
 
@@ -184,24 +186,22 @@ internal sealed partial class MainViewModel: ObservableObject
             "加载编码器",
             () => {
                 var encoder = EncoderFactory.Create(SelectedEncoderName!, path);
-                if (encoder.Chars == 0)
+                var (charCnt, maxLen, minLen) = encoder.Spec;
+                if (charCnt == 0)
                     throw new InvalidOperationException("单字词库无效");
 
                 _encoder = encoder;
-                (MinLen, MaxLen) = encoder.LenRange;
+                (MaxLen, MinLen) = (maxLen, minLen);
                 CurLen = MinLen;
                 ShortenCommand.NotifyCanExecuteChanged();
                 UpdateAutoCodes(true);
 
                 var msg1 = $"已启用\"{SelectedEncoderName}\"的编码器";
                 var msg2 = $"使用单字词库\"{path}\"";
-                var msg3 = $"覆盖{_encoder.Chars}个单字";
+                var msg3 = $"覆盖{charCnt}个单字";
                 AuditLogger.Log($"{msg1}，{msg2}，{msg3}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}\n{msg3}");
             });
-
-    [ObservableProperty] private byte _maxLen = 4, _minLen = 4, _curLen = 4;
-    partial void OnCurLenChanged(byte value) => UpdateAutoCodes(false);
 
     /// <summary> 自动编码，填充FullAutoCodes与AutoCodes </summary>
     private void UpdateAutoCodes(bool changeFullCode) =>
@@ -221,13 +221,13 @@ internal sealed partial class MainViewModel: ObservableObject
                 foreach (var code in codes.Order())
                     AutoCodes.Add(code);
 
-                SelectedAutoCode = AutoCodes.FirstOrDefault(code =>
-                                       code.StartsWith(oldSelected, StringComparison.Ordinal)
-                                    || oldSelected.StartsWith(code, StringComparison.Ordinal))
-                                ?? AutoCodes[0];
+                var related = AutoCodes.FirstOrDefault(code =>
+                    code.StartsWith(oldSelected, StringComparison.Ordinal)
+                 || oldSelected.StartsWith(code, StringComparison.Ordinal));
+                SelectedAutoCode = related ?? AutoCodes[0];
                 AutoCodeColor = AutoCodes.Count > 1
-                    ? "Crimson"
-                    : "Black";
+                    ? "#C00"
+                    : "";
             });
 
     #endregion 自动编码
@@ -288,13 +288,13 @@ internal sealed partial class MainViewModel: ObservableObject
             () => {
                 var curEntry = CurEntry;
 
-                var related = (curEntry.Code is {} // 非null则有码
+                var related = (curEntry.Code is {} code // 非null则有码
                         ? _rimeDict!.SearchByWord(curEntry.Word!)
-                            .Union(_rimeDict.SearchByCode(curEntry.Code, true))
+                            .Union(_rimeDict.SearchByCode(code, true))
                         : _rimeDict!.SearchByWord(curEntry.Word!)).Select(static e => $"\"{e}\"")
                     .ToArray();
                 if (related.Length > 0
-                 && !ShowConfirm("警告", $"词库已有以下条目，是否仍要添加？\n{string.Join('\n', related)}"))
+                 && !ShowConfirm("警告", $"词库已有以下条目，确认添加？\n{string.Join('\n', related)}"))
                     return;
 
                 _rimeDict.Insert(curEntry);
@@ -323,9 +323,9 @@ internal sealed partial class MainViewModel: ObservableObject
                 if (toRemove.Code is { Length: > 0 } code
                  && _rimeDict!.SearchByCode(code, false)
                         .Any(entry => entry.Code!.Length > code.Length)) {
-                    if (!ShowConfirm("确认", $"删除后，编码\"{code}\"将会空缺。是否确认？"))
+                    if (!ShowConfirm("确认", $"编码\"{code}\"将会空缺。确认删除以下条目？\n\"{toRemove}\""))
                         return;
-                } else if (!ShowConfirm("确认", $"确认删除\n\"{toRemove}\"？"))
+                } else if (!ShowConfirm("确认", $"确认删除以下条目？\n\"{toRemove}\""))
                     return;
 
                 _rimeDict!.Remove(toRemove);
@@ -365,14 +365,15 @@ internal sealed partial class MainViewModel: ObservableObject
 
                 var msg1 = $"\"{toShorten.Src}\"\t=>\t\"{shortened}\"";
                 var msg2 = $"\"{toLengthen?.Src}\"\t=>\t\"{lengthened}\"";
+                var msg = toLengthen is {}
+                    ? $"{msg1}\n{msg2}"
+                    : msg1;
                 if (SearchResults.Any(me =>
-                    me.Src.Code?.Length > toShorten.Src.Code?.Length
+                    me.Src.Code!.Length > toShorten.Src.Code!.Length
                  && me.Src.Code.StartsWith(toShorten.Src.Code, StringComparison.Ordinal))) {
-                    if (!ShowConfirm("确认", $"截短后，编码\"{toShorten.Src.Code}\"将会空缺。是否确认？"))
+                    if (!ShowConfirm("确认", $"编码\"{toShorten.Src.Code}\"将会空缺。确认修改以下条目？\n{msg}"))
                         return;
-                } else if (toLengthen is {}
-                    ? !ShowConfirm("确认", $"确认以下修改？\n{msg1}\n{msg2}")
-                    : !ShowConfirm("确认", $"确认以下修改？\n{msg1}"))
+                } else if (!ShowConfirm("确认", $"确认修改以下条目？\n{msg}"))
                     return;
 
                 _rimeDict!.Remove(toShorten.Src);
@@ -433,7 +434,7 @@ internal sealed partial class MainViewModel: ObservableObject
                 if (mods.Count == 0)
                     throw new InvalidOperationException("没有有效的改动，什么都没做");
 
-                var msg = mods.Select(static mod => $"\"{mod.Old}\"\t=>\t\"{mod.New}\"");
+                var msg = mods.Select(static mod => $"\"{mod.Old.Src}\"\t=>\t\"{mod.New}\"");
                 if (!ShowConfirm("确认", $"确认以下修改？\n{string.Join('\n', msg)}"))
                     return;
 

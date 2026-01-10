@@ -28,8 +28,10 @@ internal sealed partial class LogViewModel: ObservableObject
                     FileName = $"RDM_{DateTime.Now:yyMMdd-HHmmss}.log",
                     Filter = "日志文件 (*.log)|*.log|所有文件 (*.*)|*.*"
                 };
+
                 if (dialog.ShowDialog() != true)
                     return;
+
                 AuditLogger.Save(dialog.FileName);
                 var count = AuditLogger.Entries.Count - 1;
                 ShowInfo("成功", $"已将{count}条日志保存到\"{dialog.FileName}\"");

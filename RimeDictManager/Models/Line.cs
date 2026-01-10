@@ -14,7 +14,7 @@ internal sealed record Line(uint? Idx, string? Word, string? Code, string? Weigh
         (Idx, Word, Comment) switch {
             ({}, null, null) => 0,
             ({}, null, { Length: > 0 }) => 1,
-            (_, { Length: > 0 }, null) => 2,
+            (_, { Length: > 0 }, null) when (Code, Weight) is not (null, {}) => 2,
             _ => 3
         };
 

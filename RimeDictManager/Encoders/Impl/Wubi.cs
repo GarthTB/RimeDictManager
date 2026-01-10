@@ -10,8 +10,7 @@ internal sealed class Wubi(string dictPath): IEncoder
     private readonly Dictionary<char, string[]> _charsDict
         = File.ReadLines(dictPath).ToCharsDict(2); // 只有前2码参与词组编码
 
-    public uint Chars => (uint)_charsDict.Count;
-    public (byte Min, byte Max) LenRange => (4, 4);
+    public (uint CharCnt, byte MaxLen, byte MinLen) Spec => ((uint)_charsDict.Count, 4, 4);
 
     public IEnumerable<string> Encode(string word) =>
         (_charsDict.F3L1Codes(word) switch {

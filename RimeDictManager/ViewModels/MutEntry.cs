@@ -16,11 +16,13 @@ internal sealed class MutEntry(Line src)
     /// <param name="entry"> 新条目行：无改动则为null </param>
     /// <returns> 是否有改动 </returns>
     public bool ToNewEntry(out Line? entry) {
-        var (word, code, weight) = (Word.Trim(), Code.Trim(), Weight.Trim());
-        if (code.Length == 0)
-            code = null;
-        if (weight.Length == 0)
-            weight = null;
+        var word = Word.Trim();
+        var code = string.IsNullOrWhiteSpace(Code)
+            ? null
+            : Code.Trim();
+        var weight = string.IsNullOrWhiteSpace(Weight)
+            ? null
+            : Weight.Trim();
 
         var modified = word != Src.Word || code != Src.Code || weight != Src.Weight;
         entry = modified

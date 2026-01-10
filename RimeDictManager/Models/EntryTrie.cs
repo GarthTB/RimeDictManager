@@ -7,7 +7,7 @@ internal sealed class EntryTrie
     private readonly Node _root = new(new(8105), []); // 假设覆盖通规
 
     /// <summary> 插入条目 </summary>
-    /// <param name="entry"> 待插入的条目：必须为条目行 </param>
+    /// <param name="entry"> 待插入的条目：必须为条目行，内部不检验 </param>
     public void Insert(Line entry) =>
         (entry.Code ?? "").Aggregate( // 无编码的条目插入根节点
             _root,

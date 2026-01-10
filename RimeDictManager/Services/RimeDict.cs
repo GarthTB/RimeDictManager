@@ -55,7 +55,7 @@ internal sealed class RimeDict
     public bool Modified { get; private set; }
 
     /// <summary> 插入条目 </summary>
-    /// <param name="entry"> 待插入的条目：必须为条目行 </param>
+    /// <param name="entry"> 待插入的条目：必须为条目行，内部不检验 </param>
     public void Insert(Line entry) {
         _entriesByCode.Insert(entry);
         if (_entriesByWord.TryGetValue(entry.Word!, out var list))

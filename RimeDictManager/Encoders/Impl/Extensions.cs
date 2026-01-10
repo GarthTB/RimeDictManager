@@ -24,14 +24,14 @@ internal static class Extensions
     public static List<string[]> F3L1Codes(this Dictionary<char, string[]> charsDict, string word) {
         List<string[]> codes = new(4);
         for (var i = 0; i < word.Length && codes.Count < 4; i++)
-            if (charsDict.TryGetValue(word[i], out var arr))
-                codes.Add(arr);
+            if (charsDict.TryGetValue(word[i], out var charCodes))
+                codes.Add(charCodes);
         if (codes.Count < 4)
             return codes;
 
         for (var (i, found) = (word.Length - 1, false); i >= 4 && !found; i--)
-            if (charsDict.TryGetValue(word[i], out var arr))
-                (codes[3], found) = (arr, true);
+            if (charsDict.TryGetValue(word[i], out var charCodes))
+                (codes[3], found) = (charCodes, true);
         return codes;
     }
 }
