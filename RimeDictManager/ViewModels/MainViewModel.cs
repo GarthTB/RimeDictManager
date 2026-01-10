@@ -77,7 +77,9 @@ internal sealed partial class MainViewModel: ObservableObject
                 _rimeDict!.Save(path, sort);
                 SaveCommand.NotifyCanExecuteChanged();
 
-                var msg1 = $"已保存词库到\"{path}\"";
+                var msg1 = path is {}
+                    ? $"已保存词库到\"{path}\""
+                    : "已覆写原词库文件";
                 var msg2 = $"共有{_rimeDict.Count}个条目";
                 AuditLogger.Log($"{msg1}，{msg2}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}");
@@ -317,8 +319,15 @@ internal sealed partial class MainViewModel: ObservableObject
             "删除条目",
             () => {
                 var toRemove = SelectedSearchResult!.Src;
-                if (!ShowConfirm("确认", $"确认删除\n\"{toRemove}\"？"))
+
+                if (toRemove.Code is { Length: > 0 } code
+                 && _rimeDict!.SearchByCode(code, false)
+                        .Any(entry => entry.Code!.Length > code.Length)) {
+                    if (!ShowConfirm("确认", $"删除后，编码\"{code}\"将会空缺。是否确认？"))
+                        return;
+                } else if (!ShowConfirm("确认", $"确认删除\n\"{toRemove}\"？"))
                     return;
+
                 _rimeDict!.Remove(toRemove);
                 SaveCommand.NotifyCanExecuteChanged();
                 AuditLogger.Log("删除", toRemove);
@@ -356,14 +365,14 @@ internal sealed partial class MainViewModel: ObservableObject
 
                 var msg1 = $"\"{toShorten.Src}\"\t=>\t\"{shortened}\"";
                 var msg2 = $"\"{toLengthen?.Src}\"\t=>\t\"{lengthened}\"";
-                if (toLengthen is null
-                    ? !ShowConfirm("确认", $"确认以下修改？\n{msg1}")
-                    : !ShowConfirm("确认", $"确认以下修改？\n{msg1}\n{msg2}"))
-                    return;
                 if (SearchResults.Any(me =>
-                        me.Src.Code!.Length > toShorten.Src.Code!.Length
-                     && me.Src.Code.StartsWith(toShorten.Src.Code, StringComparison.Ordinal))
-                 && !ShowConfirm("提示", "选中条目的编码将会空缺，是否仍要截短？"))
+                    me.Src.Code?.Length > toShorten.Src.Code?.Length
+                 && me.Src.Code.StartsWith(toShorten.Src.Code, StringComparison.Ordinal))) {
+                    if (!ShowConfirm("确认", $"截短后，编码\"{toShorten.Src.Code}\"将会空缺。是否确认？"))
+                        return;
+                } else if (toLengthen is {}
+                    ? !ShowConfirm("确认", $"确认以下修改？\n{msg1}\n{msg2}")
+                    : !ShowConfirm("确认", $"确认以下修改？\n{msg1}"))
                     return;
 
                 _rimeDict!.Remove(toShorten.Src);
@@ -394,7 +403,7 @@ internal sealed partial class MainViewModel: ObservableObject
                         : GetLongCode(fullCodes);
                     return toLengthen.Src with { Code = longCode } is { Type: 2 } result
                         ? result
-                        : throw new InvalidOperationException("占位条目加长后无效");
+                        : throw new InvalidOperationException("占位条目加长编码后无效");
                 }
 
                 string GetLongCode(string[] fullCodes) {
