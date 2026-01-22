@@ -1,12 +1,14 @@
 # RIME 词库管理器
 
+![Tech Stack](https://skillicons.dev/icons?i=dotnet,cs,windows)
+[![License MIT](https://img.shields.io/badge/License-MIT-750014)](https://mit-license.org)
+[![Latest 2.0.1](https://img.shields.io/badge/Latest-2.0.1-0FBF3E?logo=github)](https://github.com/GarthTB/RimeDictManager/releases/latest)
+
 一个轻量级 GUI 应用程序，用于交互式维护 RIME 输入法的词库。
 利用严格的官方格式约束和直观的表格界面，减少错误并提高效率。
 提供基于单字词库的词组自动编码功能以及可导出的操作日志。
 
-![Tech Stack](https://skillicons.dev/icons?i=dotnet,cs,windows)
-[![License MIT](https://img.shields.io/badge/License-MIT-750014)](https://mit-license.org)
-[![Latest 2.0.0](https://img.shields.io/badge/Latest-2.0.0-0FBF3E?logo=github)](https://github.com/GarthTB/RimeDictManager/releases/latest)
+![主界面](RimeDictManager/Assets/Screenshot.png)
 
 ## 功能特点
 
@@ -17,10 +19,9 @@
 
 ## 使用方法
 
-### 系统要求
+### 系统要求：Windows 10+
 
-- 操作系统：Windows 10+
-- 运行依赖：[.NET 10.0 运行时](https://dotnet.microsoft.com/download/dotnet/10.0)
+### 运行依赖：[.NET 10.0 运行时](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 ### 使用步骤
 
@@ -43,7 +44,9 @@
 
 ## 版本日志
 
-### v2.0.0 (20260110)
+### 2.0.1 (20260123)：优化自动编码性能
+
+### 2.0.0 (20260110)
 
 **（严重）全面重构，纠正对非官方格式的错误支持。**
 旧源码已封存至 Legacy 目录，旧发布文件已销毁。
@@ -51,14 +54,14 @@
 - 改进：不再强制无重复项，支持无编码条目
 - 新增：保存时的两种排序策略
 
-### v1.1.0 (20250723)
+### 1.1.0 (20250723)
 
 - 修复：排序搜索结果导致选中项识别错误
 - 新增：自动处理词库文件头
 - 新增：有多个自动编码可选时，编码变红
 - 新增：截短编码时引入编码空位的风险提示
 
-### v1.0.0 (20250720)
+### 1.0.0 (20250720)
 
 - 使用 .NET 10.0 WPF，专注 Windows 单平台
 - 使用 MVVM 架构，提升性能与可维护性

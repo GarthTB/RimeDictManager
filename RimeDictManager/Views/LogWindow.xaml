@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="clr-namespace:RimeDictManager.ViewModels"
-    Title="RIME 词库管理器 v2.0.0 - 日志"
+    Title="RIME 词库管理器 2.0.1 - 日志"
     FontSize="14"
     Height="480"
     Width="640"
