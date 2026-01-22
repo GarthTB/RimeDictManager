@@ -1,5 +1,6 @@
 namespace RimeDictManager.Encoders.Impl;
 
+using System.Collections.Frozen;
 using System.IO;
 
 /// <summary> 星空键道6 编码器 </summary>
@@ -7,7 +8,7 @@ using System.IO;
 internal sealed class Xkjd6(string dictPath): IEncoder
 {
     /// <summary> 单字词库 </summary>
-    private readonly Dictionary<char, string[]> _charsDict
+    private readonly FrozenDictionary<char, string[]> _charsDict
         = File.ReadLines(dictPath).ToCharsDict(3); // 只有前3码参与词组编码
 
     public (uint CharCnt, byte MaxLen, byte MinLen) Spec => ((uint)_charsDict.Count, 6, 3);

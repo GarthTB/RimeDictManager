@@ -4,7 +4,7 @@ using System.IO;
 using Models;
 
 /// <summary> 日志：记录CRUD操作 </summary>
-internal static class AuditLogger
+internal static class Logger
 {
     /// <summary> 日志内容 </summary>
     private static readonly List<string> Logs = [$"{DateTime.Now:yyMMdd-HHmmss} 开始记录日志"];

@@ -11,10 +11,10 @@ internal sealed partial class LogViewModel: ObservableObject
 {
     /// <summary> 日志文本 </summary>
     [ObservableProperty]
-    private string _logText = string.Join('\n', AuditLogger.Entries);
+    private string _logText = string.Join('\n', Logger.Entries);
 
     /// <summary> 日志是否有内容 </summary>
-    private static bool HasLogs => AuditLogger.Entries.Count > 1;
+    private static bool HasLogs => Logger.Entries.Count > 1;
 
     /// <summary> 将日志保存为文件 </summary>
     [RelayCommand(CanExecute = nameof(HasLogs))]
@@ -32,8 +32,8 @@ internal sealed partial class LogViewModel: ObservableObject
                 if (dialog.ShowDialog() != true)
                     return;
 
-                AuditLogger.Save(dialog.FileName);
-                var count = AuditLogger.Entries.Count - 1;
+                Logger.Save(dialog.FileName);
+                var count = Logger.Entries.Count - 1;
                 ShowInfo("成功", $"已将{count}条日志保存到\"{dialog.FileName}\"");
             });
 }

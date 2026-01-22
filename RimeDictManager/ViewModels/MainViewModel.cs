@@ -55,7 +55,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
                 var msg1 = $"已加载词库\"{path}\"";
                 var msg2 = $"共有{_rimeDict.Count}个条目";
-                AuditLogger.Log($"{msg1}，{msg2}", null);
+                Logger.Log($"{msg1}，{msg2}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}");
             });
 
@@ -81,7 +81,7 @@ internal sealed partial class MainViewModel: ObservableObject
                     ? $"已保存词库到\"{path}\""
                     : "已覆写原词库文件";
                 var msg2 = $"共有{_rimeDict.Count}个条目";
-                AuditLogger.Log($"{msg1}，{msg2}", null);
+                Logger.Log($"{msg1}，{msg2}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}");
             });
 
@@ -199,7 +199,7 @@ internal sealed partial class MainViewModel: ObservableObject
                 var msg1 = $"已启用\"{SelectedEncoderName}\"的编码器";
                 var msg2 = $"使用单字词库\"{path}\"";
                 var msg3 = $"覆盖{charCnt}个单字";
-                AuditLogger.Log($"{msg1}，{msg2}，{msg3}", null);
+                Logger.Log($"{msg1}，{msg2}，{msg3}", null);
                 ShowInfo("成功", $"{msg1}\n{msg2}\n{msg3}");
             });
 
@@ -299,7 +299,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
                 _rimeDict.Insert(curEntry);
                 SaveCommand.NotifyCanExecuteChanged();
-                AuditLogger.Log("添加", curEntry);
+                Logger.Log("添加", curEntry);
                 if ((SearchMode == 0 && SearchText == (curEntry.Code ?? ""))
                  || (SearchMode == 1 && SearchText == curEntry.Word))
                     SearchResults.Add(new(curEntry));
@@ -330,7 +330,7 @@ internal sealed partial class MainViewModel: ObservableObject
 
                 _rimeDict!.Remove(toRemove);
                 SaveCommand.NotifyCanExecuteChanged();
-                AuditLogger.Log("删除", toRemove);
+                Logger.Log("删除", toRemove);
                 SearchResults.Remove(SelectedSearchResult);
             });
 
@@ -377,17 +377,17 @@ internal sealed partial class MainViewModel: ObservableObject
                     return;
 
                 _rimeDict!.Remove(toShorten.Src);
-                AuditLogger.Log("截短前", toShorten.Src);
+                Logger.Log("截短前", toShorten.Src);
                 SearchResults.Remove(toShorten);
                 _rimeDict.Insert(shortened);
-                AuditLogger.Log("截短后", shortened);
+                Logger.Log("截短后", shortened);
                 SearchResults.Add(new(shortened));
                 if (toLengthen is {}) {
                     _rimeDict.Remove(toLengthen.Src);
-                    AuditLogger.Log("加长前", toLengthen.Src);
+                    Logger.Log("加长前", toLengthen.Src);
                     SearchResults.Remove(toLengthen);
                     _rimeDict.Insert(lengthened!);
-                    AuditLogger.Log("加长后", lengthened!);
+                    Logger.Log("加长后", lengthened!);
                     SearchResults.Add(new(lengthened!));
                 }
                 SaveCommand.NotifyCanExecuteChanged();
@@ -440,10 +440,10 @@ internal sealed partial class MainViewModel: ObservableObject
 
                 foreach (var mod in mods) {
                     _rimeDict!.Remove(mod.Old.Src);
-                    AuditLogger.Log("改前", mod.Old.Src);
+                    Logger.Log("改前", mod.Old.Src);
                     SearchResults.Remove(mod.Old);
                     _rimeDict.Insert(mod.New);
-                    AuditLogger.Log("改后", mod.New);
+                    Logger.Log("改后", mod.New);
                     SearchResults.Add(new(mod.New));
                 }
                 SaveCommand.NotifyCanExecuteChanged();
