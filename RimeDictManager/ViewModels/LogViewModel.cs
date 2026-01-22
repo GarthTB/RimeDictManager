@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using Services;
-using static VmHelper;
+using static Helper;
 
 /// <summary> 日志窗口的视图模型 </summary>
 internal sealed partial class LogViewModel: ObservableObject

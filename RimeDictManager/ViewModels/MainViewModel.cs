@@ -9,7 +9,7 @@ using Encoders;
 using Microsoft.Win32;
 using Models;
 using Services;
-using static VmHelper;
+using static Helper;
 
 /// <summary> 主窗口的视图模型 </summary>
 internal sealed partial class MainViewModel: ObservableObject

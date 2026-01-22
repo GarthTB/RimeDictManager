@@ -3,7 +3,7 @@ namespace RimeDictManager.ViewModels;
 using System.Windows;
 
 /// <summary> 视图模型工具 </summary>
-internal static class VmHelper
+internal static class Helper
 {
     /// <summary> 弹窗提示信息 </summary>
     /// <param name="title"> 弹窗标题 </param>
@@ -19,7 +19,7 @@ internal static class VmHelper
         MessageBox.Show(msg, title, MessageBoxButton.YesNo, MessageBoxImage.Question)
      == MessageBoxResult.Yes;
 
-    /// <summary> 尝试执行动作，静默处理打断，其他异常弹窗提示 </summary>
+    /// <summary> 尝试执行动作，弹窗提示异常 </summary>
     /// <param name="name"> 动作名 </param>
     /// <param name="action"> 动作 </param>
     public static void TryOrShowEx(string name, Action action) {

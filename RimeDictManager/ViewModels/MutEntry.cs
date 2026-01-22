@@ -3,14 +3,13 @@ namespace RimeDictManager.ViewModels;
 using Models;
 
 /// <summary> 词库条目的可变副本，供DataGrid编辑 </summary>
-/// <param name="src"> 源条目 </param>
-internal sealed class MutEntry(Line src)
+/// <param name="Src"> 源条目 </param>
+internal sealed record MutEntry(Line Src)
 {
-    public readonly Line Src = src;
-    public string Idx { get; } = $"{src.Idx}";
-    public string Word { get; set; } = src.Word!;
-    public string Code { get; set; } = src.Code ?? "";
-    public string Weight { get; set; } = src.Weight ?? "";
+    public string Idx { get; } = $"{Src.Idx}";
+    public string Word { get; set; } = Src.Word!;
+    public string Code { get; set; } = Src.Code ?? "";
+    public string Weight { get; set; } = Src.Weight ?? "";
 
     /// <summary> 将可变副本构造为新条目行 </summary>
     /// <param name="entry"> 新条目行：无改动则为null </param>
@@ -23,11 +22,9 @@ internal sealed class MutEntry(Line src)
         var weight = string.IsNullOrWhiteSpace(Weight)
             ? null
             : Weight.Trim();
-
-        var modified = word != Src.Word || code != Src.Code || weight != Src.Weight;
-        entry = modified
-            ? Src with { Word = word, Code = code, Weight = weight }
-            : null;
-        return modified;
+        entry = word == Src.Word && code == Src.Code && weight == Src.Weight
+            ? null
+            : Src with { Word = word, Code = code, Weight = weight };
+        return entry is {};
     }
 }
