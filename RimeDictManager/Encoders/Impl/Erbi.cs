@@ -1,30 +1,29 @@
 namespace RimeDictManager.Encoders.Impl;
 
 using System.Collections.Frozen;
-using System.IO;
 
 /// <summary> 二笔编码器 </summary>
 /// <param name="dictPath"> 单字词库路径 </param>
 internal sealed class Erbi(string dictPath): IEncoder
 {
     /// <summary> 单字词库 </summary>
-    private readonly FrozenDictionary<char, string[]> _charsDict
-        = File.ReadLines(dictPath).ToCharsDict(2); // 只有前2码参与词组编码
+    private readonly FrozenDictionary<char, string[]>
+        _charsDict = dictPath.ToCharsDict(2); // 仅前2码参与词组编码
 
     public (uint CharCnt, byte MaxLen, byte MinLen) Spec => ((uint)_charsDict.Count, 4, 4);
 
     public IEnumerable<string> Encode(string word) =>
-        (_charsDict.F3L1Codes(word) switch {
-            { Count: 2 } codes =>
+        (word.First3Last1(_charsDict, out var codes) switch {
+            2 =>
                 from c1 in codes[0]
                 from c2 in codes[1]
                 select $"{c1[..2]}{c2[..2]}",
-            { Count: 3 } codes =>
+            3 =>
                 from c1 in codes[0]
                 from c2 in codes[1]
                 from c3 in codes[2]
                 select $"{c1[..2]}{c2[0]}{c3[0]}",
-            { Count: 4 } codes =>
+            4 =>
                 from c1 in codes[0]
                 from c2 in codes[1]
                 from c3 in codes[2]
