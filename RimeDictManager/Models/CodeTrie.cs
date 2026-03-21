@@ -1,16 +1,13 @@
 namespace RimeDictManager.Models;
 
 using static System.Runtime.InteropServices.CollectionsMarshal;
-using static ArgumentNullException;
 
 internal sealed class CodeTrie {
     private readonly Node _root = new(32);
 
     public void Insert(Entry entry) {
-        ThrowIfNull(entry.Code);
-
         var node = _root;
-        foreach (var c in entry.Code) {
+        foreach (var c in entry.Code ?? "") {
             ref var nodeRef = ref GetValueRefOrAddDefault(node.Children, c, out var exist);
             node = exist
                 ? nodeRef!
@@ -20,10 +17,8 @@ internal sealed class CodeTrie {
     }
 
     public void Remove(Entry entry) {
-        ThrowIfNull(entry.Code);
-
         var node = _root;
-        if (entry.Code.Any(c => !node.Children.TryGetValue(c, out node))
+        if ((entry.Code ?? "").Any(c => !node.Children.TryGetValue(c, out node))
          || !node.Entries.Remove(entry))
             throw new KeyNotFoundException("找不到待删除词条");
     }
@@ -34,9 +29,9 @@ internal sealed class CodeTrie {
 
         if (exact) return node.Entries.AsReadOnly();
 
+        List<Entry> entries = new(64);
         Stack<Node> nodes = new(64);
         nodes.Push(node);
-        List<Entry> entries = new(64);
         while (nodes.TryPop(out var top)) {
             entries.AddRange(top.Entries);
             foreach (var child in top.Children.Values) nodes.Push(child);

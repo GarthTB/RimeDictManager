@@ -2,32 +2,50 @@ namespace RimeDictManager.Services;
 
 using System.Collections.Frozen;
 using System.IO;
-using MethodInfo
-    = (byte MinLen, byte MaxLen, byte CharCodeLen, Func<string, IEnumerable<string>> Encode);
 
 internal static class Encoder {
     private static FrozenDictionary<char, string[]>? _charsDict;
+    private static string? _curMethod;
+    public static bool Ready => _charsDict?.Count > 0;
+    public static IReadOnlyList<string> Methods => ["二笔 | 两笔", "虎码", "五笔", "小鹤音形", "星空键道6"];
 
-    public static readonly Dictionary<string, MethodInfo> Methods = new() {
-        ["二笔 | 两笔"] = (4, 4, 2, static word => Encode2B(word).Distinct()),
-        ["虎码"] = (4, 4, 2, static word => Encode5B(word).Distinct()),
-        ["五笔"] = (4, 4, 2, static word => Encode5B(word).Distinct()),
-        ["小鹤音形"] = (3, 4, 2, static word => Encode5B(word).Distinct()),
-        ["星空键道6"] = (3, 6, 3, static word => EncodeJD6(word).Distinct())
-    };
+    /// <summary> 设置编码方案 </summary>
+    /// <param name="name"> 方案名 </param>
+    /// <returns> 有效码长范围 </returns>
+    public static (byte MinCodeLen, byte MaxCodeLen) SetMethod(string name) =>
+        (_curMethod = name) switch {
+            "二笔 | 两笔" or "虎码" or "五笔" => (4, 4), "小鹤音形" => (3, 4), _ => (3, 6)
+        };
 
-    /// <summary> 设置单字码表 </summary>
-    /// <param name="path"> 路径 </param>
-    /// <param name="charCodeLen"> 单字编码中参与词组编码部分的长度 </param>
+    /// <summary> 设置码表 </summary>
+    /// <param name="path"> 路径：null时重置状态 </param>
     /// <returns> 覆盖字数 </returns>
-    public static uint SetCharsDict(string path, byte charCodeLen) =>
-        (uint)(_charsDict = File.ReadLines(path)
-            .Select(static line => line.Split('\t', 3))
-            .Where(parts => parts.Length > 1 // 有编码
-                         && parts[0] is [not '#'] // 是单字条目
-                         && parts[1].Length >= charCodeLen) // 码长够用
+    public static uint SetCharsDict(string? path) {
+        if (path is null) {
+            _charsDict = null;
+            return 0;
+        }
+        var stemLen = _curMethod == "星空键道6"
+            ? 3 // 键道6单字前3码参与词组编码
+            : 2; // 其他方案单字前2码参与词组编码
+        _charsDict = File.ReadLines(path)
+            .Select(static line => line.Split('\t', 3, StringSplitOptions.TrimEntries))
+            .Where(parts => parts is [[not '#'], var code, ..] && code.Length >= stemLen) // 是单字且码长够
             .GroupBy(static parts => parts[0][0], static parts => parts[1])
-            .ToFrozenDictionary(static g => g.Key, static g => g.Distinct().ToArray())).Count;
+            .ToFrozenDictionary(static g => g.Key, static g => g.Distinct().ToArray());
+        if (_charsDict.Count == 0) _charsDict = null;
+        return (uint?)_charsDict?.Count ?? 0;
+    }
+
+    /// <summary> 为词组编码 </summary>
+    /// <param name="word"> 词组 </param>
+    /// <returns> 无重、无序的所有全码 </returns>
+    public static IEnumerable<string> Encode(string word) =>
+        _curMethod switch {
+            "二笔 | 两笔" => Encode2B(word).Distinct(),
+            "虎码" or "五笔" or "小鹤音形" => Encode5B(word).Distinct(),
+            _ => EncodeJD6(word).Distinct()
+        };
 
     private static IEnumerable<string> Encode2B(string word) =>
         CodesOfF3L1Chars(word, out var codes) switch {
@@ -94,7 +112,7 @@ internal static class Encoder {
     /// <param name="codes"> 各有效单字的所有编码 </param>
     /// <returns> 有效字数 </returns>
     private static byte CodesOfF3L1Chars(string word, out string[][] codes) {
-        if (_charsDict is null) throw new InvalidOperationException("未设置单字码表");
+        if (_charsDict is not { Count: > 0 }) throw new InvalidOperationException("码表无效");
         codes = new string[4][];
 
         byte cnt = 0;

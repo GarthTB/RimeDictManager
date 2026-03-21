@@ -2,84 +2,94 @@ namespace RimeDictManager.Models;
 
 using System.IO;
 using static System.Runtime.InteropServices.CollectionsMarshal;
-using static ArgumentException;
 
 internal sealed class Dict {
-    private readonly Dictionary<string, List<Line>> _dict = new(8192);
+    private readonly CodeTrie _codeTrie = new();
+    private readonly Dictionary<string, List<Entry>> _dict = new(8192);
     private readonly List<string> _header = [];
     private readonly List<Line> _misc = [];
+    private readonly Action _onModifiedChanged;
     private readonly string _path;
-    private readonly CodeTrie _trie = new();
 
-    public Dict(string path) {
+    public Dict(string path, Action onModifiedChanged) {
         var isHeader = true;
         var num = 1u;
-        foreach (var sLine in File.ReadLines(path))
+        foreach (var line in File.ReadLines(path)) {
             if (isHeader) {
-                _header.Add(sLine);
-                if (sLine == "...") isHeader = false;
-            } else {
-                var oLine = Line.FromString(num++, sLine);
-                if (oLine.Word is [not '#', ..])
-                    Insert(oLine);
-                else
-                    _misc.Add(oLine);
-            }
-        if (_header.Count == 0) throw new FormatException("词库缺失文件头");
+                _header.Add(line);
+                if (line == "...") isHeader = false;
+            } else if (line.Length == 0)
+                _misc.Add(new(num, null));
+            else if (line[0] == '#')
+                _misc.Add(new(num, line));
+            else
+                InsertCore(Entry.FromString(num, line));
+            num++;
+        }
+        _onModifiedChanged = onModifiedChanged;
         _path = path;
-        Modified = false; // 纠正Insert副作用
+        if (_header.LastOrDefault() != "...") throw new FormatException("词库缺失文件头");
     }
 
     public uint Count { get; private set; }
-    public bool Modified { get; private set; }
 
-    public void Insert(Line entry) {
-        ThrowIfNullOrEmpty(entry.Word);
+    public bool Modified {
+        get;
+        private set {
+            if (field == value) return;
+            field = value;
+            _onModifiedChanged();
+        }
+    }
 
-        _trie.Insert(entry);
+    public void Insert(Entry entry) {
+        InsertCore(entry);
+        Modified = true;
+    }
+
+    public void Remove(Entry entry) {
+        _codeTrie.Remove(entry); // 找不到会抛异常
+        if (!_dict[entry.Word].Remove(entry))
+            throw new InvalidOperationException("Trie和Dict不一致，请停用并报告异常");
+        Count--;
+        Modified = true;
+    }
+
+    private void InsertCore(Entry entry) {
+        _codeTrie.Insert(entry);
         ref var list = ref GetValueRefOrAddDefault(_dict, entry.Word, out var exist);
         if (exist)
             list!.Add(entry);
         else
             list = [entry];
-
         Count++;
-        Modified = true;
     }
 
-    public void Remove(Line entry) {
-        ThrowIfNullOrEmpty(entry.Word);
+    public IReadOnlyList<Entry> SearchByCode(string code, bool exact) =>
+        _codeTrie.Search(code, exact);
 
-        _trie.Remove(entry); // 保证现有
-        if (!_dict[entry.Word].Remove(entry))
-            throw new InvalidOperationException("Trie和Dict不一致，请停用并报告异常");
-
-        Count--;
-        Modified = true;
-    }
-
-    public IReadOnlyList<Line> SearchByCode(string code, bool exact) => _trie.Search(code, exact);
-
-    public IReadOnlyList<Line> SearchByWord(string word) =>
+    public IReadOnlyList<Entry> SearchByWord(string word) =>
         _dict.TryGetValue(word, out var list)
             ? list.AsReadOnly()
             : [];
 
+    public bool IsCodePrefix(string code) =>
+        code.Length > 0 && _codeTrie.Search(code, false).Any(e => e.Code!.Length > code.Length);
+
     /// <summary> 保存词库 </summary>
     /// <param name="path"> 路径：null时覆写 </param>
-    /// <param name="sort"> true时条目按编码升序，编码相同则原序，注释原序放在末尾，空行删除；false时保留原序，新条目按编码升序放在末尾 </param>
+    /// <param name="sort"> true时词条先按编码升序再按原序（新词条后置），注释原序放在末尾，空行删除；false保留原序，新词条按编码升序放在末尾 </param>
     public void Save(string? path, bool sort) {
         var entries = _dict.Values.SelectMany(static x => x).ToArray();
         var ordered = sort
-            ? entries.OrderBy(static e => e.Code)
-                .ThenBy(static e => e.Num - 1) // 0回绕（新条目后置）
-                .Concat(_misc.Where(static l => l.Word is ['#', ..])) // 注释原序
-            : entries.Where(static e => e.Num > 0) // 原有条目
+            ? entries.OrderBy(static e => (e.Code, e.Num - 1)) // 0回绕（新词条后置）
+                .Concat(_misc.Where(static l => l.Raw is {})) // 注释原序
+            : entries.Where(static e => e.Num > 0) // 原有词条
                 .Concat(_misc)
-                .OrderBy(static e => e.Num)
+                .OrderBy(static l => l.Num)
                 .Concat(entries.Where(static e => e.Num == 0).OrderBy(static e => e.Code));
-        File.WriteAllLines(path ?? _path, _header.Concat(ordered.Select(static e => $"{e}")));
-
+        var lines = _header.Concat(ordered.Select(static l => $"{l}"));
+        File.WriteAllLines(path ?? _path, lines);
         Modified = false;
     }
 }
