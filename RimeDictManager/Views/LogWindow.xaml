@@ -1,0 +1,25 @@
+<Window x:Class="RimeDictManager.Views.LogWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:RimeDictManager.VMs"
+    Title="RIME 词库管理器 2.1.0 - 日志"
+    FontSize="14"
+    Height="480"
+    Width="640"
+    UseLayoutRounding="True">
+    <Window.DataContext>
+        <vm:LogVM/>
+    </Window.DataContext>
+    <Grid Margin="12, 11">
+        <TextBox IsReadOnly="True"
+            VerticalScrollBarVisibility="Auto"
+            Text="{Binding LogText,Mode=OneWay}"
+            TextWrapping="Wrap"/>
+        <Button Width="88"
+            Height="30"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Command="{Binding SaveCommand}"
+            Content="导出日志"/>
+    </Grid>
+</Window>
