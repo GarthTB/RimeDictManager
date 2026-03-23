@@ -10,5 +10,223 @@
     <Window.DataContext>
         <vm:MainVM/>
     </Window.DataContext>
-    <Grid/>
+    <Grid Margin="12, 11">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="12"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="11"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="11"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="11"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="11"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="11"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button AllowDrop="True"
+                Content="打开词库"
+                ToolTip="支持拖放"
+                Command="{Binding OpenCommand}"
+                Drop="DropDict"/>
+            <Button Grid.Column="2"
+                Background="#FDD"
+                Content="保存词库"
+                ToolTip="覆写原文件"
+                Command="{Binding SaveCommand}"/>
+            <Button Grid.Column="4"
+                Content="另存词库"
+                ToolTip="另存后，'保存词库'仍按原路径"
+                Command="{Binding SaveAsCommand}"/>
+        </Grid>
+        <TextBox Grid.Column="0"
+            Grid.Row="2"
+            Grid.RowSpan="3"
+            Padding="5"
+            ToolTip="待添加的词组"
+            TextWrapping="Wrap"
+            Text="{Binding Word, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"/>
+        <Grid Grid.Column="0"
+            Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Content="日志"
+                Click="ShowLogWindow"/>
+            <Button Grid.Column="2"
+                Content="加词"
+                ToolTip="将词组、编码、权重组成新词条并加入词库"
+                Command="{Binding InsertCommand}"/>
+            <Button Grid.Column="4"
+                Content="删词"
+                ToolTip="删除选中词条"
+                Command="{Binding RemoveCommand}"/>
+            <Button Grid.Column="6"
+                Content="截码"
+                ToolTip="将选中词条的编码截短为搜索框中的编码&#x000A;若有一个词条占用该短码，则自动加长其编码到最短的余位&#x000A;需开启自动编码和编码前缀搜索；仅用于变长编码方案"
+                Command="{Binding ShortenCommand}"/>
+
+        </Grid>
+        <Grid Grid.Column="0"
+            Grid.Row="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Background="#FDD"
+                Content="修改"
+                ToolTip="应用在表格中的改动"
+                Command="{Binding ModifyCommand}"/>
+            <Label Grid.Column="2"
+                Padding="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Content="搜索模式"/>
+            <RadioButton Grid.Column="4"
+                Padding="0"
+                Content="码前缀"
+                GroupName="SearchMode"
+                IsChecked="{Binding IsSearchByCode}"/>
+            <RadioButton Grid.Column="6"
+                Padding="0"
+                Content="词精确"
+                GroupName="SearchMode"/>
+        </Grid>
+        <Grid Grid.Row="0"
+            Grid.Column="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="11"/>
+                <ColumnDefinition Width="90"/>
+            </Grid.ColumnDefinitions>
+            <RadioButton Margin="3,0"
+                Padding="0"
+                Content="自动编码"
+                GroupName="EncodeMode"
+                IsChecked="{Binding EncoderActive}"/>
+            <ComboBox Grid.Column="1"
+                Padding="8,0,0,0"
+                VerticalContentAlignment="Center"
+                ToolTip="编码方案名"
+                IsEnabled="{Binding EncoderActive}"
+                ItemsSource="{Binding EncoderMethods}"
+                SelectedItem="{Binding SelEncoderMethod}"/>
+            <Button Grid.Column="3"
+                AllowDrop="True"
+                Content="更换码表"
+                ToolTip="支持拖放"
+                Command="{Binding PickCharsDictCommand}"
+                Drop="DropCharsDict"/>
+        </Grid>
+        <Grid Grid.Column="2"
+            Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Slider Margin="4,0,12,0"
+                IsSnapToTickEnabled="True"
+                TickPlacement="TopLeft"
+                AutoToolTipPlacement="TopLeft"
+                ToolTip="自动编码的码长"
+                IsEnabled="{Binding EncoderActive}"
+                Minimum="{Binding MinCodeLen}"
+                Maximum="{Binding MaxCodeLen}"
+                Value="{Binding CurCodeLen}"/>
+            <ComboBox Grid.Column="1"
+                Padding="8,0"
+                VerticalContentAlignment="Center"
+                ToolTip="自动编码结果；变红表示不唯一"
+                Foreground="{Binding AutoCodeColor}"
+                IsEnabled="{Binding EncoderActive}"
+                ItemsSource="{Binding AutoCodes}"
+                SelectedItem="{Binding SelAutoCode}"/>
+        </Grid>
+        <Grid Grid.Column="2"
+            Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <RadioButton Margin="3,0"
+                Padding="0"
+                Content="手动编码"
+                GroupName="EncodeMode"/>
+            <TextBox Grid.Column="1"
+                Padding="5,0"
+                VerticalContentAlignment="Center"
+                Text="{Binding ManualCode, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+        <Grid Grid.Column="2"
+            Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Label Margin="6,0"
+                Padding="0"
+                VerticalAlignment="Center"
+                Content="权重（可选）"/>
+            <TextBox Grid.Column="1"
+                Padding="5,0"
+                VerticalContentAlignment="Center"
+                ToolTip="格式：'非负整数'或'浮点数%'"
+                Text="{Binding Weight, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+        <TextBox Grid.Column="2"
+            Grid.Row="8"
+            Padding="5,0"
+            VerticalContentAlignment="Center"
+            ToolTip="输入搜索内容，结果立即显示在表格中"
+            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+        <DataGrid Grid.Column="0"
+            Grid.ColumnSpan="3"
+            Grid.Row="10"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            SelectionMode="Single"
+            ItemsSource="{Binding SearchResults}"
+            SelectedItem="{Binding SelSearchResult}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Width="*"
+                    IsReadOnly="True"
+                    Header="行号"
+                    Binding="{Binding Num}"/>
+                <DataGridTextColumn Width="2*"
+                    Header="词组"
+                    Binding="{Binding Word}"/>
+                <DataGridTextColumn Width="2*"
+                    Header="编码"
+                    Binding="{Binding Code}"/>
+                <DataGridTextColumn Width="*"
+                    Header="权重"
+                    Binding="{Binding Weight}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
 </Window>
