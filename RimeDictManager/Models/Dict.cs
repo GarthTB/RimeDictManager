@@ -70,7 +70,7 @@ internal sealed class Dict {
 
     public IReadOnlyList<Entry> SearchByWord(string word) =>
         _dict.TryGetValue(word, out var list)
-            ? list.AsReadOnly()
+            ? list
             : [];
 
     public bool IsCodePrefix(string code) =>

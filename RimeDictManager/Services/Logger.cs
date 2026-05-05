@@ -6,7 +6,7 @@ using static DateTime;
 
 internal static class Logger {
     private static readonly List<string> Logs = new(64) { $"{Now:u} 日志开始" };
-    public static IReadOnlyList<string> LogView => Logs.AsReadOnly();
+    public static IReadOnlyList<string> LogView => Logs;
 
     /// <summary> 添加日志 </summary>
     /// <param name="msg"> 信息 </param>

@@ -13,6 +13,7 @@ using Services;
 using static System.Windows.MessageBox;
 using static System.Windows.MessageBoxButton;
 using static System.Windows.MessageBoxImage;
+using static Services.Logger;
 using static StringComparison;
 using IOE = InvalidOperationException;
 using MBR = System.Windows.MessageBoxResult;
@@ -217,7 +218,7 @@ internal sealed partial class MainVM: ObservableObject {
             }
 
             Dict.Insert(entry);
-            Logger.Log("添加", entry);
+            Log("添加", entry);
 
             var searchText = SearchText;
             SyncSearchText();
@@ -240,7 +241,7 @@ internal sealed partial class MainVM: ObservableObject {
             if (Show(msg, "确认", YesNo, Question) != MBR.Yes) return;
 
             Dict!.Remove(entry);
-            Logger.Log("删除", entry);
+            Log("删除", entry);
             SearchResults.Remove(SelSearchResult);
             ModifyCommand.NotifyCanExecuteChanged();
         } catch (Exception ex) { LogAndShowEx($"删除词条时：\n{ex}"); }
@@ -278,17 +279,17 @@ internal sealed partial class MainVM: ObservableObject {
             if (Show(msg, "确认", YesNo, Question) != MBR.Yes) return;
 
             Dict!.Remove(oldLong.Src);
-            Logger.Log("删除", oldLong.Src);
+            Log("删除", oldLong.Src);
             SearchResults.Remove(oldLong);
             Dict.Insert(newShort);
-            Logger.Log("改为", newShort);
+            Log("改为", newShort);
             SearchResults.Add(new(newShort));
             if (oldShort is {}) {
                 Dict.Remove(oldShort.Src);
-                Logger.Log("删除", oldShort.Src);
+                Log("删除", oldShort.Src);
                 SearchResults.Remove(oldShort);
                 Dict.Insert(newLong!);
-                Logger.Log("改为", newLong);
+                Log("改为", newLong);
                 SearchResults.Add(new(newLong!));
             }
             ModifyCommand.NotifyCanExecuteChanged();
@@ -329,7 +330,10 @@ internal sealed partial class MainVM: ObservableObject {
             List<string> messages = new(mods.Length * 3);
             foreach (var (o, n) in mods) {
                 messages.AddRange([$"删除：'{o.Src}'", $"改为：'{n}'"]);
-                if (o.Src.Code is {} code && code != n!.Code && Dict!.IsCodePrefix(code))
+                if (o.Src.Code is {} code
+                 && code != n!.Code
+                 && mods.All(mod => mod.New!.Code != code)
+                 && Dict!.IsCodePrefix(code))
                     messages.Add($"修改后，编码'{code}'将空缺，有长码可被截短");
             }
             var msg = $"确认修改？\n{string.Join('\n', messages)}";
@@ -337,10 +341,10 @@ internal sealed partial class MainVM: ObservableObject {
 
             foreach (var (o, n) in mods) {
                 Dict!.Remove(o.Src);
-                Logger.Log("删除", o.Src);
+                Log("删除", o.Src);
                 SearchResults.Remove(o);
                 Dict.Insert(n!);
-                Logger.Log("改为", n);
+                Log("改为", n);
                 SearchResults.Add(new(n!));
             }
             ModifyCommand.NotifyCanExecuteChanged();
@@ -352,12 +356,12 @@ internal sealed partial class MainVM: ObservableObject {
     #region 集中响应
 
     private static void LogAndShowEx(string msg) {
-        Logger.Log(msg, null);
+        Log(msg, null);
         Show(msg, "异常", OK, Error);
     }
 
     private static void LogAndShowSuccess(params string[] msg) {
-        Logger.Log(string.Join('，', msg), null);
+        Log(string.Join('，', msg), null);
         Show(string.Join('\n', msg), "成功", OK, Information);
     }
 
