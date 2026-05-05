@@ -17,5 +17,9 @@ internal static class Logger {
                 ? $"{msg}\t{line}"
                 : msg);
 
-    public static void Save(string path) => File.WriteAllLines(path, Logs.Append($"{Now:u} 日志保存"));
+    public static void Save(string path) {
+        using StreamWriter sw = new(path, true);
+        sw.NewLine = "\n";
+        foreach (var line in Logs.Append($"{Now:u} 日志保存")) sw.WriteLine(line);
+    }
 }

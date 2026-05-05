@@ -78,15 +78,18 @@ internal sealed class Dict {
     /// <param name="sort"> true时词条先按编码升序再按原序（新词条后置），注释原序放在末尾，空行删除；false保留原序，新词条按编码升序放在末尾 </param>
     public void Save(string? path, bool sort) {
         var entries = _dict.Values.SelectMany(static x => x).ToArray();
-        var ordered = sort
+        var sorted = sort
             ? entries.OrderBy(static e => (e.Code, e.Num - 1)) // 0回绕（新词条后置）
                 .Concat(_misc.Where(static l => l.Raw is {})) // 注释原序
             : entries.Where(static e => e.Num > 0) // 原有词条
                 .Concat(_misc)
                 .OrderBy(static l => l.Num)
                 .Concat(entries.Where(static e => e.Num == 0).OrderBy(static e => e.Code));
-        var lines = _header.Concat(ordered.Select(static l => $"{l}"));
-        File.WriteAllLines(path ?? _path, lines);
+
+        using StreamWriter sw = new(path ?? _path);
+        sw.NewLine = "\n";
+        foreach (var line in _header.Concat(sorted.Select(static l => $"{l}"))) sw.WriteLine(line);
+
         Modified = false;
     }
 }

@@ -132,8 +132,8 @@ internal sealed partial class MainVM: ObservableObject {
             foreach (var code in codes.Order()) AutoCodes.Add(code);
 
             if (AutoCodes.Count > 0)
-                SelAutoCode = Math.Min(oldSel?.Length ?? 0, CurCodeLen) is var len and > 0
-                    ? AutoCodes.FirstOrDefault(s => s[..len] == oldSel![..len], AutoCodes[0])
+                SelAutoCode = oldSel is {} && Math.Min(oldSel.Length, CurCodeLen) is var len and > 0
+                    ? AutoCodes.FirstOrDefault(s => s[..len] == oldSel[..len], AutoCodes[0])
                     : AutoCodes[0];
             AutoCodeColor = AutoCodes.Count > 1
                 ? "Red"
