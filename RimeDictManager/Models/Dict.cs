@@ -8,10 +8,10 @@ internal sealed class Dict {
     private readonly Dictionary<string, List<Entry>> _dict = new(8192);
     private readonly List<string> _header = [];
     private readonly List<Line> _misc = [];
-    private readonly Action _onModifiedChanged;
+    private readonly Action<bool> _onModifiedChanged;
     private readonly string _path;
 
-    public Dict(string path, Action onModifiedChanged) {
+    public Dict(string path, Action<bool> onModifiedChanged) {
         var isHeader = true;
         var num = 1u;
         foreach (var line in File.ReadLines(path)) {
@@ -33,12 +33,9 @@ internal sealed class Dict {
 
     public uint Count { get; private set; }
 
-    public bool Modified {
-        get;
-        private set {
-            if (field == value) return;
-            field = value;
-            _onModifiedChanged();
+    private bool Modified {
+        set {
+            if (field != value) _onModifiedChanged(field = value);
         }
     }
 

@@ -31,7 +31,7 @@ internal sealed partial class MainVM: ObservableObject {
 
     public void LoadDict(string path) {
         try {
-            Dict = new(path, () => DictModified = Dict!.Modified);
+            Dict = new(path, modified => DictModified = modified);
             DictModified = false;
             Search();
             LogAndShowSuccess("已加载词库", $"路径'{path}'", $"总词条数'{Dict.Count}'");
