@@ -78,13 +78,11 @@
                 Command="{Binding InsertCommand}"/>
             <Button Grid.Column="4"
                 Content="删词"
-                ToolTip="删除选中词条"
                 Command="{Binding RemoveCommand}"/>
             <Button Grid.Column="6"
                 Content="截码"
                 ToolTip="将选中词条的编码截短为搜索框中的编码&#x000A;若有一个词条占用该短码，则自动加长其编码到最短的余位&#x000A;需开启自动编码和编码前缀搜索；仅用于变长编码方案"
                 Command="{Binding ShortenCommand}"/>
-
         </Grid>
         <Grid Grid.Column="0"
             Grid.Row="8">
