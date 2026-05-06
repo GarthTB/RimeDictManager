@@ -17,25 +17,21 @@
 
 ## 📥 使用
 
-### 系统要求：Windows 10+
-
-### 运行依赖：[.NET 10.0 运行时](https://dotnet.microsoft.com/download/dotnet/10.0)
+- **系统要求**：Windows 10+
+- **运行依赖**：[.NET 10.0 运行时](https://dotnet.microsoft.com/download/dotnet/10.0)
+- **获取软件**：从 [Releases](https://github.com/GarthTB/RimeDictManager/releases/latest) 下载最新版本
 
 ### 使用步骤
 
-1. 从 [Releases](https://github.com/GarthTB/RimeDictManager/releases/latest) 下载压缩包并解压
-2. 运行 `RimeDictManager.exe`
-3. 打开 `RIME词库文件（.dict.yaml）`
-4. 启用自动编码，选择编码方案，加载单字码表
-5. 加词、删词、截码、手动修改
-6. 查看并保存日志
-7. 保存或另存词库
+1. 打开 `RIME词库文件（.dict.yaml）`
+2. 启用自动编码，选择编码方案，加载单字码表
+3. 加词、删词、截码、手动修改
+4. 查看并保存日志
+5. 保存或另存词库
 
-### 词库要求
+### 不完全支持 RIME 允许的所有格式
 
-**不完全支持 RIME 允许的所有格式！**
-
-词库行的格式必须为下列其一：
+词库行的格式须为下列其一：
 
 - 不含任何字符的空行
 - `#[注释]`
@@ -43,7 +39,7 @@
 - `[词]\t[编码]`
 - `[词]\t[编码]\t[权重]`
 
-单字码表行的格式必须为 `[字]\t[编码]` 或 `[字]\t[编码]\t[无关内容]`
+单字码表行的格式须为 `[字]\t[编码]` 或 `[字]\t[编码]\t[任意内容]`
 
 ## ℹ 关于
 
@@ -57,14 +53,23 @@
 
 ## 📝 版本
 
+### 2.1.2 (20260507)
+
+- 修复：修改操作后删除和截码操作失效
+- 优化：追加日志的提示
+
 ### 2.1.1 (20260506)
 
-- 将换行符从 `\r\n` 改为 `\n`
-- 细微优化性能和风险提示
+- 修改：将换行符从 `\r\n` 改为 `\n`
+- 优化：性能和风险提示
 
-### 2.1.0 (20260326)：优化界面，完善风险提示
+### 2.1.0 (20260326)
 
-### 2.0.1 (20260123)：优化自动编码性能
+优化界面，完善风险提示
+
+### 2.0.1 (20260123)
+
+优化自动编码性能
 
 ### 2.0.0 (20260110)
 
@@ -92,6 +97,9 @@
 - **[跨平台Rime词库管理器](https://github.com/GarthTB/RimeTyrant)** (20240910 - 20240914)
     - 使用 MAUI 框架，支持 Windows 和 Android
     - 初步尝试支持其他输入法方案
-- **[词器清单版](https://github.com/GarthTB/RimeLibrarian)** (20240622 - 20241110)：重构界面，提供表格以简化操作
-- **[词器v2](https://github.com/GarthTB/JDLibManager)** (20240605 - 20240620)：改用 .NET 6.0 WPF
-- **[词器](https://github.com/GarthTB/CiQi)** (20230513 - 20231223)：使用 WinForms，专用于星空键道6
+- **[词器清单版](https://github.com/GarthTB/RimeLibrarian)** (20240622 - 20241110)
+    - 重构界面，提供表格以简化操作
+- **[词器v2](https://github.com/GarthTB/JDLibManager)** (20240605 - 20240620)
+    - 改用 .NET 6.0 WPF
+- **[词器](https://github.com/GarthTB/CiQi)** (20230513 - 20231223)
+    - 使用 WinForms，专用于星空键道6
