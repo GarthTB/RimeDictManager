@@ -2,48 +2,60 @@ namespace RimeDictManager.Models;
 
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
-internal sealed class CodeTrie {
-    private readonly List<Node> _pool = new(262144) { new() };
+internal sealed class CodeTrie(int poolCap) {
+    private readonly List<Dictionary<char, int>?> _children = new(poolCap) { null };
+    private readonly List<List<int>?> _values = new(poolCap) { null };
 
-    public void Insert(Entry entry) {
+    public void Insert(string? code, int v) {
         var i = 0;
-        foreach (var c in entry.Code ?? "") {
-            ref var next = ref GetValueRefOrAddDefault(_pool[i].Next, c, out var exist);
-            if (!exist) {
-                next = _pool.Count;
-                _pool.Add(new());
+        for (var j = 0; j < code?.Length; j++) {
+            ref var k = ref GetValueRefOrAddDefault(_children[i] ??= [], code[j], out var exists);
+            if (!exists) {
+                _children.Add(null);
+                _values.Add(null);
+                k = _children.Count - 1;
             }
-            i = next;
+            i = k;
         }
-        _pool[i].Entries.Add(entry);
+        (_values[i] ??= []).Add(v);
     }
 
-    public void Remove(Entry entry) {
+    public bool Remove(string? code, int v) {
+        if (TryFind(code) is not (>= 0 and var i)
+         || _values[i] is not {} vals
+         || vals.IndexOf(v) is not (>= 0 and var j))
+            return false;
+
+        vals[j] = vals[^1];
+        vals.RemoveAt(vals.Count - 1);
+        return true;
+    }
+
+    public void ForEachByKey(string? key, bool exact, Func<int, bool> doWhile) {
+        if (TryFind(key) is >= 0 and var i && Proc(i) && !exact) Dfs(i);
+
+        bool Proc(int j) {
+            if (_values[j] is not {} vals) return true;
+            foreach (var v in vals)
+                if (!doWhile(v))
+                    return false;
+            return true;
+        }
+
+        bool Dfs(int j) {
+            if (_children[j] is not {} ch) return true;
+            foreach (var k in ch.Values)
+                if (!Proc(k) || !Dfs(k))
+                    return false;
+            return true;
+        }
+    }
+
+    private int TryFind(string? key) {
         var i = 0;
-        foreach (var c in entry.Code ?? "")
-            if (!_pool[i].Next.TryGetValue(c, out i))
-                throw new KeyNotFoundException("找不到待删除词条");
-        if (!_pool[i].Entries.Remove(entry)) throw new InvalidOperationException("删除失败");
-    }
-
-    public IReadOnlyList<Entry> Search(string code, bool exact) {
-        var i = 0;
-        foreach (var c in code)
-            if (!_pool[i].Next.TryGetValue(c, out i))
-                return [];
-
-        if (exact) return _pool[i].Entries;
-
-        List<Entry> entries = new(64);
-        Stack<int> idx = new(64);
-        for (idx.Push(i); idx.TryPop(out i); entries.AddRange(_pool[i].Entries))
-            foreach (var j in _pool[i].Next.Values)
-                idx.Push(j);
-        return entries;
-    }
-
-    private sealed class Node {
-        public readonly List<Entry> Entries = [];
-        public readonly Dictionary<char, int> Next = [];
+        for (var j = 0; j < key?.Length; j++)
+            if (_children[i] is not {} ch || !ch.TryGetValue(key[j], out i))
+                return -1;
+        return i;
     }
 }
