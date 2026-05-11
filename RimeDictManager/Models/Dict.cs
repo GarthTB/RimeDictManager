@@ -1,37 +1,65 @@
 namespace RimeDictManager.Models;
 
 using System.IO;
+using Services;
 using static System.Runtime.InteropServices.CollectionsMarshal;
+using FmtEx = FormatException;
 
 internal sealed class Dict {
-    private readonly CodeTrie _codeTrie = new();
-    private readonly Dictionary<string, List<Entry>> _dict = new(8192);
-    private readonly List<string> _header = [];
-    private readonly List<Line> _misc = [];
+    private readonly CodeTrie _codeTrie;
+    private readonly List<Entry> _entries;
+    private readonly List<string?> _header;
     private readonly Action<bool> _onModifiedChanged;
     private readonly string _path;
+    private readonly List<RawLine> _rawLines;
+    private readonly Dictionary<string, List<int>> _textDict;
 
     public Dict(string path, Action<bool> onModifiedChanged) {
-        var isHeader = true;
-        var num = 1u;
-        foreach (var line in File.ReadLines(path)) {
-            if (isHeader) {
-                _header.Add(line);
-                if (line == "...") isHeader = false;
-            } else if (line.Length == 0)
-                _misc.Add(new(num, null));
-            else if (line[0] == '#')
-                _misc.Add(new(num, line));
-            else
-                InsertCore(Entry.FromString(num, line));
-            num++;
+        using StreamReader sr = new(_path = path);
+        string? l;
+
+        _header = new(64);
+        for (var pos = 0; (l = sr.ReadLine()) is {}; _header.Add(l)) {
+            if (_header.Count - pos > 1023) throw new FmtEx("词库文件头过长，疑似未闭合");
+            if (string.IsNullOrWhiteSpace(l))
+                l = null;
+            else if (l == "---")
+                pos = _header.Count + 1;
+            else if (l == "...") {
+                LineCodec.SetCols(_header[pos..]);
+                break;
+            }
         }
+        if (sr.EndOfStream) throw new FmtEx("词库文件头缺失或未闭合");
+
+        _rawLines = new(64);
+        _entries = new(16384);
+        for (var num = (uint)_header.Count + 2; (l = sr.ReadLine()) is {}; num++)
+            if (string.IsNullOrWhiteSpace(l))
+                _rawLines.Add(new(num, null));
+            else if (l[0] == '#')
+                _rawLines.Add(new(num, l));
+            else
+                _entries.Add(LineCodec.Deserialize(num, l));
+        if (_entries.Count == 0) throw new FmtEx("词库为空");
+        Count = _entries.Count;
+
+        _textDict = new(16384);
+        _codeTrie = new(65536);
+        for (var i = 0; i < _entries.Count; i++) {
+            var e = _entries[i];
+            ref var indexes = ref GetValueRefOrAddDefault(_textDict, e.Text, out var exists);
+            if (exists)
+                indexes!.Add(i);
+            else
+                indexes = [i];
+            _codeTrie.Insert(e.Code, i);
+        }
+
         _onModifiedChanged = onModifiedChanged;
-        _path = path;
-        if (_header.LastOrDefault() != "...") throw new FormatException("词库缺失文件头");
     }
 
-    public uint Count { get; private set; }
+    public int Count { get; private set; }
 
     private bool Modified {
         set {
@@ -39,56 +67,38 @@ internal sealed class Dict {
         }
     }
 
-    public void Insert(Entry entry) {
-        InsertCore(entry);
+    public void Insert(Entry e) {
+        _entries.Add(e);
+        var i = _entries.Count - 1;
+        ref var indexes = ref GetValueRefOrAddDefault(_textDict, e.Text, out var exists);
+        if (exists)
+            indexes!.Add(i);
+        else
+            indexes = [i];
+        _codeTrie.Insert(e.Code, i);
+
+        Count++;
         Modified = true;
     }
 
-    public void Remove(Entry entry) {
-        _codeTrie.Remove(entry); // 找不到会抛异常
-        if (!_dict[entry.Word].Remove(entry))
-            throw new InvalidOperationException("Trie和Dict不一致，请停用并报告异常");
+    public bool Remove(Entry e) {
+        throw new NotImplementedException();
+
         Count--;
         Modified = true;
     }
 
-    private void InsertCore(Entry entry) {
-        _codeTrie.Insert(entry);
-        ref var list = ref GetValueRefOrAddDefault(_dict, entry.Word, out var exist);
-        if (exist)
-            list!.Add(entry);
-        else
-            list = [entry];
-        Count++;
-    }
+    public void ForEachByWord(string word, Func<Entry, bool> doWhile) =>
+        throw new NotImplementedException();
 
-    public IReadOnlyList<Entry> SearchByCode(string code, bool exact) =>
-        _codeTrie.Search(code, exact);
+    public void ForEachByCode(string? code, bool exact, Func<Entry, bool> doWhile) =>
+        throw new NotImplementedException();
 
-    public IReadOnlyList<Entry> SearchByWord(string word) =>
-        _dict.TryGetValue(word, out var list)
-            ? list
-            : [];
-
-    public bool IsCodePrefix(string code) =>
-        code.Length > 0 && _codeTrie.Search(code, false).Any(e => e.Code!.Length > code.Length);
-
-    /// <summary> 保存词库 </summary>
-    /// <param name="path"> 路径：null时覆写 </param>
-    /// <param name="sort"> true时词条先按编码升序再按原序（新词条后置），注释原序放在末尾，空行删除；false保留原序，新词条按编码升序放在末尾 </param>
-    public void Save(string? path, bool sort) {
-        var entries = _dict.Values.SelectMany(static x => x).ToArray();
-        var sorted = sort
-            ? entries.OrderBy(static e => (e.Code, e.Num - 1)) // 0回绕（新词条后置）
-                .Concat(_misc.Where(static l => l.Raw is {})) // 注释原序
-            : entries.Where(static e => e.Num > 0) // 原有词条
-                .Concat(_misc)
-                .OrderBy(static l => l.Num)
-                .Concat(entries.Where(static e => e.Num == 0).OrderBy(static e => e.Code));
+    public void Save(string? path, bool reorder) {
+        throw new NotImplementedException();
 
         using StreamWriter sw = new(path ?? _path);
         sw.NewLine = "\n";
-        foreach (var line in _header.Concat(sorted.Select(static l => $"{l}"))) sw.WriteLine(line);
 
         Modified = false;
     }
