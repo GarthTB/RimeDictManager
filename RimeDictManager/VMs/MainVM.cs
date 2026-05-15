@@ -1,174 +1,197 @@
-// ReSharper disable UnusedParameterInPartialMethod
-
 namespace RimeDictManager.VMs;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using Models;
-using Services;
-using static System.Windows.MessageBox;
-using static System.Windows.MessageBoxButton;
-using static System.Windows.MessageBoxImage;
+using static System.Windows.MessageBoxResult;
+using static MsgBox;
+using static Services.LineCodec;
 using static Services.Logger;
-using static StringComparison;
-using IOE = InvalidOperationException;
-using MBR = System.Windows.MessageBoxResult;
 
 internal sealed partial class MainVM: ObservableObject {
+    private const string DictFileFilter = "RIME 词库|*.dict.yaml|所有文件|*.*";
+
     #region 词库文件
 
-    private const string DictFileFilter = "RIME词库文件|*.dict.yaml|所有文件|*.*";
     [ObservableProperty] private partial Dict? Dict { get; set; }
-    [ObservableProperty] private partial bool DictModified { get; set; }
-    private bool DictExist => Dict is {};
-
-    public bool UnmodOrDiscard =>
-        !DictModified || Show("是否丢弃未保存的改动？", "警告", YesNo, Warning) == MBR.Yes;
-
-    public void LoadDict(string path) {
-        try {
-            Dict = new(path, modified => DictModified = modified);
-            DictModified = false;
-            Search();
-            LogAndShowSuccess("已加载词库", $"路径'{path}'", $"总词条数'{Dict.Count}'");
-        } catch (Exception ex) {
-            Dict = null;
-            DictModified = false;
-            LogAndShowEx($"加载词库时：\n{ex}");
-        }
-    }
+    private bool DictModified => Dict is { Modified: true };
+    public bool EnsureSaved => !DictModified || ShowConfirm("警告", "丢弃未保存的改动？") == Yes;
 
     [RelayCommand]
     private void Open() {
-        if (!UnmodOrDiscard) return;
-        var ofd = new OpenFileDialog { Title = "打开RIME词库", Filter = DictFileFilter };
+        if (!EnsureSaved) return;
+        var ofd = new OpenFileDialog { Title = "打开 RIME 词库", Filter = DictFileFilter };
         if (ofd.ShowDialog() == true) LoadDict(ofd.FileName);
     }
 
-    [RelayCommand(CanExecute = nameof(DictModified))]
-    private void Save(string? path) {
-        const string notice = "是：词条先按编码升序再按原序（新词条后置），注释原序放在末尾，空行删除\n否：保留原序，新词条按编码升序放在末尾";
+    public void LoadDict(string path) {
         try {
-            var sort = Show(notice, "选择排序策略", YesNo, Question);
-            if (sort is not (MBR.Yes or MBR.No)) return;
-            Dict!.Save(path, sort == MBR.Yes);
-            var msg = path is {}
-                ? $"路径'{path}'"
-                : "覆写原文件";
-            LogAndShowSuccess("已保存词库", msg, $"总词条数'{Dict.Count}'");
-        } catch (Exception ex) { LogAndShowEx($"保存词库时：\n{ex}"); }
+            Dict = new(path, SaveCommand.NotifyCanExecuteChanged);
+            Search();
+            LogAndShowSuccess("词库已载入", $"路径：{path}", $"总词条数：{Dict.Count}");
+        } catch (Exception ex) {
+            Dict = null;
+            LogAndShowErr($"加载词库时：\n{ex}");
+        }
     }
 
-    [RelayCommand(CanExecute = nameof(DictExist))]
-    private void SaveAs() {
-        var sfd = new SaveFileDialog { Title = "将词库另存为...", Filter = DictFileFilter };
-        if (sfd.ShowDialog() == true) Save(sfd.FileName);
+    [RelayCommand(CanExecute = nameof(DictModified))]
+    private void Save() {
+        const string overwritePrompt = "是：覆写原词库\n否：另存副本",
+            reorderPrompt = "是：词条先按编码升序，再按原行号升序重排，空行丢弃，注释原序排在末尾\n否：保持原有行，新词条按编码升序排在末尾";
+
+        var overwrite = ShowConfirm("选择策略", overwritePrompt);
+        if (overwrite is not (Yes or No)) return;
+        string? path = null;
+        if (overwrite == No) {
+            var sfd = new SaveFileDialog { Title = "将词库另存至...", Filter = DictFileFilter };
+            if (sfd.ShowDialog() == true) path = sfd.FileName;
+        }
+        var reorder = ShowConfirm("选择策略", reorderPrompt);
+        if (reorder is not (Yes or No)) return;
+
+        try {
+            Dict!.Save(path, reorder == Yes);
+            var msg = path is {}
+                ? $"路径：{path}"
+                : "覆写原文件";
+            LogAndShowSuccess("词库已保存", msg, $"总词条数：{Dict.Count}");
+        } catch (Exception ex) { LogAndShowErr($"保存词库时：\n{ex}"); }
     }
 
     #endregion 词库文件
 
     #region 编码器
 
-    [ObservableProperty] public partial bool EncoderActive { get; set; }
-    public static IReadOnlyList<string> EncoderMethods => Encoder.Methods;
-    [ObservableProperty] public partial string? SelEncoderMethod { get; set; }
-    [ObservableProperty] private partial Func<string, IEnumerable<string>>? Encode { get; set; }
-    [ObservableProperty] public partial byte MinCodeLen { get; private set; }
-    [ObservableProperty] public partial byte MaxCodeLen { get; private set; }
-    [ObservableProperty] public partial byte CurCodeLen { get; set; }
-    partial void OnCurCodeLenChanged(byte value) => UpdateAutoCodes(false);
+    public static IReadOnlyList<string> EncodeMethods => Encoder.Methods;
 
-    partial void OnEncoderActiveChanged(bool value) {
-        SyncSearchText();
-        if (!value || Encode is {} || SelEncoderMethod is null) return;
-        PickCharsDict();
-        EncoderActive = Encode is {};
-    }
-
-    partial void OnSelEncoderMethodChanged(string? value) {
-        if (value is null) return;
-        var ofd = new OpenFileDialog { Title = $"打开{SelEncoderMethod}码表", Filter = DictFileFilter };
-        if (ofd.ShowDialog() == true)
-            SetEncoder(ofd.FileName);
-        else {
-            Encode = null;
-            EncoderActive = false;
+    public bool EncoderEnabled {
+        get;
+        set {
+            if (field == value) return;
+            if (value && Encoder is null && SelEncodeMethod is {}) {
+                OpenSingle();
+                if (Encoder is null) {
+                    OnPropertyChanged();
+                    return;
+                }
+            }
+            SetProperty(ref field, value);
+            UpdatePendingEntry();
         }
     }
 
-    public void SetEncoder(string path) {
+    public string? SelEncodeMethod {
+        get;
+        set {
+            if (field == value) return;
+            if (value is {}) {
+                var title = $"打开'{SelEncodeMethod}'方案的单字码表";
+                var ofd = new OpenFileDialog { Title = title, Filter = DictFileFilter };
+                if (ofd.ShowDialog() == true)
+                    LoadSingle(ofd.FileName);
+                else {
+                    OnPropertyChanged();
+                    return;
+                }
+            }
+            SetProperty(ref field, value);
+        }
+    }
+
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(CodeLenMin), nameof(CodeLenMax))]
+    private partial Encoder? Encoder { get; set; }
+
+    public byte CodeLenMin => Encoder?.CodeLenMin ?? 0;
+    public byte CodeLenMax => Encoder?.CodeLenMax ?? 0;
+    [ObservableProperty] public partial byte CodeLen { get; set; }
+    partial void OnCodeLenChanged(byte value) => UpdateAutoCodes(false);
+
+    [RelayCommand(CanExecute = nameof(EncoderEnabled))]
+    private void OpenSingle() {
+        var title = $"打开'{SelEncodeMethod}'方案的单字码表";
+        var ofd = new OpenFileDialog { Title = title, Filter = DictFileFilter };
+        if (ofd.ShowDialog() == true) LoadSingle(ofd.FileName);
+    }
+
+    public void LoadSingle(string path) {
         try {
-            var (min, max, encode, count) = Encoder.Create(SelEncoderMethod!, path);
-            if (count == 0) throw new InvalidDataException("码表为空");
-            (MinCodeLen, MaxCodeLen, CurCodeLen, Encode) = (min, max, min, encode);
+            Encoder = new(SelEncodeMethod!, path);
+            CodeLen = Encoder.CodeLenMin;
             UpdateAutoCodes(true);
-            LogAndShowSuccess($"已加载{SelEncoderMethod}码表", $"路径'{path}'", $"覆盖字数'{count}'");
+            var msg = $"'{SelEncodeMethod}'方案的单字码表已载入";
+            LogAndShowSuccess(msg, $"路径：{path}", $"覆盖字数：{Encoder.CharCount}");
         } catch (Exception ex) {
-            Encode = null;
-            EncoderActive = false;
-            LogAndShowEx($"加载{SelEncoderMethod}码表时：\n{ex}");
+            Encoder = null;
+            EncoderEnabled = false;
+            LogAndShowErr($"加载单字码表时：\n{ex}");
         }
-    }
-
-    [RelayCommand(CanExecute = nameof(EncoderActive))]
-    private void PickCharsDict() {
-        var ofd = new OpenFileDialog { Title = $"打开{SelEncoderMethod}码表", Filter = DictFileFilter };
-        if (ofd.ShowDialog() == true) SetEncoder(ofd.FileName);
     }
 
     private void UpdateAutoCodes(bool needEncode) {
         try {
-            var oldSel = SelAutoCode;
+            if (needEncode) {
+                _fullAutoCodes.Clear();
+                _fullAutoCodes.AddRange(Encoder!.Encode(PendingText));
+            }
+            var codes = CodeLen < CodeLenMax
+                ? _fullAutoCodes.Select(s => s[..CodeLen]).Distinct()
+                : _fullAutoCodes;
 
+            var oldSel = SelAutoCode;
             AutoCodes.Clear();
-            if (needEncode) _fullAutoCodes = Encode!(Word).ToArray();
-            var codes = MaxCodeLen == MinCodeLen || CurCodeLen == MaxCodeLen
-                ? _fullAutoCodes
-                : _fullAutoCodes.Select(s => s[..CurCodeLen]).Distinct();
             foreach (var code in codes.Order()) AutoCodes.Add(code);
 
             if (AutoCodes.Count > 0)
-                SelAutoCode = oldSel is {} && Math.Min(oldSel.Length, CurCodeLen) is var len and > 0
+                SelAutoCode = oldSel is {} && Math.Min(oldSel.Length, CodeLen) is var len
                     ? AutoCodes.FirstOrDefault(s => s[..len] == oldSel[..len], AutoCodes[0])
                     : AutoCodes[0];
+        } catch (Exception ex) {
+            _fullAutoCodes.Clear();
+            AutoCodes.Clear();
+            LogAndShowErr($"自动编码时：\n{ex}");
+        } finally {
             AutoCodeColor = AutoCodes.Count > 1
                 ? "Red"
                 : "";
-        } catch (Exception ex) { LogAndShowEx($"自动编码时：\n{ex}"); }
+        }
     }
 
     #endregion 编码器
 
-    #region 词条属性
+    #region 词条字段
 
-    [ObservableProperty] public partial string Word { get; set; } = "";
+    [ObservableProperty] public partial string PendingText { get; set; } = "";
     [ObservableProperty] public partial string ManualCode { get; set; } = "";
-    [ObservableProperty] public partial string Weight { get; set; } = "";
-    partial void OnManualCodeChanged(string value) => SyncSearchText();
+    [ObservableProperty] public partial string PendingWeight { get; set; } = "";
+    [ObservableProperty] public partial string PendingStem { get; set; } = "";
+    [ObservableProperty] private partial Entry? PendingEntry { get; set; }
 
-    private string[] _fullAutoCodes = [];
+    private readonly List<string> _fullAutoCodes = new(64);
     public ObservableCollection<string> AutoCodes { get; } = [];
     [ObservableProperty] public partial string? SelAutoCode { get; set; }
     [ObservableProperty] public partial string AutoCodeColor { get; private set; } = "";
-    partial void OnSelAutoCodeChanged(string? value) => SyncSearchText();
 
-    partial void OnWordChanged(string value) {
-        if (EncoderActive) UpdateAutoCodes(true);
-        SyncSearchText();
+    partial void OnPendingTextChanged(string value) {
+        if (Encoder is {}) UpdateAutoCodes(true);
+        UpdatePendingEntry();
     }
 
-    private string? CurCode =>
-        EncoderActive
-            ? SelAutoCode
-            : ManualCode;
+    partial void OnManualCodeChanged(string value) => UpdatePendingEntry();
+    partial void OnSelAutoCodeChanged(string? value) => UpdatePendingEntry();
+    partial void OnPendingWeightChanged(string value) => UpdatePendingEntry();
+    partial void OnPendingStemChanged(string value) => UpdatePendingEntry();
+    partial void OnPendingEntryChanged(Entry? value) => SyncSearchText();
 
-    private Entry? CurEntry => Entry.TryNew(Word, CurCode, Weight); // 内部会Trim
+    private void UpdatePendingEntry() =>
+        PendingEntry = EncoderEnabled
+            ? TryNewEntry(PendingText, SelAutoCode, PendingWeight, PendingStem)
+            : TryNewEntry(PendingText, ManualCode, PendingWeight, PendingStem);
 
-    #endregion 词条属性
+    #endregion 词条字段
 
     #region 搜索
 
@@ -180,189 +203,73 @@ internal sealed partial class MainVM: ObservableObject {
     partial void OnSearchTextChanged(string value) => Search();
 
     private void SyncSearchText() =>
-        SearchText = IsSearchByCode
-            ? CurCode ?? ""
-            : Word;
+        SearchText = PendingEntry is {} e
+            ? IsSearchByCode
+                ? e.Code ?? ""
+                : e.Text
+            : "";
 
     private void Search() {
+        SearchResults.Clear();
         try {
-            SearchResults.Clear();
-            if (Dict is { Count: > 0 } && !(IsSearchByCode && SearchText.Length == 0)) {
-                var entries = IsSearchByCode
-                    ? Dict.SearchByCode(SearchText, false)
-                    : Dict.SearchByWord(SearchText);
-                foreach (var e in entries.OrderBy(static e => e.Code)) SearchResults.Add(new(e));
-            }
+            if (Dict is not { Count: > 0 }) return;
+            if (!IsSearchByCode)
+                Dict.ForEachByText(SearchText, AddResult);
+            else if (!string.IsNullOrEmpty(SearchText)) // 禁止前缀匹配整个Trie
+                Dict.ForEachByCode(SearchText, false, AddResult);
+        } catch (Exception ex) { LogAndShowErr($"搜索词条时：\n{ex}"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
-        } catch (Exception ex) { LogAndShowEx($"搜索词条时：\n{ex}"); }
+        }
+    }
+
+    private bool AddResult(Entry e) {
+        SearchResults.Add(new(e));
+        return true;
     }
 
     #endregion 搜索
 
-    #region 词库操作
+    #region 操作
 
-    private bool CanInsert => Dict is {} && CurEntry is {};
+    private bool CanInsert => Dict is {} && PendingEntry is {};
 
     [RelayCommand(CanExecute = nameof(CanInsert))]
-    private void Insert() {
-        try {
-            var entry = CurEntry!;
+    private void Insert() => throw new NotImplementedException();
 
-            var related = (entry.Code is {} code
-                    ? Dict!.SearchByWord(entry.Word).Union(Dict.SearchByCode(code, true))
-                    : Dict!.SearchByWord(entry.Word)).Select(static e => $"{e}")
-                .ToArray();
-            if (related.Length > 0) {
-                var msg = $"已有以下相关词条，仍要添加？\n{string.Join('\n', related)}";
-                if (Show(msg, "确认", YesNo, Question) != MBR.Yes) return;
-            }
-
-            Dict.Insert(entry);
-            Log("添加", entry);
-
-            var searchText = SearchText;
-            SyncSearchText();
-            if (searchText != SearchText) return;
-            SearchResults.Add(new(entry));
-            ModifyCommand.NotifyCanExecuteChanged();
-        } catch (Exception ex) { LogAndShowEx($"添加词条时：\n{ex}"); }
-    }
-
-    private bool CanRemove => Dict is {} && SelSearchResult is { Modified: false };
+    private bool CanRemove => Dict is {} && SelSearchResult is {};
 
     [RelayCommand(CanExecute = nameof(CanRemove))]
-    private void Remove() {
-        try {
-            var entry = SelSearchResult!.Src;
-
-            var msg = $"确认删除？\n{entry}";
-            if (entry.Code is {} code && Dict!.IsCodePrefix(code))
-                msg += $"\n删除后，编码'{code}'将空缺，有长码可被截短";
-            if (Show(msg, "确认", YesNo, Question) != MBR.Yes) return;
-
-            Dict!.Remove(entry);
-            Log("删除", entry);
-            SearchResults.Remove(SelSearchResult);
-            ModifyCommand.NotifyCanExecuteChanged();
-        } catch (Exception ex) { LogAndShowEx($"删除词条时：\n{ex}"); }
-    }
+    private void Remove() => throw new NotImplementedException();
 
     private bool CanShorten =>
         Dict is {}
-     && EncoderActive
-     && MaxCodeLen > MinCodeLen
+     && Encoder is { CodeLenMin: var min, CodeLenMax: var max }
+     && min < max
      && IsSearchByCode
-     && SearchText.Length >= MinCodeLen
-     && SelSearchResult is { Modified: false } entry
-     && entry.Code.Length > SearchText.Length;
+     && SearchText.Length >= min
+     && SelSearchResult is {} e
+     && e.Code.Length > SearchText.Length;
 
     [RelayCommand(CanExecute = nameof(CanShorten))]
-    private void Shorten() {
-        try {
-            var oldLong = SelSearchResult!;
-            var newShort = Entry.TryNew(oldLong.Word, SearchText, oldLong.Weight);
-            if (newShort is null) throw new IOE("短码无效");
-
-            var oldShorts = SearchResults.Where(me => me.Code == SearchText).ToArray();
-            if (oldShorts.Length > 1) throw new IOE("占用短码的词条不唯一");
-            var oldShort = oldShorts.FirstOrDefault();
-            if (oldShort?.Modified == true) throw new IOE("占用短码的词条有改动");
-            var newLong = oldShort is {}
-                ? Lengthen()
-                : null;
-
-            List<string> messages = new(5) { $"删除：'{oldLong.Src}'", $"改为：'{newShort}'" };
-            if (oldShort is {}) messages.AddRange([$"删除：'{oldShort.Src}'", $"改为：'{newLong}'"]);
-            if (oldLong.Code != newLong?.Code && Dict!.IsCodePrefix(oldLong.Code))
-                messages.Add($"截短后，编码'{oldLong.Code}'将空缺，有更长编码可被截短");
-            var msg = $"确认修改？\n{string.Join('\n', messages)}";
-            if (Show(msg, "确认", YesNo, Question) != MBR.Yes) return;
-
-            Dict!.Remove(oldLong.Src);
-            Log("删除", oldLong.Src);
-            SearchResults.Remove(oldLong);
-            Dict.Insert(newShort);
-            Log("改为", newShort);
-            SearchResults.Add(new(newShort));
-            if (oldShort is {}) {
-                Dict.Remove(oldShort.Src);
-                Log("删除", oldShort.Src);
-                SearchResults.Remove(oldShort);
-                Dict.Insert(newLong!);
-                Log("改为", newLong);
-                SearchResults.Add(new(newLong!));
-            }
-            ModifyCommand.NotifyCanExecuteChanged();
-
-            Entry Lengthen() {
-                var fullCodes = Encode!(oldShort.Word)
-                    .Where(s => s.StartsWith(SearchText, Ordinal))
-                    .ToArray();
-                if (fullCodes.Length == 0) throw new IOE("找不到匹配的新长码");
-                var newLongCode = fullCodes.Any(s => s.StartsWith(oldLong.Code, Ordinal))
-                    ? oldLong.Code // 直接交换编码
-                    : GetLongCode(fullCodes);
-                return Entry.TryNew(oldShort.Word, newLongCode, oldShort.Weight)
-                    ?? throw new IOE("新长码无效");
-            }
-
-            string GetLongCode(string[] fullCodes) {
-                for (var len = SearchText.Length + 1; len <= MaxCodeLen; len++) {
-                    var codes = fullCodes.Select(s => s[..len]).Distinct().ToArray();
-                    if (codes.Length > 1) throw new IOE("新长码不唯一");
-                    if (Dict!.SearchByCode(codes[0], true).Count == 0) return codes[0];
-                }
-                throw new IOE("没有空闲的新长码");
-            }
-        } catch (Exception ex) { LogAndShowEx($"截短编码时：\n{ex}"); }
-    }
+    private void Shorten() => throw new NotImplementedException();
 
     private bool CanModify => Dict is {} && SearchResults.Count > 0;
 
     [RelayCommand(CanExecute = nameof(CanModify))]
-    private void Modify() {
-        try {
-            var mods = SearchResults.Select(static me => (Old: me, New: me.TryNew()))
-                .Where(static mod => mod.New is {})
-                .ToArray();
-            if (mods.Length == 0) throw new IOE("没有改动，什么都没做");
+    private void Modify() => throw new NotImplementedException();
 
-            List<string> messages = new(mods.Length * 3);
-            foreach (var (o, n) in mods) {
-                messages.AddRange([$"删除：'{o.Src}'", $"改为：'{n}'"]);
-                if (o.Src.Code is {} code
-                 && code != n!.Code
-                 && mods.All(mod => mod.New!.Code != code)
-                 && Dict!.IsCodePrefix(code))
-                    messages.Add($"修改后，编码'{code}'将空缺，有长码可被截短");
-            }
-            var msg = $"确认修改？\n{string.Join('\n', messages)}";
-            if (Show(msg, "确认", YesNo, Question) != MBR.Yes) return;
+    #endregion 操作
 
-            foreach (var (o, n) in mods) {
-                Dict!.Remove(o.Src);
-                Log("删除", o.Src);
-                SearchResults.Remove(o);
-                Dict.Insert(n!);
-                Log("改为", n);
-                SearchResults.Add(new(n!));
-            }
-            ModifyCommand.NotifyCanExecuteChanged();
-        } catch (Exception ex) { LogAndShowEx($"修改词条时：\n{ex}"); }
-    }
-
-    #endregion 词库操作
-
-    #region 集中响应
-
-    private static void LogAndShowEx(string msg) {
-        Log(msg, null);
-        Show(msg, "异常", OK, Error);
-    }
+    #region 响应
 
     private static void LogAndShowSuccess(params string[] msg) {
         Log(string.Join('，', msg), null);
-        Show(string.Join('\n', msg), "成功", OK, Information);
+        ShowInfo("成功", string.Join('\n', msg));
+    }
+
+    private static void LogAndShowErr(string msg) {
+        Log(msg, null);
+        ShowErr(msg);
     }
 
     private readonly Dictionary<string, IRelayCommand[]> _dependencies;
@@ -370,14 +277,10 @@ internal sealed partial class MainVM: ObservableObject {
     public MainVM() =>
         _dependencies = new() {
             [nameof(Dict)]
-                = [SaveAsCommand, InsertCommand, RemoveCommand, ShortenCommand, ModifyCommand],
-            [nameof(DictModified)] = [SaveCommand],
-            [nameof(Word)] = [InsertCommand],
-            [nameof(SelAutoCode)] = [InsertCommand],
-            [nameof(ManualCode)] = [InsertCommand],
-            [nameof(Weight)] = [InsertCommand],
-            [nameof(EncoderActive)] = [PickCharsDictCommand, InsertCommand, ShortenCommand],
-            [nameof(Encode)] = [ShortenCommand],
+                = [SaveCommand, InsertCommand, RemoveCommand, ShortenCommand, ModifyCommand],
+            [nameof(EncoderEnabled)] = [OpenSingleCommand],
+            [nameof(Encoder)] = [ShortenCommand],
+            [nameof(PendingEntry)] = [InsertCommand],
             [nameof(IsSearchByCode)] = [ShortenCommand],
             [nameof(SearchText)] = [ShortenCommand],
             [nameof(SelSearchResult)] = [RemoveCommand, ShortenCommand]
@@ -386,8 +289,8 @@ internal sealed partial class MainVM: ObservableObject {
     protected override void OnPropertyChanged(PropertyChangedEventArgs e) {
         base.OnPropertyChanged(e);
         if (e.PropertyName is not {} n || !_dependencies.TryGetValue(n, out var commands)) return;
-        foreach (var command in commands) command.NotifyCanExecuteChanged();
+        foreach (var cmd in commands) cmd.NotifyCanExecuteChanged();
     }
 
-    #endregion 集中响应
+    #endregion 响应
 }
