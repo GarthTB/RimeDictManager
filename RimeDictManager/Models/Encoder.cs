@@ -6,18 +6,20 @@ using System.IO;
 using Codes = IEnumerable<string>;
 
 internal sealed class Encoder {
-    private readonly FrozenDictionary<char, string[]> _charsDict;
+    private readonly FrozenDictionary<char, string[]> _singleDict;
 
-    public Encoder(string method, string charsDictPath) {
+    public Encoder(string method, string singleDictPath) {
         var stemLen = method == "星空键道6"
             ? 3 // 键道6单字前3码参与词组编码
             : 2; // 其他方案单字前2码参与词组编码
-        _charsDict = File.ReadLines(charsDictPath)
+        _singleDict = File.ReadLines(singleDictPath)
             .Select(static l => l.Split('\t', 3, StringSplitOptions.TrimEntries))
             .Where(p => p is [[not '#'], var code, ..] && code.Length >= stemLen) // 是单字且码长够
             .GroupBy(static p => p[0][0], p => p[1][..stemLen])
             .ToFrozenDictionary(static g => g.Key, static g => g.Distinct().ToArray());
-        CharCount = (uint)_charsDict.Count;
+        CharCount = (uint)_singleDict.Count;
+        if (CharCount == 0) throw new FormatException("单字码表为空");
+
         (CodeLenMin, CodeLenMax, Encode) = method switch {
             "二笔" => ((byte)4, (byte)4, (Func<string, Codes>)Encode2B),
             "虎码" or "五笔" => (4, 4, Encode5B),
@@ -70,12 +72,14 @@ internal sealed class Encoder {
 
         byte cnt = 0;
         for (var i = 0; i < word.Length && cnt < 4; i++)
-            if (_charsDict.TryGetValue(word[i], out var v))
+            if (_singleDict.TryGetValue(word[i], out var v))
                 codes[cnt++] = v;
         if (cnt == 4)
-            for (var (i, found) = (word.Length - 1, false); i > 3 && !found; i--)
-                if (_charsDict.TryGetValue(word[i], out var v))
-                    (codes[3], found) = (v, true);
+            for (var i = word.Length - 1; i > 3; i--)
+                if (_singleDict.TryGetValue(word[i], out var v)) {
+                    codes[3] = v;
+                    break;
+                }
 
         return (cnt switch {
             2 =>
