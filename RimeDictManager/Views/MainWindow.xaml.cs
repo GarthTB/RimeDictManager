@@ -15,9 +15,9 @@ public sealed partial class MainWindow {
             vm.LoadDict(path);
     }
 
-    private void DropCharsDict(object _, DragEventArgs e) {
+    private void DropSingle(object _, DragEventArgs e) {
         if (e.Data.GetData(DataFormats.FileDrop) is string[] and [var path])
-            ((MainVM)DataContext).SetEncoder(path);
+            ((MainVM)DataContext).LoadSingle(path);
     }
 
     private void ShowLogs(object _, RoutedEventArgs e) => new LogWindow().ShowDialog();

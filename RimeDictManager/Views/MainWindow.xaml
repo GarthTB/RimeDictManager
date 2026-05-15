@@ -50,8 +50,8 @@
             Grid.Row="4"
             Content="更换单字"
             ToolTip="支持拖放"
-            Command="{Binding ChangeSingleCommand, Mode=OneTime}"
-            Drop="DropCharsDict"/>
+            Command="{Binding OpenSingleCommand, Mode=OneTime}"
+            Drop="DropSingle"/>
         <Button Grid.Column="0"
             Grid.Row="6"
             Content="查看日志"
@@ -89,7 +89,7 @@
             ToolTip="自动编码结果；变红表示不唯一"
             Foreground="{Binding AutoCodeColor}"
             IsEnabled="{Binding EncoderEnabled}"
-            ItemsSource="{Binding AutoCodes}"
+            ItemsSource="{Binding AutoCodes, Mode=OneTime}"
             SelectedItem="{Binding SelAutoCode}"/>
         <RadioButton Grid.Column="2"
             Grid.Row="4"
@@ -144,7 +144,7 @@
             Padding="0"
             Content="按编码前缀"
             GroupName="SearchMode"
-            IsChecked="{Binding IsSearchByCode}"/>
+            IsChecked="{Binding IsSearchByCode, Mode=OneWayToSource}"/>
         <RadioButton Grid.Column="1"
             Grid.ColumnSpan="2"
             Grid.Row="10"
@@ -163,23 +163,23 @@
             CanUserAddRows="False"
             CanUserDeleteRows="False"
             SelectionMode="Single"
-            ItemsSource="{Binding SearchResults}"
+            ItemsSource="{Binding SearchResults, Mode=OneTime}"
             SelectedItem="{Binding SelSearchResult}">
             <DataGrid.Columns>
-                <DataGridTextColumn Width="100"
+                <DataGridTextColumn Width="80"
                     IsReadOnly="True"
                     Header="行号"
-                    Binding="{Binding Num}"/>
+                    Binding="{Binding Num, Mode=OneTime}"/>
                 <DataGridTextColumn Width="*"
                     Header="词组"
                     Binding="{Binding Text}"/>
                 <DataGridTextColumn Width="*"
                     Header="编码"
                     Binding="{Binding Code}"/>
-                <DataGridTextColumn Width="100"
+                <DataGridTextColumn Width="80"
                     Header="权重"
                     Binding="{Binding Weight}"/>
-                <DataGridTextColumn Width="100"
+                <DataGridTextColumn Width="80"
                     Header="造词码"
                     Binding="{Binding Stem}"/>
             </DataGrid.Columns>

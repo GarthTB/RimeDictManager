@@ -11,7 +11,8 @@
         <vm:LogVM/>
     </Window.DataContext>
     <Grid Margin="12, 11">
-        <TextBox IsReadOnly="True"
+        <TextBox Padding="4"
+            IsReadOnly="True"
             TextWrapping="Wrap"
             VerticalContentAlignment="Top"
             VerticalScrollBarVisibility="Auto"
