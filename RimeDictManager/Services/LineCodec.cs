@@ -17,16 +17,16 @@ internal static class LineCodec {
         var indent = metaLines[i]!.Length - metaLines[i].AsSpan().TrimStart().Length;
         while (++i < metaLines.Count) {
             var line = metaLines[i].AsSpan();
-            var trimmed = line.TrimStart();
-            if (trimmed.IsEmpty || trimmed[0] == '#') continue;
-            if (line.Length - trimmed.Length <= indent) break;
-            if (trimmed[0] != '-') throw new FmtEx("列定义项缺失'-'");
+
+            var item = line.TrimStart();
+            if (item.IsEmpty || item[0] == '#') continue;
+            if (line.Length - item.Length <= indent) break;
+            if (item[0] != '-') throw new FmtEx("列定义项缺失'-'");
             if (cols.Count >= 4) throw new FmtEx("词库超过4列");
 
-            var name = trimmed[1..].TrimStart();
-            var hash = name.IndexOf(" #", StringComparison.Ordinal);
-            if (hash >= 0) name = name[..hash];
-            name = name.Trim();
+            var name = (item.IndexOf(" #") is > 1 and var j
+                ? item[1..j]
+                : item[1..]).Trim();
             if (!Enum.TryParse(name, true, out Col col)) throw new FmtEx($"列名无效：'{name}'");
             if (cols.Contains(col)) throw new FmtEx($"列名重复：'{name}'");
 
@@ -50,10 +50,16 @@ internal static class LineCodec {
             : throw new FmtEx("词条文本为空");
     }
 
-    public static Entry? TryNewEntry(string text, string? code, string? weight, string? stem) =>
-        TrimOrNull(text) is {} t
-            ? new(0, t, TrimOrNull(code), TrimOrNull(weight), TrimOrNull(stem))
-            : null;
+    public static Entry? TryNewEntry(string text, string? code, string? weight, string? stem) {
+        if (TrimOrNull(text) is not {} t) return null;
+        var c = TrimOrNull(code);
+        if (c is {} && !_cols.Contains(Col.Code)) return null;
+        var w = TrimOrNull(weight);
+        if (w is {} && !_cols.Contains(Col.Weight)) return null;
+        var s = TrimOrNull(stem);
+        if (s is {} && !_cols.Contains(Col.Stem)) return null;
+        return new(0, t, c, w, s);
+    }
 
     public static string Serialize(Entry e) {
         var vals = _cols.Select(col => col switch {
