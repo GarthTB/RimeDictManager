@@ -31,23 +31,31 @@ internal sealed class CodeTrie(int poolCap) {
         return true;
     }
 
-    public void ForEachByKey(string? key, bool exact, Func<int, bool> doWhile) {
-        if (TryFind(key) is >= 0 and var i && Proc(i) && !exact) Dfs(i);
+    public bool ContainsKey(string? key) => TryFind(key) is >= 0 and var i && _values[i]?.Count > 0;
 
-        bool Proc(int j) {
-            if (_values[j] is not {} vals) return true;
-            foreach (var v in vals)
-                if (!doWhile(v))
-                    return false;
-            return true;
+    public void ForEachByKey(string? key, bool exact, Action<int> f) {
+        if (TryFind(key) is not (>= 0 and var i)) return;
+        _values[i]?.ForEach(f);
+        if (!exact) Dfs(i);
+
+        void Dfs(int j) {
+            if (_children[j] is not {} ch) return;
+            foreach (var k in ch.Values) {
+                _values[k]?.ForEach(f);
+                Dfs(k);
+            }
         }
+    }
 
-        bool Dfs(int j) {
-            if (_children[j] is not {} ch) return true;
+    public bool IsPrefix(string? key) {
+        return TryFind(key) is >= 0 and var i && HasChildValue(i);
+
+        bool HasChildValue(int j) {
+            if (_children[j] is not {} ch) return false;
             foreach (var k in ch.Values)
-                if (!Proc(k) || !Dfs(k))
-                    return false;
-            return true;
+                if (_values[k]?.Count > 0 || HasChildValue(k))
+                    return true;
+            return false;
         }
     }
 

@@ -86,15 +86,14 @@ internal sealed class Dict {
     }
 
     public bool Remove(Entry e) {
-        if (!_textDict.TryGetValue(e.Text, out var indexes)) return false;
-        var j = indexes.FindIndex(i => _entries[i] == e);
-        if (j < 0) return false;
+        if (!_textDict.TryGetValue(e.Text, out var indexes)
+         || indexes.FindIndex(i => _entries[i] == e) is not (>= 0 and var j))
+            return false;
 
         var i = indexes[j];
         indexes[j] = indexes[^1];
         indexes.RemoveAt(indexes.Count - 1);
-
-        if (!_codeTrie.Remove(e.Code, i)) throw new NeverEx("程序内部不一致，请停用并报告异常");
+        if (!_codeTrie.Remove(e.Code, i)) throw new NeverEx("程序内部不一致，请停用并报告异常A");
         if (indexes.Count == 0) _textDict.Remove(e.Text);
 
         _entries[i] = e with { Text = "" };
@@ -102,15 +101,16 @@ internal sealed class Dict {
         return Modified = true;
     }
 
-    public void ForEachByText(string text, Func<Entry, bool> doWhile) {
+    public bool ContainsCode(string? code) => _codeTrie.ContainsKey(code);
+    public bool IsCodePrefix(string? code) => _codeTrie.IsPrefix(code);
+
+    public void ForEachByText(string text, Action<Entry> f) {
         if (!_textDict.TryGetValue(text, out var indexes)) return;
-        foreach (var i in indexes)
-            if (!doWhile(_entries[i]))
-                break;
+        foreach (var i in indexes) f(_entries[i]);
     }
 
-    public void ForEachByCode(string? code, bool exact, Func<Entry, bool> doWhile) =>
-        _codeTrie.ForEachByKey(code, exact, i => doWhile(_entries[i]));
+    public void ForEachByCode(string? code, bool exact, Action<Entry> f) =>
+        _codeTrie.ForEachByKey(code, exact, i => f(_entries[i]));
 
     /// <summary> 保存词库（不迁移路径） </summary>
     /// <param name="path"> null则覆写 </param>
