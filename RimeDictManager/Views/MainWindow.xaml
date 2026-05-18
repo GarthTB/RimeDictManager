@@ -41,6 +41,7 @@
             Drop="DropDict"/>
         <ComboBox Grid.Column="0"
             Grid.Row="2"
+            Padding="7, 0, 0, 0"
             VerticalContentAlignment="Center"
             ToolTip="编码方案名"
             IsEnabled="{Binding EncoderEnabled}"
@@ -85,6 +86,7 @@
             Value="{Binding CodeLen}"/>
         <ComboBox Grid.Column="3"
             Grid.Row="2"
+            Padding="7, 0, 0, 0"
             VerticalContentAlignment="Center"
             ToolTip="自动编码结果；变红表示不唯一"
             Foreground="{Binding AutoCodeColor}"
@@ -144,7 +146,7 @@
             Padding="0"
             Content="按编码前缀"
             GroupName="SearchMode"
-            IsChecked="{Binding IsSearchByCode, Mode=OneWayToSource}"/>
+            IsChecked="{Binding IsSearchByCode}"/>
         <RadioButton Grid.Column="1"
             Grid.ColumnSpan="2"
             Grid.Row="10"
