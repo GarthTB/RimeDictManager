@@ -9,7 +9,7 @@
         <ApplicationIcon>RDM3.ico</ApplicationIcon>
         <Version>3.0.0</Version>
         <Authors>Garth TB | 天卜 &lt;g-art-h@outlook.com&gt;</Authors>
-        <Description>Auto-encoding RIME Dictionary Manager | 可自动编码的RIME词库管理器</Description>
+        <Description>Auto-encoding RIME Dictionary Manager | 可自动编码的 RIME 词库管理器</Description>
         <Copyright>Copyright (c) 2026 Garth TB | 天卜</Copyright>
         <PackageProjectUrl>https://github.com/GarthTB/RimeDictManager</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
