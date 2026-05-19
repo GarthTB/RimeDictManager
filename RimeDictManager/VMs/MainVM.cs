@@ -163,7 +163,7 @@ internal sealed partial class MainVM: ObservableObject {
     partial void OnPendingEntryChanged(Entry? value) => SyncSearchText();
 
     private void UpdatePendingEntry() =>
-        PendingEntry = EncoderReady
+        PendingEntry = EncoderEnabled && EncoderReady
             ? TryNewEntry(PendingText, SelAutoCode, PendingWeight, PendingStem)
             : TryNewEntry(PendingText, ManualCode, PendingWeight, PendingStem);
 
