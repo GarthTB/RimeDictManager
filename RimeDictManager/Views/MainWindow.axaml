@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:RimeDictManager.ViewModels"
+    x:Class="RimeDictManager.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    Height="480"
+    Width="640"
+    Title="RIME 词库管理器 4.0.0">
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+    <TextBlock HorizontalAlignment="Center"
+        VerticalAlignment="Center"
+        Text="{Binding Greeting}"/>
+</Window>

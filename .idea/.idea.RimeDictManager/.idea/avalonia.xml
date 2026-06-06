@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AvaloniaProject">
+    <option name="projectPerEditor">
+      <map>
+        <entry key="RimeDictManager/App.axaml" value="RimeDictManager/RimeDictManager.csproj" />
+        <entry key="RimeDictManager/Views/MainWindow.axaml" value="RimeDictManager/RimeDictManager.csproj" />
+      </map>
+    </option>
+  </component>
+</project>
