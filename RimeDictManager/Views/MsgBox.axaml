@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="RimeDictManager.Views.MsgBox"
+    SizeToContent="WidthAndHeight"
+    WindowStartupLocation="CenterOwner">
+    <Grid Margin="16,14"
+        RowDefinitions="*,14,32">
+        <TextBlock x:Name="Msg"/>
+        <Grid Grid.Row="2"
+            ColumnDefinitions="*,16,*"
+            HorizontalAlignment="Right">
+            <Button x:Name="BtnNo"/>
+            <Button x:Name="BtnYes"
+                Grid.Column="2"/>
+        </Grid>
+    </Grid>
+</Window>
