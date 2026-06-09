@@ -11,7 +11,7 @@ public sealed class App: Application {
 
     public override void OnFrameworkInitializationCompleted() {
         (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow
-            = new MainWindow { DataContext = new MainWindowViewModel() };
+            = new MainWindow { DataContext = new MainWindowVM() };
         base.OnFrameworkInitializationCompleted();
     }
 }
