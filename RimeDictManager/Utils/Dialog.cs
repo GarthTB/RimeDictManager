@@ -1,15 +1,11 @@
 namespace RimeDictManager.Utils;
 
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Views;
 
 public static class Dialog {
-    private static Window Owner =>
-        ((IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!).Windows
-        .FirstOrDefault(static w => w.IsActive)!;
+    public static Task<bool> Ask(Window owner, string msg) =>
+        new MsgBox(msg, true).ShowDialog<bool>(owner);
 
-    public static Task<bool> Ask(string msg) => new MsgBox(msg, true).ShowDialog<bool>(Owner);
-    public static Task Show(string msg) => new MsgBox(msg, false).ShowDialog(Owner);
+    public static Task Inform(Window owner, string msg) => new MsgBox(msg, false).ShowDialog(owner);
 }
