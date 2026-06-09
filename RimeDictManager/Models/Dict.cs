@@ -1,41 +1,23 @@
 namespace RimeDictManager.Models;
 
 using System.Diagnostics;
-using System.Text;
 using Utils;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
 public sealed class Dict {
-    private readonly IReadOnlyList<Col> _cols;
     private readonly List<EntryLine> _entries;
     private readonly CodeTrie _entriesByCode;
     private readonly Dictionary<string, List<int>> _entriesByText;
-    private readonly string _header, _name, _path;
+    private readonly string _header, _path;
     private readonly List<RawLine> _rawLines;
 
-    public Dict(string path) {
-        using StreamReader reader = new(_path = path);
-        var num = 1u;
+    public Dict(Stream stream, string path) {
+        using StreamReader reader = new(stream);
+        _path = path;
 
-        var headerIdx = 0;
-        StringBuilder header = new(1024);
-        for (string? l; (l = reader.ReadLine()) is {}; num++) {
-            if (header.Length > 16384) throw new FormatException("词库文件头过长，疑似缺失或未闭合");
-            if (string.IsNullOrWhiteSpace(l))
-                header.Append('\n');
-            else if (l == "---")
-                headerIdx = header.Append(l).Append('\n').Length;
-            else if (l == "...") {
-                var yaml = header.ToString(headerIdx, header.Length - headerIdx);
-                Codec.ParseHeader(yaml, path, out _name, out _cols);
-                header.Append(l);
-                num++;
-                break;
-            } else
-                header.Append(l).Append('\n');
-        }
-        if (_name is null || _cols is null) throw new FormatException("词库文件头缺失或未闭合");
-        _header = header.ToString();
+        var header = DictParser.ReadHeader(reader, out _header, out var num);
+        Name = header.Name ?? DictParser.GetName(path);
+        Cols = DictParser.ParseCols(header.Cols);
 
         _entries = new(4096);
         _rawLines = new(64);
@@ -45,7 +27,7 @@ public sealed class Dict {
             else if (l[0] == '#')
                 _rawLines.Add(new(num, l));
             else
-                _entries.Add(Codec.Deserialize(num, l, _cols));
+                _entries.Add(LineCodec.Deserialize(num, l, Cols));
         Cnt = (uint)_entries.Count;
 
         _entriesByText = new(_entries.Count);
@@ -63,6 +45,8 @@ public sealed class Dict {
 
     public uint Cnt { get; private set; }
     public bool Mod { get; private set; }
+    public string Name { get; }
+    public IReadOnlyList<Col> Cols { get; }
 
     public void Insert(EntryLine e) {
         _entries.Add(e);
@@ -116,26 +100,26 @@ public sealed class Dict {
         if (reorder) {
             foreach (var e in _entries.Where(static e => e.Text.Length > 0)
                 .OrderBy(static e => (e.Code, e.Num - 1))) // 新词条后置
-                writer.WriteLine(e.Serialize(_cols));
+                writer.WriteLine(e.Serialize(Cols));
             foreach (var l in _rawLines.Where(static l => l.Content is {}))
                 writer.WriteLine(l.Content);
         } else {
-            using var en = _entries.Where(static e => e is { Num: > 0, Text.Length: > 0 })
+            using var entries = _entries.Where(static e => e is { Num: > 0, Text.Length: > 0 })
                 .GetEnumerator();
-            using var rn = _rawLines.GetEnumerator();
-            var hasE = en.MoveNext();
-            var hasR = rn.MoveNext();
-            while (hasE || hasR)
-                if (hasE && (!hasR || en.Current.Num <= rn.Current.Num)) {
-                    writer.WriteLine(en.Current.Serialize(_cols));
-                    hasE = en.MoveNext();
+            using var rawLines = _rawLines.GetEnumerator();
+            var anyE = entries.MoveNext();
+            var anyR = rawLines.MoveNext();
+            while (anyE || anyR)
+                if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
+                    writer.WriteLine(entries.Current.Serialize(Cols));
+                    anyE = entries.MoveNext();
                 } else {
-                    writer.WriteLine(rn.Current.Content);
-                    hasR = rn.MoveNext();
+                    writer.WriteLine(rawLines.Current.Content);
+                    anyR = rawLines.MoveNext();
                 }
             foreach (var e in _entries.Where(static e => e is { Num: 0, Text.Length: > 0 })
                 .OrderBy(static e => e.Code))
-                writer.WriteLine(e.Serialize(_cols));
+                writer.WriteLine(e.Serialize(Cols));
         }
 
         Mod = false;

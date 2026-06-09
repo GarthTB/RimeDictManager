@@ -1,44 +1,11 @@
 namespace RimeDictManager.Utils;
 
 using Models;
-using SharpYaml;
 using static Col;
 using Cols = IReadOnlyList<Col>;
 using FmtEx = FormatException;
 
-public enum Col: byte { Text, Code, Weight, Stem }
-
-public static class Codec {
-    private static readonly Cols DefaultCols = [Text, Code, Weight, Stem];
-
-    public static void ParseHeader(string yaml, string path, out string name, out Cols cols) {
-        var info = YamlSerializer.Deserialize<HeaderInfo>(yaml)
-                ?? throw new FmtEx("词库文件头无法作为YAML解析");
-
-        const string ext = ".dict.yaml";
-        name = info.Name
-            ?? (path.EndsWith(ext, StringComparison.OrdinalIgnoreCase)
-                   ? path[..^ext.Length]
-                   : path);
-
-        if (info.Cols is not {} sCols) {
-            cols = DefaultCols;
-            return;
-        }
-        if (sCols.Length == 0) throw new FmtEx("词库列定义为空");
-        if (sCols.Length > 4) throw new FmtEx("词库超过4列");
-        var eCols = Array.ConvertAll(
-            sCols,
-            static s => Enum.TryParse(TrimOrNull(s), true, out Col col)
-                ? col
-                : throw new FmtEx($"词库列名无效：'{s}'"));
-        cols = !eCols.Contains(Text)
-            ? throw new FmtEx("词库未定义文本列")
-            : eCols.Distinct().Count() != eCols.Length
-                ? throw new FmtEx("词库有重复列名")
-                : eCols;
-    }
-
+public static class LineCodec {
     public static EntryLine Deserialize(uint num, string line, Cols cols) {
         var cnt = cols.Count;
         var parts = line.Split('\t', cnt + 1);
@@ -81,9 +48,4 @@ public static class Codec {
         string.IsNullOrWhiteSpace(s)
             ? null
             : s.Trim();
-
-    private sealed class HeaderInfo {
-        public string? Name { get; }
-        public string[]? Cols { get; }
-    }
 }
