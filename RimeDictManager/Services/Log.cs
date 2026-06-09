@@ -4,11 +4,9 @@ public static class Log {
     private static readonly List<string> Logs = new(1024);
     private static readonly DateTime StartTime = DateTime.Now;
 
-    public static void Add(string msg, string? entry) {
-        if (entry is {}) msg += $"\t{entry}";
-        Logs.Add(msg);
-    }
-
+    public static void Crud(string op, string entry) => Logs.Add($"{op}\t{entry}");
+    public static void Ex(string op, Exception ex) => Logs.Add($"{op}时：\n{ex}");
+    public static void Info(string msg) => Logs.Add(msg);
     public static string ReadAll() => string.Join('\n', Logs);
 
     public static async Task SaveAsync(Stream stream) {
