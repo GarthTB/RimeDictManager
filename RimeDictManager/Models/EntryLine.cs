@@ -1,7 +1,7 @@
 namespace RimeDictManager.Models;
 
 /// <summary> 解析的词条行 </summary>
-/// <param name="Num"> 行号：1开始，新词条为0 </param>
+/// <param name="Num"> 行号：1开始 </param>
 /// <param name="Text"> 文本（字词）：非空 </param>
 /// <param name="Code"> 编码：省略时null </param>
 /// <param name="Weight"> 权重：省略时null </param>

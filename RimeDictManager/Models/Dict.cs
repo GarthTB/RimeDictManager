@@ -10,35 +10,35 @@ public sealed class Dict {
     private readonly Dictionary<string, List<int>> _entriesByText;
     private readonly string _header, _path;
     private readonly List<RawLine> _rawLines;
+    private uint _num;
 
-    public Dict(Stream stream, string path) {
-        using StreamReader reader = new(stream);
-        _path = path;
+    public Dict(string path) {
+        using StreamReader reader = new(_path = path);
 
-        var header = DictParser.ReadHeader(reader, out _header, out var num);
+        var header = DictParser.ReadHeader(reader, out _header, out _num);
         Name = header.Name ?? DictParser.GetName(path);
         Cols = DictParser.ParseCols(header.Cols);
 
         _entries = new(4096);
         _rawLines = new(64);
-        for (string? l; (l = reader.ReadLine()) is {}; num++)
+        for (string? l; (l = reader.ReadLine()) is {}; _num++)
             if (string.IsNullOrWhiteSpace(l))
-                _rawLines.Add(new(num, null));
+                _rawLines.Add(new(_num, null));
             else if (l[0] == '#')
-                _rawLines.Add(new(num, l));
+                _rawLines.Add(new(_num, l));
             else
-                _entries.Add(LineCodec.Deserialize(num, l, Cols));
+                _entries.Add(LineCodec.Deserialize(_num, l, Cols));
         Cnt = (uint)_entries.Count;
 
         _entriesByText = new(_entries.Count);
         _entriesByCode = new(4 * _entries.Count);
         for (var i = 0; i < _entries.Count; i++) {
             var e = _entries[i];
-            ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
+            ref var idx = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
             if (exists)
-                indexes!.Add(i);
+                idx!.Add(i);
             else
-                indexes = [i];
+                idx = [i];
             _entriesByCode.Insert(e.Code, i);
         }
     }
@@ -49,13 +49,15 @@ public sealed class Dict {
     public IReadOnlyList<Col> Cols { get; }
 
     public void Insert(EntryLine e) {
+        e = e with { Num = ++_num };
+
         _entries.Add(e);
         var i = _entries.Count - 1;
-        ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
+        ref var idx = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
         if (exists)
-            indexes!.Add(i);
+            idx!.Add(i);
         else
-            indexes = [i];
+            idx = [i];
         _entriesByCode.Insert(e.Code, i);
 
         Cnt++;
@@ -63,15 +65,15 @@ public sealed class Dict {
     }
 
     public bool Remove(EntryLine e) {
-        if (!_entriesByText.TryGetValue(e.Text, out var indexes)
-         || indexes.FindIndex(x => _entries[x] == e) is not (>= 0 and var j))
+        if (!_entriesByText.TryGetValue(e.Text, out var idx)
+         || idx.FindIndex(x => _entries[x] == e) is not (>= 0 and var j))
             return false;
 
-        var i = indexes[j];
-        indexes[j] = indexes[^1];
-        indexes.RemoveAt(indexes.Count - 1);
-        if (!_entriesByCode.Remove(e.Code, i)) throw new UnreachableException("致命错误，请停用并报告异常A");
-        if (indexes.Count == 0) _entriesByText.Remove(e.Text);
+        var i = idx[j];
+        idx[j] = idx[^1];
+        idx.RemoveAt(idx.Count - 1);
+        if (!_entriesByCode.Remove(e.Code, i)) throw new UnreachableException("严重错误：请停用并报告异常A");
+        if (idx.Count == 0) _entriesByText.Remove(e.Text);
 
         _entries[i] = e with { Text = "" }; // 标记死亡
         Cnt--;
@@ -91,35 +93,31 @@ public sealed class Dict {
 
     /// <summary> 保存词库（不迁移路径） </summary>
     /// <param name="path"> null则覆写 </param>
-    /// <param name="reorder"> true：词条先按Code升序，再按Num升序重排，空行丢弃，注释原序排在末尾；false：保持原有行，新词条按Code升序排在末尾 </param>
-    public void Save(string? path, bool reorder) {
-        using StreamWriter writer = new(path ?? _path);
+    /// <param name="reorder"> true：词条先按Code升序，再按Num升序重排，空行丢弃，注释原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
+    public async Task SaveAsync(string? path, bool reorder) {
+        await using StreamWriter writer = new(path ?? _path);
         writer.NewLine = "\n";
-        writer.WriteLine(_header);
+        await writer.WriteLineAsync(_header);
 
         if (reorder) {
             foreach (var e in _entries.Where(static e => e.Text.Length > 0)
-                .OrderBy(static e => (e.Code, e.Num - 1))) // 新词条后置
-                writer.WriteLine(e.Serialize(Cols));
+                .OrderBy(static e => (e.Code, e.Num - 1))) // 下溢回绕，新词条后置
+                await writer.WriteLineAsync(e.Serialize(Cols));
             foreach (var l in _rawLines.Where(static l => l.Content is {}))
-                writer.WriteLine(l.Content);
+                await writer.WriteLineAsync(l.Content);
         } else {
-            using var entries = _entries.Where(static e => e is { Num: > 0, Text.Length: > 0 })
-                .GetEnumerator();
+            using var entries = _entries.Where(static e => e.Text.Length > 0).GetEnumerator();
             using var rawLines = _rawLines.GetEnumerator();
             var anyE = entries.MoveNext();
             var anyR = rawLines.MoveNext();
             while (anyE || anyR)
                 if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
-                    writer.WriteLine(entries.Current.Serialize(Cols));
+                    await writer.WriteLineAsync(entries.Current.Serialize(Cols));
                     anyE = entries.MoveNext();
                 } else {
-                    writer.WriteLine(rawLines.Current.Content);
+                    await writer.WriteLineAsync(rawLines.Current.Content);
                     anyR = rawLines.MoveNext();
                 }
-            foreach (var e in _entries.Where(static e => e is { Num: 0, Text.Length: > 0 })
-                .OrderBy(static e => e.Code))
-                writer.WriteLine(e.Serialize(Cols));
         }
 
         Mod = false;

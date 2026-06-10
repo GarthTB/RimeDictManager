@@ -9,14 +9,14 @@ public static class LineCodec {
     public static EntryLine Deserialize(uint num, string line, Cols cols) {
         var cnt = cols.Count;
         var parts = line.Split('\t', cnt + 1);
-        if (parts.Length > cnt) throw new FmtEx($"词条超过{cnt}列");
+        if (parts.Length > cnt) throw new FmtEx($"第{num}行词条超过{cnt}列");
 
         var vals = new string?[4];
         for (var i = 0; i < parts.Length; i++) vals[(int)cols[i]] = TrimOrNull(parts[i]);
 
         return vals[(int)Text] is {} t
             ? new(num, t, vals[(int)Code], vals[(int)Weight], vals[(int)Stem])
-            : throw new FmtEx("词条文本为空");
+            : throw new FmtEx($"第{num}行词条文本为空");
     }
 
     public static string Serialize(this EntryLine e, Cols cols) {

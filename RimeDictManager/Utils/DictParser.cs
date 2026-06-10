@@ -19,7 +19,7 @@ public sealed class Header {
 public static class DictParser {
     private static readonly Col[] DefaultCols = [Text, Code, Weight, Stem];
 
-    public static Header ReadHeader(StreamReader reader, out string raw, out uint num) {
+    public static Header ReadHeader(TextReader reader, out string raw, out uint num) {
         StringBuilder s = new(1024);
         var start = 0;
         num = 1u;
