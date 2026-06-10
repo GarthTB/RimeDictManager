@@ -101,7 +101,7 @@ public sealed class Dict {
 
         if (reorder) {
             foreach (var e in _entries.Where(static e => e.Text.Length > 0)
-                .OrderBy(static e => (e.Code, e.Num - 1))) // 下溢回绕，新词条后置
+                .OrderBy(static e => (e.Code, e.Num)))
                 await writer.WriteLineAsync(e.Serialize(Cols));
             foreach (var l in _rawLines.Where(static l => l.Content is {}))
                 await writer.WriteLineAsync(l.Content);
