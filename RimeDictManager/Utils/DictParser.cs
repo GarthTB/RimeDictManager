@@ -1,23 +1,23 @@
-// ReSharper disable ClassNeverInstantiated.Global
-// ReSharper disable UnassignedGetOnlyAutoProperty
+// ReSharper disable InconsistentNaming
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace RimeDictManager.Utils;
 
 using System.Text;
+using Common;
 using SharpYaml;
-using static Col;
-using static Common.FileTypes;
 using FmtEx = FormatException;
 
 public enum Col: byte { Text, Code, Weight, Stem }
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public sealed class Header {
-    public string? Name { get; }
-    public string[]? Cols { get; }
+    public string? name { get; set; }
+    public string[]? columns { get; set; }
 }
 
 public static class DictParser {
-    private static readonly Col[] DefaultCols = [Text, Code, Weight, Stem];
+    private static readonly Col[] DefaultCols = [Col.Text, Col.Code, Col.Weight, Col.Stem];
 
     public static Header ReadHeader(TextReader reader, out string raw, out uint num) {
         StringBuilder s = new(1024);
@@ -43,8 +43,8 @@ public static class DictParser {
     }
 
     public static string GetName(string path) =>
-        path.EndsWith(DictExt, StringComparison.OrdinalIgnoreCase)
-            ? path[..^DictExt.Length]
+        path.EndsWith(FileTypes.DictExt, StringComparison.OrdinalIgnoreCase)
+            ? path[..^FileTypes.DictExt.Length]
             : path;
 
     public static Col[] ParseCols(string[]? cols) {
@@ -56,7 +56,7 @@ public static class DictParser {
             static s => Enum.TryParse(s.Trim(), true, out Col col)
                 ? col
                 : throw new FmtEx($"词库列名无效：'{s}'"));
-        return !result.Contains(Text)
+        return !result.Contains(Col.Text)
             ? throw new FmtEx("词库未定义文本列")
             : result.Distinct().Count() < result.Length
                 ? throw new FmtEx("词库有重复列名")

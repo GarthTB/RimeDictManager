@@ -8,16 +8,16 @@ public sealed class Dict {
     private readonly List<EntryLine> _entries;
     private readonly CodeTrie _entriesByCode;
     private readonly Dictionary<string, List<int>> _entriesByText;
-    private readonly string _header, _path;
+    private readonly string _header;
     private readonly List<RawLine> _rawLines;
     private uint _num;
 
     public Dict(string path) {
-        using StreamReader reader = new(_path = path);
+        using StreamReader reader = new(Path = path);
 
         var header = DictParser.ReadHeader(reader, out _header, out _num);
-        Name = header.Name ?? DictParser.GetName(path);
-        Cols = DictParser.ParseCols(header.Cols);
+        Name = header.name ?? DictParser.GetName(path);
+        Cols = DictParser.ParseCols(header.columns);
 
         _entries = new(4096);
         _rawLines = new(64);
@@ -43,9 +43,10 @@ public sealed class Dict {
         }
     }
 
+    public string Name { get; }
+    public string Path { get; }
     public uint Cnt { get; private set; }
     public bool Mod { get; private set; }
-    public string Name { get; }
     public IReadOnlyList<Col> Cols { get; }
 
     public void Insert(EntryLine e) {
@@ -95,7 +96,7 @@ public sealed class Dict {
     /// <param name="path"> null则覆写 </param>
     /// <param name="reorder"> true：词条先按Code升序，再按Num升序重排，空行丢弃，注释原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
     public async Task SaveAsync(string? path, bool reorder) {
-        await using StreamWriter writer = new(path ?? _path);
+        await using StreamWriter writer = new(path ?? Path);
         writer.NewLine = "\n";
         await writer.WriteLineAsync(_header);
 
@@ -105,21 +106,22 @@ public sealed class Dict {
                 await writer.WriteLineAsync(e.Serialize(Cols));
             foreach (var l in _rawLines.Where(static l => l.Content is {}))
                 await writer.WriteLineAsync(l.Content);
-        } else {
-            using var entries = _entries.Where(static e => e.Text.Length > 0).GetEnumerator();
-            using var rawLines = _rawLines.GetEnumerator();
-            var anyE = entries.MoveNext();
-            var anyR = rawLines.MoveNext();
-            while (anyE || anyR)
-                if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
-                    await writer.WriteLineAsync(entries.Current.Serialize(Cols));
-                    anyE = entries.MoveNext();
-                } else {
-                    await writer.WriteLineAsync(rawLines.Current.Content);
-                    anyR = rawLines.MoveNext();
-                }
+            Mod = false;
+            return;
         }
 
+        using var entries = _entries.Where(static e => e.Text.Length > 0).GetEnumerator();
+        using var rawLines = _rawLines.GetEnumerator();
+        var anyE = entries.MoveNext();
+        var anyR = rawLines.MoveNext();
+        while (anyE || anyR)
+            if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
+                await writer.WriteLineAsync(entries.Current.Serialize(Cols));
+                anyE = entries.MoveNext();
+            } else {
+                await writer.WriteLineAsync(rawLines.Current.Content);
+                anyR = rawLines.MoveNext();
+            }
         Mod = false;
     }
 }
