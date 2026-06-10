@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:vm="using:RimeDictManager.ViewModels"
+    x:Class="RimeDictManager.Views.DictWindow"
+    x:DataType="vm:DictWindowVM"
+    d:DataContext="{x:Type vm:DictWindowVM}"
+    Height="480"
+    Width="640"
+    Title="RIME 词库管理器 - 词库">
+    <Grid Margin="16,14"
+        RowDefinitions="Auto,14,*">
+        <Grid ColumnDefinitions="2*,16,2*,16,2*,16,3*">
+            <Button Content="添加词库"
+                Click="AddDict"/>
+            <Button Grid.Column="2"
+                Content="移除词库"
+                Command="{Binding RemoveCommand, Mode=OneTime}"/>
+            <Button Grid.Column="4"
+                Content="保存词库"
+                Command="{Binding SaveCommand, Mode=OneTime}"/>
+            <Button Grid.Column="6"
+                Content="设为加词目标"
+                Command="{Binding SetTgtCommand, Mode=OneTime}"/>
+        </Grid>
+        <DataGrid Grid.Row="2"
+            IsReadOnly="True"
+            CanUserReorderColumns="True"
+            CanUserResizeColumns="True"
+            SelectionMode="Single"
+            ItemsSource="{Binding DictInfos, Mode=OneTime}"
+            SelectedItem="{Binding SelDictInfo}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="名称"
+                    Binding="{Binding Name, Mode=OneTime}"/>
+                <DataGridTextColumn Width="*"
+                    Header="路径"
+                    Binding="{Binding Path, Mode=OneTime}"/>
+                <DataGridTextColumn Header="词条数"
+                    Binding="{Binding Cnt, Mode=OneTime}"/>
+                <DataGridTextColumn Header="改动"
+                    Binding="{Binding ModText, Mode=OneWay}"/>
+                <DataGridTextColumn Header="加词目标"
+                    Binding="{Binding TgtText, Mode=OneWay}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>

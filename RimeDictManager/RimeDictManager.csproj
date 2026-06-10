@@ -21,6 +21,7 @@
 
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="12.0.4"/>
+        <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.0.0"/>
         <PackageReference Include="Avalonia.Desktop" Version="12.0.4"/>
         <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4"/>
         <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.4"/>
@@ -29,6 +30,6 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2"/>
-        <PackageReference Include="SharpYaml" Version="3.9.0"/>
+        <PackageReference Include="SharpYaml" Version="3.10.0"/>
     </ItemGroup>
 </Project>

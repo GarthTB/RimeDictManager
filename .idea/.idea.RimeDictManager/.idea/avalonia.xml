@@ -4,10 +4,10 @@
     <option name="projectPerEditor">
       <map>
         <entry key="RimeDictManager/App.axaml" value="RimeDictManager/RimeDictManager.csproj" />
+        <entry key="RimeDictManager/Views/DictWindow.axaml" value="RimeDictManager/RimeDictManager.csproj" />
         <entry key="RimeDictManager/Views/LogWindow.axaml" value="RimeDictManager/RimeDictManager.csproj" />
         <entry key="RimeDictManager/Views/MainWindow.axaml" value="RimeDictManager/RimeDictManager.csproj" />
-        <entry key="RimeDictManager/Views/MessageBox.axaml" value="RimeDictManager/RimeDictManager.csproj" />
-        <entry key="RimeDictManager/Views/MsgBox.axaml" value="RimeDictManager/RimeDictManager.csproj" />
+        <entry key="RimeDictManager/Views/MsgWindow.axaml" value="RimeDictManager/RimeDictManager.csproj" />
       </map>
     </option>
   </component>
