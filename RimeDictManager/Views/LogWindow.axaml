@@ -3,12 +3,11 @@
     x:Class="RimeDictManager.Views.LogWindow"
     Height="480"
     Width="640"
-    Title="RIME 词库管理器 4.0.0 - 日志">
+    Title="RIME 词库管理器 - 日志">
     <Grid Margin="16,14">
         <TextBlock x:Name="Logs"
             TextWrapping="Wrap"/>
         <Button x:Name="BtnSave"
-            Height="32"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"
             Content="保存日志"
