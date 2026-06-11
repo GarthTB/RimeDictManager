@@ -15,9 +15,9 @@ public sealed class Dict {
     public Dict(string path) {
         using StreamReader reader = new(Path = path);
 
-        var header = DictParser.ReadHeader(reader, out _header, out _num);
-        Name = header.name ?? DictParser.GetName(path);
-        Cols = DictParser.ParseCols(header.columns);
+        _header = DictParser.ReadHeader(path, reader, out var name, out var cols, out _num);
+        Name = name;
+        Cols = cols;
 
         _entries = new(4096);
         _rawLines = new(64);
