@@ -1,22 +1,40 @@
 namespace RimeDictManager.Utils;
 
+using System.Diagnostics.CodeAnalysis;
 using Models;
 using static Col;
 using Cols = IReadOnlyList<Col>;
 using FmtEx = FormatException;
 
 public static class LineCodec {
-    public static EntryLine Deserialize(uint num, string line, Cols cols) {
+    public static bool Deserialize(
+        string l,
+        uint num,
+        Cols cols,
+        [NotNullWhen(true)] out EntryLine? e,
+        [NotNullWhen(false)] out RawLine? r) {
+        if (string.IsNullOrWhiteSpace(l)) {
+            e = null;
+            r = new(num, null);
+            return false;
+        }
+        if (l[0] == '#') {
+            e = null;
+            r = new(num, l);
+            return false;
+        }
+
         var cnt = cols.Count;
-        var parts = line.Split('\t', cnt + 1);
+        var parts = l.Split('\t', cnt + 1);
         if (parts.Length > cnt) throw new FmtEx($"第{num}行词条超过{cnt}列");
 
-        var vals = new string?[4];
+        var vals = new string?[cnt];
         for (var i = 0; i < parts.Length; i++) vals[(int)cols[i]] = TrimOrNull(parts[i]);
+        if (vals[(int)Text] is not {} t) throw new FmtEx($"第{num}行词条文本为空");
 
-        return vals[(int)Text] is {} t
-            ? new(num, t, vals[(int)Code], vals[(int)Weight], vals[(int)Stem])
-            : throw new FmtEx($"第{num}行词条文本为空");
+        e = new(num, t, vals[(int)Code], vals[(int)Weight], vals[(int)Stem]);
+        r = null;
+        return true;
     }
 
     public static string Serialize(this EntryLine e, Cols cols) {

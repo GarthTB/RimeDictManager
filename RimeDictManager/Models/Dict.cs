@@ -13,21 +13,19 @@ public sealed class Dict {
     private uint _num;
 
     public Dict(string path) {
-        using StreamReader reader = new(Path = path);
-
-        _header = DictParser.ReadHeader(path, reader, out var name, out var cols, out _num);
+        using StreamReader reader = new(path);
+        _header = DictParser.ReadHeader(reader, path, out var name, out var cols, out _num);
         Name = name;
+        Path = path;
         Cols = cols;
 
         _entries = new(4096);
         _rawLines = new(64);
         for (string? l; (l = reader.ReadLine()) is {}; _num++)
-            if (string.IsNullOrWhiteSpace(l))
-                _rawLines.Add(new(_num, null));
-            else if (l[0] == '#')
-                _rawLines.Add(new(_num, l));
+            if (LineCodec.Deserialize(l, _num, Cols, out var e, out var r))
+                _entries.Add(e.Value);
             else
-                _entries.Add(LineCodec.Deserialize(_num, l, Cols));
+                _rawLines.Add(r.Value);
         Cnt = (uint)_entries.Count;
 
         _entriesByText = new(_entries.Count);
@@ -45,9 +43,9 @@ public sealed class Dict {
 
     public string Name { get; }
     public string Path { get; }
+    public IReadOnlyList<Col> Cols { get; }
     public uint Cnt { get; private set; }
     public bool Mod { get; private set; }
-    public IReadOnlyList<Col> Cols { get; }
 
     public void Insert(EntryLine e) {
         e = e with { Num = ++_num };

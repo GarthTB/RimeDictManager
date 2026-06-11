@@ -1,6 +1,3 @@
-// ReSharper disable InconsistentNaming
-// ReSharper disable UnusedAutoPropertyAccessor.Local
-
 namespace RimeDictManager.Utils;
 
 using System.Text;
@@ -11,17 +8,15 @@ using FmtEx = FormatException;
 public enum Col: byte { Text, Code, Weight, Stem }
 
 // ReSharper disable once ClassNeverInstantiated.Local
-file sealed class Header {
-    public string? name { get; set; }
-    public string[]? columns { get; set; }
-}
+// ReSharper disable InconsistentNaming
+file sealed record Header(string? name, string[]? columns);
 
 public static class DictParser {
     private static readonly Col[] DefaultCols = [Col.Text, Col.Code, Col.Weight, Col.Stem];
 
     public static string ReadHeader(
-        string path,
         TextReader reader,
+        string path,
         out string name,
         out Col[] cols,
         out uint num) {
@@ -29,23 +24,27 @@ public static class DictParser {
         var start = 0;
         num = 1;
         for (string? l; (l = reader.ReadLine()) is {}; num++) {
-            if (s.Length > 16384) throw new FmtEx($"词库：{path}\n文件头过长，疑似缺失或未闭合");
+            if (s.Length > 16384) throw new FmtEx($"文件头过长，疑似缺失或未闭合\nRIME 词库：{path}");
             if (string.IsNullOrWhiteSpace(l))
                 s.Append('\n');
-            else if (l == "---")
-                start = s.Append(l).Append('\n').Length;
-            else if (l == "...") {
-                var yaml = s.ToString(start, s.Length - start);
-                var header = YamlSerializer.Deserialize<Header>(yaml)
-                          ?? throw new FmtEx($"词库：{path}\n文件头无法作为YAML解析");
-                name = header.name ?? GetName(path);
-                cols = ParseCols(name, header.columns);
+            else if (l == "---") {
+                start = s.Length;
+                s.Append(l).Append('\n');
+            } else if (l == "...") {
+                s.Append(l);
                 num++;
-                return s.Append(l).ToString();
+                break;
             } else
                 s.Append(l).Append('\n');
         }
-        throw new FmtEx($"词库：{path}\n文件头缺失或未闭合");
+        var raw = s.ToString();
+        if (raw is not [.., '.', '.', '.']) throw new FmtEx($"文件头缺失或未闭合\nRIME 词库：{path}");
+
+        var header = YamlSerializer.Deserialize<Header>(raw.AsSpan(start))
+                  ?? throw new FmtEx($"文件头无法作为YAML解析\nRIME 词库：{path}");
+        name = header.name ?? GetName(path);
+        cols = ParseCols(name, header.columns);
+        return raw;
     }
 
     private static string GetName(string path) =>
@@ -55,17 +54,16 @@ public static class DictParser {
 
     private static Col[] ParseCols(string name, string[]? cols) {
         if (cols is null) return DefaultCols;
-        if (cols.Length == 0) throw new FmtEx($"词库：{name}\n列定义为空");
-        if (cols.Length > 4) throw new FmtEx($"词库：{name}\n超过4列");
-        var result = Array.ConvertAll(
-            cols,
-            s => Enum.TryParse(s.Trim(), true, out Col col)
-                ? col
-                : throw new FmtEx($"词库：{name}\n列名无效：'{s}'"));
-        return !result.Contains(Col.Text)
-            ? throw new FmtEx($"词库：{name}\n未定义文本列")
-            : result.Distinct().Count() < result.Length
-                ? throw new FmtEx($"词库：{name}\n有重复列名")
-                : result;
+        if (cols.Length == 0) throw new FmtEx($"列定义为空\nRIME 词库：{name}");
+        if (cols.Length > 4) throw new FmtEx($"词库超过4列\nRIME 词库：{name}");
+        HashSet<Col> result = new(4);
+        foreach (var s in cols) {
+            if (!Enum.TryParse(s.Trim(), true, out Col col))
+                throw new FmtEx($"列名无效：'{s}'\nRIME 词库：{name}");
+            if (!result.Add(col)) throw new FmtEx($"有重复列名'{s}'\nRIME 词库：{name}");
+        }
+        return result.Contains(Col.Text)
+            ? result.ToArray()
+            : throw new FmtEx($"未定义文本列\nRIME 词库：{name}");
     }
 }
