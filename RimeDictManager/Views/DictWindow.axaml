@@ -19,7 +19,8 @@
                 Command="{Binding RemoveDictCommand, Mode=OneTime}"/>
             <Button Grid.Column="4"
                 Content="保存词库"
-                Command="{Binding SaveDictCommand, Mode=OneTime}"/>
+                IsEnabled="{Binding SelDictInfoMod, Mode=OneWay}"
+                Click="SaveDict"/>
             <Button Grid.Column="6"
                 Content="设为加词目标"
                 Command="{Binding SetTgtDictCommand, Mode=OneTime}"/>

@@ -26,6 +26,6 @@ public sealed partial class LogWindow: Window {
             if (file is null) return;
             await using (var stream = await file.OpenWriteAsync()) await Log.SaveAsync(stream);
             await MsgBox.Info($"日志已写入'{file.Name}'", this);
-        } catch (Exception ex) { await MsgBox.Ex("保存日志", ex, this); }
+        } catch (Exception ex) { await MsgBox.Err("保存日志", ex, this); }
     }
 }
