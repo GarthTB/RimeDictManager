@@ -19,15 +19,6 @@ public sealed partial class DictWindow: Window {
         DataContext = new DictWindowVM();
     }
 
-    private async void AddDict(object? _, RoutedEventArgs e) {
-        try {
-            var files = await StorageProvider.OpenFilePickerAsync(_openOptions);
-            if (files.Count < 1) return;
-            var vm = (DictWindowVM)DataContext!;
-            foreach (var file in files) {
-                vm.Add(file.TryGetLocalPath() ?? file.Path.LocalPath);
-                file.Dispose();
-            }
-        } catch (Exception ex) { await MsgBox.Ex("添加词库", ex, this); }
-    }
+    private void AddDict(object? _, RoutedEventArgs e) => throw new NotImplementedException();
+    private void AddSingleDict(object? _, RoutedEventArgs e) => throw new NotImplementedException();
 }
