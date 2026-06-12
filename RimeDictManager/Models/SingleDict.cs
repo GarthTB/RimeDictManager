@@ -1,7 +1,7 @@
 namespace RimeDictManager.Models;
 
 using System.Collections.Frozen;
-using Utils;
+using Services;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
 public sealed class SingleDict {

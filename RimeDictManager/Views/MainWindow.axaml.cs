@@ -10,5 +10,5 @@ public sealed partial class MainWindow: Window {
         DataContext = new MainWindowVM();
     }
 
-    private void Test(object? _, RoutedEventArgs e) => new LogWindow().ShowDialog(this);
+    private void Test(object? _, RoutedEventArgs e) => new DictWindow().ShowDialog(this);
 }

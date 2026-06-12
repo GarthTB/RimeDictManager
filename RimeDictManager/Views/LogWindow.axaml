@@ -6,7 +6,8 @@
     Title="RIME 词库管理器 - 日志">
     <Grid Margin="16,14">
         <TextBlock x:Name="Logs"
-            TextWrapping="Wrap"/>
+            TextWrapping="Wrap"
+            Text="暂未记录任何操作"/>
         <Button x:Name="BtnSave"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"

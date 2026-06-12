@@ -1,13 +1,14 @@
 <Window xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:vm="using:RimeDictManager.ViewModels"
     x:Class="RimeDictManager.Views.DictWindow"
     x:DataType="vm:DictWindowVM"
-    d:DataContext="{x:Type vm:DictWindowVM}"
     Height="480"
     Width="640"
     Title="RIME 词库管理器 - 词库">
+    <Design.DataContext>
+        <vm:DictWindowVM/>
+    </Design.DataContext>
     <Grid Margin="16,14"
         RowDefinitions="Auto,14,*,14,Auto,14,*">
         <Grid ColumnDefinitions="*,16,*,16,*,16,*">

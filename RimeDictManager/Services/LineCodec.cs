@@ -1,4 +1,4 @@
-namespace RimeDictManager.Utils;
+namespace RimeDictManager.Services;
 
 using System.Diagnostics.CodeAnalysis;
 using Models;
@@ -28,7 +28,7 @@ public static class LineCodec {
         var parts = l.Split('\t', cnt + 1);
         if (parts.Length > cnt) throw new FmtEx($"第{num}行词条超过{cnt}列");
 
-        var vals = new string?[cnt];
+        var vals = new string?[4];
         for (var i = 0; i < parts.Length; i++) vals[(int)cols[i]] = TrimOrNull(parts[i]);
         if (vals[(int)Text] is not {} t) throw new FmtEx($"第{num}行词条文本为空");
 

@@ -16,9 +16,7 @@ public sealed partial class LogWindow: Window {
     public LogWindow() {
         InitializeComponent();
         var text = Log.ReadAll();
-        Logs.Text = text.Length == 0
-            ? "暂未记录任何操作"
-            : text;
+        if (text.Length > 0) Logs.Text = text;
         BtnSave.IsEnabled = text.Length > 0;
     }
 

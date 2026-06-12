@@ -1,7 +1,8 @@
-namespace RimeDictManager.Views;
+namespace RimeDictManager.Services;
 
 using Avalonia;
 using Avalonia.Controls;
+using Views;
 using Desktop = Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
 
 public static class MsgBox {

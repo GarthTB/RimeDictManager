@@ -28,7 +28,10 @@ public sealed partial class DictWindowVM: ObservableObject {
     private bool SelDictInfoMod => SelDictInfo is { Mod: true };
     private bool SelDictInfoNotTgt => SelDictInfo is { Tgt: false };
 
-    public void AddDict(string path) => throw new NotImplementedException();
+    public void AddDict(string path) {
+        DictInfos.Add(DictManager.AddDict(path));
+        if (DictInfos is [var dict]) dict.SetTgt(true);
+    }
 
     [RelayCommand(CanExecute = nameof(HasSelDictInfo))]
     private Task RemoveDict() => throw new NotImplementedException();
@@ -53,7 +56,7 @@ public sealed partial class DictWindowVM: ObservableObject {
     public static IReadOnlyList<EncodeMethod> EncodeMethods => EncodeMethod.All;
     [ObservableProperty] public partial EncodeMethod SelEncodeMethod { get; set; } = Encoder.Method;
 
-    public void AddSingleDict(string path) => throw new NotImplementedException();
+    public void AddSingleDict(string path) => SingleDicts.Add(Encoder.AddDict(path));
 
     [RelayCommand(CanExecute = nameof(HasSelSingleDict))]
     private Task RemoveSingleDict() => throw new NotImplementedException();

@@ -1,7 +1,7 @@
 namespace RimeDictManager.Models;
 
 using System.Diagnostics;
-using Utils;
+using Services;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
 public sealed class Dict {
