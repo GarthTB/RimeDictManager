@@ -1,4 +1,4 @@
-namespace RimeDictManager.Services;
+namespace RimeDictManager.Services.Data;
 
 using System.Text;
 using Common;

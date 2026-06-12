@@ -1,4 +1,4 @@
-namespace RimeDictManager.Services;
+namespace RimeDictManager.Services.Data;
 
 using System.Diagnostics.CodeAnalysis;
 using Models;
@@ -42,7 +42,7 @@ public static class LineCodec {
                 Text => e.Text, Code => e.Code, Weight => e.Weight, _ => e.Stem
             })
             .ToArray();
-        var last = Array.FindLastIndex(vals, static s => s is {});
+        var last = Array.FindLastIndex(vals, static x => x is {});
         return string.Join('\t', vals.AsSpan(..(last + 1)));
     }
 

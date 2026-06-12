@@ -1,7 +1,9 @@
-namespace RimeDictManager.Services;
+namespace RimeDictManager.Services.Core;
 
-using System.Diagnostics;
+using System.Collections.Immutable;
+using Data;
 using Models;
+using Utils;
 using ViewModels;
 using OpEx = InvalidOperationException;
 
@@ -10,9 +12,16 @@ public static class DictManager {
     private static readonly List<Dict> Dicts = [];
 
     public static IEnumerable<DictInfo> DictInfos => Dicts.Select(static x => new DictInfo(x));
+
+    public static IReadOnlySet<Col> IntersectCols =>
+        Dicts.SelectMany(static x => x.Cols).ToImmutableHashSet();
+
     public static bool Ready => Dicts.Count > 0;
 
+    #region 文件
+
     public static DictInfo AddDict(string path) {
+        // 外部保证丢弃变更
         if (Dicts.Any(x => x.Path == path)) throw new OpEx("词库重复");
         Dict dict = new(path);
         Dicts.Add(dict);
@@ -20,18 +29,21 @@ public static class DictManager {
         return new(dict);
     }
 
-    public static void RemoveDict(DictInfo dict) {
-        // 外部验证丢弃编辑
-        var cnt = Dicts.RemoveAll(x => x.Path == dict.Path);
-        if (cnt == 0) throw new OpEx("找不到要移除的词库");
-        if (cnt > 1) throw new UnreachableException("严重错误：请停用并报告异常E");
+    public static string? RemoveDict(DictInfo dict) {
+        var i = Dicts.FindIndex(x => x.Path == dict.Path);
+        if (i == -1) throw new OpEx("找不到要移除的词库");
+        Dicts.RemoveAt(i);
         Log.Info($"移除词库：{dict.Path}");
+        return i == 0 && Dicts is [var first, ..] // 更新加词目标
+            ? first.Path
+            : null;
     }
 
     public static async Task SaveDict(DictInfo dict, string? path, bool reorder) {
         var i = Dicts.FindIndex(x => x.Path == dict.Path);
         if (i == -1) throw new OpEx("找不到要保存的词库");
         await Dicts[i].SaveAsync(path, reorder);
+        dict.NotifySaved();
         var msg0 = path is {}
             ? $"另存词库：来源'{dict.Path}'，目标'{path}'"
             : $"覆写词库：{dict.Path}";
@@ -48,4 +60,14 @@ public static class DictManager {
         Log.Info($"设为加词目标：{dict.Path}");
         return Dicts[i].Path;
     }
+
+    #endregion 文件
+
+    #region 搜索
+
+    public enum SearchMode: byte { 编码前缀, 文本精确 }
+
+    public static void Search(string s, SearchMode mode) => throw new NotImplementedException();
+
+    #endregion 搜索
 }

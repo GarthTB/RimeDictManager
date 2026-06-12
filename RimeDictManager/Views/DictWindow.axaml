@@ -1,10 +1,11 @@
 <Window xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:m="using:RimeDictManager.Models"
     xmlns:vm="using:RimeDictManager.ViewModels"
     x:Class="RimeDictManager.Views.DictWindow"
     x:DataType="vm:DictWindowVM"
     Height="480"
-    Width="640"
+    Width="720"
     Title="RIME 词库管理器 - 词库">
     <Design.DataContext>
         <vm:DictWindowVM/>
@@ -31,16 +32,20 @@
                 ItemsSource="{Binding DictInfos, Mode=OneTime}"
                 SelectedItem="{Binding SelDictInfo}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="名称"
+                    <DataGridTextColumn MinWidth="64"
+                        Header="名称"
                         Binding="{Binding Name, Mode=OneTime}"/>
                     <DataGridTextColumn Width="*"
                         Header="路径"
                         Binding="{Binding Path, Mode=OneTime}"/>
-                    <DataGridTextColumn Header="词数"
+                    <DataGridTextColumn Width="108"
+                        Header="词数"
                         Binding="{Binding Cnt, Mode=OneTime}"/>
-                    <DataGridTextColumn Header="改动"
+                    <DataGridTextColumn Width="84"
+                        Header="变更"
                         Binding="{Binding ModText, Mode=OneWay}"/>
-                    <DataGridTextColumn Header="加词目标"
+                    <DataGridTextColumn Width="84"
+                        Header="加词"
                         Binding="{Binding TgtText, Mode=OneWay}"/>
                 </DataGrid.Columns>
             </DataGrid>
@@ -50,30 +55,36 @@
         <Grid Grid.Row="2"
             Margin="16,14"
             RowDefinitions="Auto,14,*">
-            <Grid ColumnDefinitions="5*,16,5*,16,3*,16,7*">
-                <Button Content="添加单字码表"
-                    Click="AddSingleDict"/>
-                <Button Grid.Column="2"
-                    Content="移除单字码表"
-                    Command="{Binding RemoveSingleDictCommand, Mode=OneTime}"/>
-                <Label Grid.Column="4"
-                    Content="编码方案"/>
-                <ComboBox Grid.Column="6"
-                    ItemsSource="{Binding EncodeMethods, Mode=OneTime}"
-                    DisplayMemberBinding="{Binding Name, Mode=OneTime}"
-                    SelectedItem="{Binding SelEncodeMethod}"/>
+            <Grid ColumnDefinitions="*,16,*">
+                <Grid ColumnDefinitions="*,16,*">
+                    <Button Content="添加单字码表"
+                        Click="AddSingleDict"/>
+                    <Button Grid.Column="2"
+                        Content="移除单字码表"
+                        Command="{Binding RemoveSingleDictCommand, Mode=OneTime}"/>
+                </Grid>
+                <Grid Grid.Column="2"
+                    ColumnDefinitions="84,16,*">
+                    <Label Content="编码方案"/>
+                    <ComboBox Grid.Column="2"
+                        ItemsSource="{x:Static m:EncodeMethod.All}"
+                        DisplayMemberBinding="{Binding Name, Mode=OneTime}"
+                        SelectedItem="{Binding SelEncodeMethod}"/>
+                </Grid>
             </Grid>
             <DataGrid Grid.Row="2"
                 IsReadOnly="True"
                 ItemsSource="{Binding SingleDicts, Mode=OneTime}"
                 SelectedItem="{Binding SelSingleDict}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="名称"
+                    <DataGridTextColumn MinWidth="64"
+                        Header="名称"
                         Binding="{Binding Name, Mode=OneTime}"/>
                     <DataGridTextColumn Width="*"
                         Header="路径"
                         Binding="{Binding Path, Mode=OneTime}"/>
-                    <DataGridTextColumn Header="字数"
+                    <DataGridTextColumn Width="108"
+                        Header="字数"
                         Binding="{Binding Entries.Count, Mode=OneTime}"/>
                 </DataGrid.Columns>
             </DataGrid>

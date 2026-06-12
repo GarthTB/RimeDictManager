@@ -1,16 +1,17 @@
-namespace RimeDictManager.Services;
+namespace RimeDictManager.Services.Core;
 
 using System.Collections.Frozen;
 using Models;
+using Utils;
 using OpEx = InvalidOperationException;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
 public static class Encoder {
     private static FrozenDictionary<char, string[]>? _masterDict;
     private static readonly List<SingleDict> Dicts = [];
-    public static EncodeMethod Method { get; private set; } = EncodeMethod.All[0];
     public static IReadOnlyList<SingleDict> DictList => Dicts;
     public static bool Ready => _masterDict is {};
+    public static EncodeMethod Method { get; private set; } = EncodeMethod.All[0];
 
     public static SingleDict AddDict(string path) {
         if (Dicts.Any(x => x.Path == path)) throw new OpEx("单字码表重复");
@@ -33,14 +34,13 @@ public static class Encoder {
 
         var cap = Dicts.Sum(static x => x.Entries.Count);
         Dictionary<char, HashSet<string>> master = new(cap);
-        var stemLen = method.StemLen;
         foreach (var dict in Dicts)
         foreach (var (c, codes) in dict.Entries) {
             ref var masterCodes = ref GetValueRefOrAddDefault(master, c, out var exists);
             if (!exists) masterCodes = new(codes.Count);
             foreach (var code in codes)
-                if (code.Length >= stemLen)
-                    masterCodes!.Add(code[..stemLen]);
+                if (code.Length >= method.StemLen)
+                    masterCodes!.Add(code[..method.StemLen]);
         }
 
         if (master.Count == 0) {

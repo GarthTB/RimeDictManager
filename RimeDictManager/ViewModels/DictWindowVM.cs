@@ -4,7 +4,8 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Models;
-using Services;
+using Services.Core;
+using Services.Utils;
 using FatalEx = System.Diagnostics.UnreachableException;
 
 public sealed partial class DictWindowVM: ObservableObject {
@@ -13,6 +14,8 @@ public sealed partial class DictWindowVM: ObservableObject {
         if (DictInfos is [var first, ..]) first.SetTgt(true);
         foreach (var dict in Encoder.DictList) SingleDicts.Add(dict);
     }
+
+    [ObservableProperty] public partial EncodeMethod SelEncodeMethod { get; set; } = Encoder.Method;
 
     #region 词库
 
@@ -36,13 +39,13 @@ public sealed partial class DictWindowVM: ObservableObject {
     private async Task RemoveDict() {
         try {
             var dict = SelDictInfo!;
-            if (dict.Mod && !await MsgBox.Ask<bool>("是否丢弃未保存的编辑？")) return;
-            DictManager.RemoveDict(dict);
+            if (dict.Mod && !await MsgBox.Ask<bool>("是否丢弃未保存的变更？")) return;
+            var tgtPath = DictManager.RemoveDict(dict);
             if (!DictInfos.Remove(dict)) throw new FatalEx("严重错误：请停用并报告异常B");
-        } catch (Exception ex) {
-            Log.Err("移除词库", ex);
-            await MsgBox.Err("移除词库", ex);
-        }
+            var tgt = DictInfos.FirstOrDefault(x => x.Path == tgtPath)
+                   ?? throw new FatalEx("严重错误：请停用并报告异常C");
+            tgt.SetTgt(true);
+        } catch (Exception ex) { await ex.Alert("移除词库"); }
     }
 
     [RelayCommand(CanExecute = nameof(SelDictInfoNotTgt))]
@@ -50,19 +53,16 @@ public sealed partial class DictWindowVM: ObservableObject {
         try {
             var dict = SelDictInfo!;
             var prevPath = DictManager.SetTgtDict(dict);
-            dict.SetTgt(true);
             var prev = DictInfos.FirstOrDefault(x => x.Path == prevPath)
-                    ?? throw new FatalEx("严重错误：请停用并报告异常C");
+                    ?? throw new FatalEx("严重错误：请停用并报告异常D");
+            dict.SetTgt(true);
             prev.SetTgt(false);
-        } catch (Exception ex) {
-            Log.Err("设置加词目标", ex);
-            await MsgBox.Err("设置加词目标", ex);
-        }
+        } catch (Exception ex) { await ex.Alert("设置加词目标"); }
     }
 
     #endregion 词库
 
-    #region 单字和编码器
+    #region 单字
 
     public ObservableCollection<SingleDict> SingleDicts { get; } = [];
 
@@ -70,10 +70,6 @@ public sealed partial class DictWindowVM: ObservableObject {
     public partial SingleDict? SelSingleDict { get; set; }
 
     private bool HasSelSingleDict => SelSingleDict is {};
-
-    public static IReadOnlyList<EncodeMethod> EncodeMethods => EncodeMethod.All;
-    [ObservableProperty] public partial EncodeMethod SelEncodeMethod { get; set; } = Encoder.Method;
-
     public void AddSingleDict(string path) => SingleDicts.Add(Encoder.AddDict(path));
 
     [RelayCommand(CanExecute = nameof(HasSelSingleDict))]
@@ -81,12 +77,9 @@ public sealed partial class DictWindowVM: ObservableObject {
         try {
             var dict = SelSingleDict!;
             Encoder.RemoveDict(dict);
-            if (!SingleDicts.Remove(dict)) throw new FatalEx("严重错误：请停用并报告异常D");
-        } catch (Exception ex) {
-            Log.Err("移除单字码表", ex);
-            await MsgBox.Err("移除单字码表", ex);
-        }
+            if (!SingleDicts.Remove(dict)) throw new FatalEx("严重错误：请停用并报告异常E");
+        } catch (Exception ex) { await ex.Alert("移除单字码表"); }
     }
 
-    #endregion 单字和编码器
+    #endregion 单字
 }

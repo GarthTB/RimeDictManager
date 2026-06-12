@@ -1,7 +1,7 @@
 namespace RimeDictManager.Models;
 
 using System.Diagnostics;
-using Services;
+using Services.Data;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
 public sealed class Dict {
@@ -102,8 +102,8 @@ public sealed class Dict {
             foreach (var e in _entries.Where(static e => e.Text.Length > 0)
                 .OrderBy(static e => (e.Code, e.Num)))
                 await writer.WriteLineAsync(e.Serialize(Cols));
-            foreach (var l in _rawLines.Where(static l => l.Content is {}))
-                await writer.WriteLineAsync(l.Content);
+            foreach (var r in _rawLines.Where(static r => r.Content is {}))
+                await writer.WriteLineAsync(r.Content);
             Mod = false;
             return;
         }
