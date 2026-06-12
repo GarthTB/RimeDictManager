@@ -18,11 +18,12 @@ public sealed partial class DictWindow: Window {
         Title = "将词库另存至...", FileTypeChoices = [FileTypes.RimeDict, FilePickerFileTypes.All]
     };
 
+    private readonly DictWindowVM _vm = new();
+
     public DictWindow() {
         InitializeComponent();
-        var vm = new DictWindowVM();
-        DataContext = vm;
-        Closed += (_, _) => Encoder.Prepare(vm.SelEncodeMethod);
+        DataContext = _vm;
+        Closed += (_, _) => Encoder.Prepare(_vm.SelEncodeMethod);
     }
 
     private async void AddDict(object? _, RoutedEventArgs e) {
@@ -30,12 +31,14 @@ public sealed partial class DictWindow: Window {
             _openOptions.Title = "打开 RIME 词库...";
             var files = await StorageProvider.OpenFilePickerAsync(_openOptions);
             if (files.Count == 0) return;
-            var vm = (DictWindowVM)DataContext!;
             foreach (var file in files) {
-                vm.AddDict(file.TryGetLocalPath() ?? file.Path.LocalPath);
+                _vm.AddDict(file.TryGetLocalPath() ?? file.Path.LocalPath);
                 file.Dispose();
             }
-        } catch (Exception ex) { await MsgBox.Err("添加词库", ex, this); }
+        } catch (Exception ex) {
+            Log.Err("添加词库", ex);
+            await MsgBox.Err("添加词库", ex, this);
+        }
     }
 
     private async void SaveDict(object? _, RoutedEventArgs e) {
@@ -44,7 +47,7 @@ public sealed partial class DictWindow: Window {
         try {
             var overwrite = await MsgBox.Ask<bool?>(overwritePrompt);
             if (overwrite is null) return;
-            var dict = ((DictWindowVM)DataContext!).SelDictInfo!;
+            var dict = _vm.SelDictInfo!;
             string? path = null;
             if (overwrite == false) {
                 _saveOptions.SuggestedFileName = dict.Name;
@@ -57,7 +60,10 @@ public sealed partial class DictWindow: Window {
             await DictManager.SaveDict(dict, path, reorder == true);
             dict.NotifySaved();
             await MsgBox.Info($"保存成功，路径：{path ?? dict.Path}", this);
-        } catch (Exception ex) { await MsgBox.Err("保存词库", ex, this); }
+        } catch (Exception ex) {
+            Log.Err("保存词库", ex);
+            await MsgBox.Err("保存词库", ex, this);
+        }
     }
 
     private async void AddSingleDict(object? _, RoutedEventArgs e) {
@@ -65,11 +71,13 @@ public sealed partial class DictWindow: Window {
             _openOptions.Title = "打开 RIME 单字码表...";
             var files = await StorageProvider.OpenFilePickerAsync(_openOptions);
             if (files.Count == 0) return;
-            var vm = (DictWindowVM)DataContext!;
             foreach (var file in files) {
-                vm.AddSingleDict(file.TryGetLocalPath() ?? file.Path.LocalPath);
+                _vm.AddSingleDict(file.TryGetLocalPath() ?? file.Path.LocalPath);
                 file.Dispose();
             }
-        } catch (Exception ex) { await MsgBox.Err("添加单字码表", ex, this); }
+        } catch (Exception ex) {
+            Log.Err("添加单字码表", ex);
+            await MsgBox.Err("添加单字码表", ex, this);
+        }
     }
 }

@@ -17,16 +17,19 @@ public static class Encoder {
         SingleDict dict = new(path);
         Dicts.Add(dict);
         _masterDict = null;
+        Log.Info($"添加单字码表：{path}");
         return dict;
     }
 
     public static void RemoveDict(SingleDict dict) {
         if (!Dicts.Remove(dict)) throw new OpEx("移除失败");
         _masterDict = null;
+        Log.Info($"移除单字码表：{dict.Path}");
     }
 
     public static void Prepare(EncodeMethod method) {
         if (_masterDict is {} && Method == method) return;
+        Method = method;
 
         var cap = Dicts.Sum(static x => x.Entries.Count);
         Dictionary<char, HashSet<string>> master = new(cap);
@@ -40,14 +43,17 @@ public static class Encoder {
                     masterCodes!.Add(code[..stemLen]);
         }
 
-        _masterDict = master.Count > 0
-            ? master.ToFrozenDictionary(static x => x.Key, static x => x.Value.ToArray())
-            : null;
-        Method = method;
+        if (master.Count == 0) {
+            _masterDict = null;
+            Log.Info("禁用编码器：归并单字码表为空");
+            return;
+        }
+        _masterDict = master.ToFrozenDictionary(static x => x.Key, static x => x.Value.ToArray());
+        Log.Info($"启用编码器：'{method.Name}'方案，覆盖{master.Count}个字");
     }
 
     public static IEnumerable<string> Encode(string s) =>
         _masterDict is {} dict
             ? Method.Encode(s, dict).Distinct()
-            : throw new OpEx("编码器未就绪");
+            : throw new OpEx("未启用编码器");
 }

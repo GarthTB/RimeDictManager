@@ -9,67 +9,74 @@
     <Design.DataContext>
         <vm:DictWindowVM/>
     </Design.DataContext>
-    <Grid Margin="16,14"
-        RowDefinitions="Auto,14,*,14,Auto,14,*">
-        <Grid ColumnDefinitions="*,16,*,16,*,16,*">
-            <Button Content="添加词库"
-                Click="AddDict"/>
-            <Button Grid.Column="2"
-                Content="移除词库"
-                Command="{Binding RemoveDictCommand, Mode=OneTime}"/>
-            <Button Grid.Column="4"
-                Content="保存词库"
-                IsEnabled="{Binding SelDictInfoMod, Mode=OneWay}"
-                Click="SaveDict"/>
-            <Button Grid.Column="6"
-                Content="设为加词目标"
-                Command="{Binding SetTgtDictCommand, Mode=OneTime}"/>
+    <Grid RowDefinitions="*,Auto,*">
+        <Grid Margin="16,14"
+            RowDefinitions="Auto,14,*">
+            <Grid ColumnDefinitions="*,16,*,16,*,16,*">
+                <Button Content="添加词库"
+                    Click="AddDict"/>
+                <Button Grid.Column="2"
+                    Content="移除词库"
+                    Command="{Binding RemoveDictCommand, Mode=OneTime}"/>
+                <Button Grid.Column="4"
+                    Content="保存词库"
+                    IsEnabled="{Binding SelDictInfoMod, Mode=OneWay}"
+                    Click="SaveDict"/>
+                <Button Grid.Column="6"
+                    Content="设为加词目标"
+                    Command="{Binding SetTgtDictCommand, Mode=OneTime}"/>
+            </Grid>
+            <DataGrid Grid.Row="2"
+                IsReadOnly="True"
+                ItemsSource="{Binding DictInfos, Mode=OneTime}"
+                SelectedItem="{Binding SelDictInfo}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="名称"
+                        Binding="{Binding Name, Mode=OneTime}"/>
+                    <DataGridTextColumn Width="*"
+                        Header="路径"
+                        Binding="{Binding Path, Mode=OneTime}"/>
+                    <DataGridTextColumn Header="词数"
+                        Binding="{Binding Cnt, Mode=OneTime}"/>
+                    <DataGridTextColumn Header="改动"
+                        Binding="{Binding ModText, Mode=OneWay}"/>
+                    <DataGridTextColumn Header="加词目标"
+                        Binding="{Binding TgtText, Mode=OneWay}"/>
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
-        <DataGrid Grid.Row="2"
-            IsReadOnly="True"
-            ItemsSource="{Binding DictInfos, Mode=OneTime}"
-            SelectedItem="{Binding SelDictInfo}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="名称"
-                    Binding="{Binding Name, Mode=OneTime}"/>
-                <DataGridTextColumn Width="*"
-                    Header="路径"
-                    Binding="{Binding Path, Mode=OneTime}"/>
-                <DataGridTextColumn Header="词数"
-                    Binding="{Binding Cnt, Mode=OneTime}"/>
-                <DataGridTextColumn Header="改动"
-                    Binding="{Binding ModText, Mode=OneWay}"/>
-                <DataGridTextColumn Header="加词目标"
-                    Binding="{Binding TgtText, Mode=OneWay}"/>
-            </DataGrid.Columns>
-        </DataGrid>
-        <Grid Grid.Row="4"
-            ColumnDefinitions="*,16,*,16,0.6*,16,1.4*">
-            <Button Content="添加单字码表"
-                Click="AddSingleDict"/>
-            <Button Grid.Column="2"
-                Content="移除单字码表"
-                Command="{Binding RemoveSingleDictCommand, Mode=OneTime}"/>
-            <Label Grid.Column="4"
-                Content="编码方案"/>
-            <ComboBox Grid.Column="6"
-                ItemsSource="{Binding EncodeMethods, Mode=OneTime}"
-                DisplayMemberBinding="{Binding Name, Mode=OneTime}"
-                SelectedItem="{Binding SelEncodeMethod}"/>
+        <GridSplitter Grid.Row="1"
+            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+        <Grid Grid.Row="2"
+            Margin="16,14"
+            RowDefinitions="Auto,14,*">
+            <Grid ColumnDefinitions="5*,16,5*,16,3*,16,7*">
+                <Button Content="添加单字码表"
+                    Click="AddSingleDict"/>
+                <Button Grid.Column="2"
+                    Content="移除单字码表"
+                    Command="{Binding RemoveSingleDictCommand, Mode=OneTime}"/>
+                <Label Grid.Column="4"
+                    Content="编码方案"/>
+                <ComboBox Grid.Column="6"
+                    ItemsSource="{Binding EncodeMethods, Mode=OneTime}"
+                    DisplayMemberBinding="{Binding Name, Mode=OneTime}"
+                    SelectedItem="{Binding SelEncodeMethod}"/>
+            </Grid>
+            <DataGrid Grid.Row="2"
+                IsReadOnly="True"
+                ItemsSource="{Binding SingleDicts, Mode=OneTime}"
+                SelectedItem="{Binding SelSingleDict}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="名称"
+                        Binding="{Binding Name, Mode=OneTime}"/>
+                    <DataGridTextColumn Width="*"
+                        Header="路径"
+                        Binding="{Binding Path, Mode=OneTime}"/>
+                    <DataGridTextColumn Header="字数"
+                        Binding="{Binding Entries.Count, Mode=OneTime}"/>
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
-        <DataGrid Grid.Row="6"
-            IsReadOnly="True"
-            ItemsSource="{Binding SingleDicts, Mode=OneTime}"
-            SelectedItem="{Binding SelSingleDict}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="名称"
-                    Binding="{Binding Name, Mode=OneTime}"/>
-                <DataGridTextColumn Width="*"
-                    Header="路径"
-                    Binding="{Binding Path, Mode=OneTime}"/>
-                <DataGridTextColumn Header="字数"
-                    Binding="{Binding Entries.Count, Mode=OneTime}"/>
-            </DataGrid.Columns>
-        </DataGrid>
     </Grid>
 </Window>

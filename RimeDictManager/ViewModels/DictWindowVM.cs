@@ -10,7 +10,7 @@ using FatalEx = System.Diagnostics.UnreachableException;
 public sealed partial class DictWindowVM: ObservableObject {
     public DictWindowVM() {
         foreach (var dict in DictManager.DictInfos) DictInfos.Add(dict);
-        if (DictInfos.Count > 0) DictInfos[0].SetTgt(true);
+        if (DictInfos is [var first, ..]) first.SetTgt(true);
         foreach (var dict in Encoder.DictList) SingleDicts.Add(dict);
     }
 
@@ -39,7 +39,10 @@ public sealed partial class DictWindowVM: ObservableObject {
             if (dict.Mod && !await MsgBox.Ask<bool>("是否丢弃未保存的编辑？")) return;
             DictManager.RemoveDict(dict);
             if (!DictInfos.Remove(dict)) throw new FatalEx("严重错误：请停用并报告异常B");
-        } catch (Exception ex) { await MsgBox.Err("移除词库", ex); }
+        } catch (Exception ex) {
+            Log.Err("移除词库", ex);
+            await MsgBox.Err("移除词库", ex);
+        }
     }
 
     [RelayCommand(CanExecute = nameof(SelDictInfoNotTgt))]
@@ -51,7 +54,10 @@ public sealed partial class DictWindowVM: ObservableObject {
             var prev = DictInfos.FirstOrDefault(x => x.Path == prevPath)
                     ?? throw new FatalEx("严重错误：请停用并报告异常C");
             prev.SetTgt(false);
-        } catch (Exception ex) { await MsgBox.Err("移除词库", ex); }
+        } catch (Exception ex) {
+            Log.Err("设置加词目标", ex);
+            await MsgBox.Err("设置加词目标", ex);
+        }
     }
 
     #endregion 词库
@@ -76,7 +82,10 @@ public sealed partial class DictWindowVM: ObservableObject {
             var dict = SelSingleDict!;
             Encoder.RemoveDict(dict);
             if (!SingleDicts.Remove(dict)) throw new FatalEx("严重错误：请停用并报告异常D");
-        } catch (Exception ex) { await MsgBox.Err("移除单字码表", ex); }
+        } catch (Exception ex) {
+            Log.Err("移除单字码表", ex);
+            await MsgBox.Err("移除单字码表", ex);
+        }
     }
 
     #endregion 单字和编码器

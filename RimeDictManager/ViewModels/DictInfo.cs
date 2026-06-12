@@ -3,13 +3,9 @@ namespace RimeDictManager.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Models;
 
-/// <summary> 词库信息：隔离词库和UI </summary>
 public sealed partial class DictInfo(Dict src): ObservableObject {
     public string Name { get; } = src.Name;
-
-    /// <summary> 路径：唯一标识 </summary>
     public string Path { get; } = src.Path;
-
     public uint Cnt { get; } = src.Cnt;
 
     [ObservableProperty, NotifyPropertyChangedFor(nameof(ModText))]
