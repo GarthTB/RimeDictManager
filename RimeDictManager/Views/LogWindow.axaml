@@ -4,11 +4,15 @@
     Height="480"
     Width="720"
     Title="RIME 词库管理器 - 日志">
-    <Grid Margin="16,14">
-        <TextBlock x:Name="Logs"
-            TextWrapping="Wrap"
-            Text="暂未记录任何操作"/>
-        <Button x:Name="BtnSave"
+    <Grid Margin="16,14"
+        RowDefinitions="*,14,Auto">
+        <ScrollViewer>
+            <TextBlock x:Name="Logs"
+                TextWrapping="Wrap"
+                Text="暂未记录任何操作"/>
+        </ScrollViewer>
+        <Button Grid.Row="2"
+            x:Name="BtnSave"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"
             Content="保存日志"

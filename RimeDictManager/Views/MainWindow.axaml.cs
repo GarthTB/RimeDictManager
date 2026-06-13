@@ -11,6 +11,7 @@ public sealed partial class MainWindow: Window {
     public MainWindow() {
         InitializeComponent();
         DataContext = _vm;
+        Loaded += ShowDictWindow;
     }
 
     private async void ShowDictWindow(object? _, RoutedEventArgs e) {

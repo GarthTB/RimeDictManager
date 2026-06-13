@@ -1,17 +1,19 @@
 <Window xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     x:Class="RimeDictManager.Views.MsgWindow"
-    MaxWidth="1280"
     SizeToContent="WidthAndHeight"
     WindowStartupLocation="CenterOwner">
     <Grid Margin="16,14"
         RowDefinitions="*,14,Auto">
-        <TextBlock x:Name="Msg"
-            TextWrapping="Wrap"/>
+        <ScrollViewer>
+            <TextBlock x:Name="Msg"
+                TextWrapping="Wrap"/>
+        </ScrollViewer>
         <Grid Grid.Row="2"
             ColumnDefinitions="*,16,*"
             HorizontalAlignment="Right">
-            <Button x:Name="BtnNo"/>
+            <Button x:Name="BtnNo"
+                Content="否"/>
             <Button x:Name="BtnYes"
                 Grid.Column="2"/>
         </Grid>

@@ -27,23 +27,23 @@
         <TextBox Grid.Row="2"
             Grid.Column="2"
             PlaceholderText="手动编码"
-            IsEnabled="{Binding HasCode}"
+            IsEnabled="{Binding UseCodeBox}"
             Text="{Binding ManualCode, UpdateSourceTrigger=PropertyChanged}"/>
         <TextBox Grid.Row="2"
             Grid.Column="4"
             PlaceholderText="权重"
-            IsEnabled="{Binding HasWeight}"
+            IsEnabled="{Binding UseWeightBox}"
             Text="{Binding PendingWeight, UpdateSourceTrigger=PropertyChanged}"/>
         <TextBox Grid.Row="2"
             Grid.Column="6"
             PlaceholderText="造词码"
-            IsEnabled="{Binding HasStem}"
+            IsEnabled="{Binding UseStemBox}"
             Text="{Binding PendingStem, UpdateSourceTrigger=PropertyChanged}"/>
         <CheckBox Grid.Row="4"
             Grid.Column="0"
             HorizontalAlignment="Center"
             Content=" 自动编码"
-            IsEnabled="{Binding EncoderToggleEnabled}"
+            IsEnabled="{Binding CanToggleEncoder}"
             IsChecked="{Binding UseEncoder}"/>
         <ComboBox Grid.Row="4"
             Grid.Column="2"
@@ -104,20 +104,20 @@
                 <DataGridTextColumn Width="108"
                     Header="行号"
                     Binding="{Binding Num, Mode=OneTime}"/>
-                <DataGridTextColumn Width="3*"
+                <DataGridTextColumn Width="*"
                     Header="文本"
                     Binding="{Binding Text}"/>
-                <DataGridTextColumn Width="3*"
+                <DataGridTextColumn Width="108"
                     Header="编码"
-                    IsVisible="{Binding HasCode}"
+                    IsVisible="{Binding ShowCodeCol}"
                     Binding="{Binding Code}"/>
-                <DataGridTextColumn Width="2*"
+                <DataGridTextColumn Width="108"
                     Header="权重"
-                    IsVisible="{Binding HasWeight}"
+                    IsVisible="{Binding ShowWeightCol}"
                     Binding="{Binding Weight}"/>
-                <DataGridTextColumn Width="2*"
+                <DataGridTextColumn Width="108"
                     Header="造词码"
-                    IsVisible="{Binding HasStem}"
+                    IsVisible="{Binding ShowStemCol}"
                     Binding="{Binding Stem}"/>
             </DataGrid.Columns>
         </DataGrid>

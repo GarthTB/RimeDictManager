@@ -5,8 +5,10 @@ public static class Log {
     private static readonly DateTime StartTime = DateTime.Now;
     public static IReadOnlyList<string> All => Logs;
 
-    public static void Crud(string op, string entry) => Logs.Add($"{op}\t{entry}");
     public static void Info(string msg) => Logs.Add(msg);
+
+    /// <summary> DictManager专用 </summary>
+    public static void Crud(string op, string entry) => Logs.Add($"{op}\t{entry}");
 
     /// <summary> MsgBox专用 </summary>
     public static void Err(Exception ex, string op) => Logs.Add($"{op}时：\n{ex}");

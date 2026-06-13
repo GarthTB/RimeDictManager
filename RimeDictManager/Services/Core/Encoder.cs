@@ -44,8 +44,8 @@ public static class Encoder {
         }
 
         if (master.Count == 0) {
+            if (_masterDict is {}) Log.Info("禁用编码器：归并单字码表为空");
             _masterDict = null;
-            Log.Info("禁用编码器：归并单字码表为空");
             return;
         }
         _masterDict = master.ToFrozenDictionary(static x => x.Key, static x => x.Value.ToArray());

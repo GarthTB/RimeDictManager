@@ -1,6 +1,5 @@
 namespace RimeDictManager.Services.Core;
 
-using System.Collections.Immutable;
 using Data;
 using Models;
 using Utils;
@@ -11,12 +10,10 @@ public static class DictManager {
     /// <summary> 词库集合：首项为加词目标 </summary>
     private static readonly List<Dict> Dicts = [];
 
-    public static IEnumerable<DictInfo> DictInfos => Dicts.Select(static x => new DictInfo(x));
-
-    public static IReadOnlySet<Col> IntersectCols =>
-        Dicts.SelectMany(static x => x.Cols).ToImmutableHashSet();
-
     public static bool Ready => Dicts.Count > 0;
+    public static IEnumerable<DictInfo> DictInfos => Dicts.Select(static x => new DictInfo(x));
+    public static IReadOnlyList<Col>? TgtCols => Dicts.FirstOrDefault()?.Cols;
+    public static IEnumerable<Col> UnionCols => Dicts.SelectMany(static x => x.Cols);
 
     #region 文件
 

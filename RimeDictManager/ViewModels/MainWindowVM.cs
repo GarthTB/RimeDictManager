@@ -1,6 +1,5 @@
 ﻿namespace RimeDictManager.ViewModels;
 
-using System.Collections.Frozen;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,19 +9,38 @@ using Services.Data;
 public sealed partial class MainWindowVM: ObservableObject {
     #region 可用性
 
-    [ObservableProperty] public partial bool DictReady { get; private set; }
-    [ObservableProperty] public partial bool HasCode { get; private set; }
-    [ObservableProperty] public partial bool HasWeight { get; private set; }
-    [ObservableProperty] public partial bool HasStem { get; private set; }
-    [ObservableProperty] public partial bool EncoderToggleEnabled { get; private set; }
+    [ObservableProperty,
+     NotifyCanExecuteChangedFor(
+         nameof(InsertCommand),
+         nameof(RemoveCommand),
+         nameof(ShortenCommand),
+         nameof(ModifyCommand))]
+    public partial bool DictReady { get; private set; }
+
+    [ObservableProperty] public partial bool UseCodeBox { get; private set; }
+    [ObservableProperty] public partial bool UseWeightBox { get; private set; }
+    [ObservableProperty] public partial bool UseStemBox { get; private set; }
+    [ObservableProperty] public partial bool ShowCodeCol { get; private set; }
+    [ObservableProperty] public partial bool ShowWeightCol { get; private set; }
+    [ObservableProperty] public partial bool ShowStemCol { get; private set; }
+    public bool CanToggleEncoder => DictReady && Encoder.Ready;
+    public static byte MinCodeLen => Encoder.Method.MinLen;
+    public static byte MaxCodeLen => Encoder.Method.MaxLen;
 
     public void RefreshState() {
         DictReady = DictManager.Ready;
-        var cols = DictManager.IntersectCols;
-        HasCode = DictReady && cols.Contains(Col.Code);
-        HasWeight = DictReady && cols.Contains(Col.Weight);
-        HasStem = DictReady && cols.Contains(Col.Stem);
-        EncoderToggleEnabled = DictReady && Encoder.Ready;
+        var tgtCols = DictManager.TgtCols?.ToHashSet();
+        UseCodeBox = DictReady && tgtCols?.Contains(Col.Code) == true;
+        UseWeightBox = DictReady && tgtCols?.Contains(Col.Weight) == true;
+        UseStemBox = DictReady && tgtCols?.Contains(Col.Stem) == true;
+        var unionCols = DictManager.UnionCols.ToHashSet();
+        ShowCodeCol = DictReady && unionCols.Contains(Col.Code);
+        ShowWeightCol = DictReady && unionCols.Contains(Col.Weight);
+        ShowStemCol = DictReady && unionCols.Contains(Col.Stem);
+        OnPropertyChanged(nameof(CanToggleEncoder));
+        OnPropertyChanged(nameof(MinCodeLen));
+        OnPropertyChanged(nameof(MaxCodeLen));
+        ShortenCommand.NotifyCanExecuteChanged();
     }
 
     #endregion 可用性
@@ -39,8 +57,6 @@ public sealed partial class MainWindowVM: ObservableObject {
     #region 自动编码
 
     [ObservableProperty] public partial bool UseEncoder { get; set; }
-    public static byte MinCodeLen => Encoder.Method.MinLen;
-    public static byte MaxCodeLen => Encoder.Method.MaxLen;
     [ObservableProperty] public partial byte CurCodeLen { get; set; }
     private readonly List<string> _fullAutoCodes = new(64);
     public ObservableCollection<string> AutoCodes { get; } = [];
@@ -50,25 +66,53 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     #region 搜索
 
-    public static IReadOnlyDictionary<DictManager.SearchMode, string> SearchModes { get; } = Enum
+    public static Dictionary<DictManager.SearchMode, string> SearchModes { get; } = Enum
         .GetValues<DictManager.SearchMode>()
-        .ToFrozenDictionary(static x => x, static x => x.ToString());
+        .ToDictionary(static x => x, static x => x.ToString());
 
-    [ObservableProperty]
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     public partial DictManager.SearchMode SelSearchMode { get; set; } = DictManager.SearchMode.编码前缀;
 
-    [ObservableProperty] public partial string SearchText { get; set; } = "";
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
+    public partial string SearchText { get; set; } = "";
+
     public ObservableCollection<EntryInfo> SearchResults { get; } = [];
-    [ObservableProperty] public partial EntryInfo? SelSearchResult { get; set; }
+
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
+    public partial EntryInfo? SelSearchResult { get; set; }
+
+    private void Search() {
+        // TODO
+        ModifyCommand.NotifyCanExecuteChanged();
+    }
 
     #endregion 搜索
 
     #region 操作
 
-    [RelayCommand] private Task Insert() => throw new NotImplementedException();
-    [RelayCommand] private Task Remove() => throw new NotImplementedException();
-    [RelayCommand] private Task Shorten() => throw new NotImplementedException();
-    [RelayCommand] private Task Modify() => throw new NotImplementedException();
+    [RelayCommand(CanExecute = nameof(DictReady))]
+    private Task Insert() => throw new NotImplementedException();
+
+    private bool CanRemove => DictReady && SelSearchResult is {};
+
+    [RelayCommand(CanExecute = nameof(CanRemove))]
+    private Task Remove() => throw new NotImplementedException();
+
+    private bool CanShorten =>
+        DictReady
+     && Encoder.Ready
+     && MinCodeLen < MaxCodeLen
+     && SelSearchMode == DictManager.SearchMode.编码前缀
+     && SearchText.Length >= MinCodeLen
+     && SelSearchResult?.Code.Length >= SearchText.Length;
+
+    [RelayCommand(CanExecute = nameof(CanShorten))]
+    private Task Shorten() => throw new NotImplementedException();
+
+    private bool CanModify => DictReady && SearchResults.Count > 0;
+
+    [RelayCommand(CanExecute = nameof(CanModify))]
+    private Task Modify() => throw new NotImplementedException();
 
     #endregion 操作
 }
