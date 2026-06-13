@@ -4,13 +4,122 @@
     x:Class="RimeDictManager.Views.MainWindow"
     x:DataType="vm:MainWindowVM"
     Height="480"
-    Width="640"
+    Width="720"
     Title="RIME 词库管理器 - 版本 4.0.0">
     <Design.DataContext>
         <vm:MainWindowVM/>
     </Design.DataContext>
-    <Button HorizontalAlignment="Center"
-        VerticalAlignment="Center"
-        Content="测试"
-        Click="Test"/>
+    <Grid Margin="16,14"
+        RowDefinitions="Auto,14,Auto,14,Auto,14,Auto,14,*"
+        ColumnDefinitions="108,16,*,16,*,16,*,16,108">
+        <Button Content="词库窗口"
+            Click="ShowDictWindow"/>
+        <Button Grid.Row="2"
+            Grid.Column="0"
+            Content="日志窗口"
+            Click="ShowLogWindow"/>
+        <TextBox Grid.Row="0"
+            Grid.Column="2"
+            Grid.ColumnSpan="5"
+            PlaceholderText="待添加的文本"
+            IsEnabled="{Binding DictReady}"
+            Text="{Binding PendingText, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBox Grid.Row="2"
+            Grid.Column="2"
+            PlaceholderText="手动编码"
+            IsEnabled="{Binding HasCode}"
+            Text="{Binding ManualCode, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBox Grid.Row="2"
+            Grid.Column="4"
+            PlaceholderText="权重"
+            IsEnabled="{Binding HasWeight}"
+            Text="{Binding PendingWeight, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBox Grid.Row="2"
+            Grid.Column="6"
+            PlaceholderText="造词码"
+            IsEnabled="{Binding HasStem}"
+            Text="{Binding PendingStem, UpdateSourceTrigger=PropertyChanged}"/>
+        <CheckBox Grid.Row="4"
+            Grid.Column="0"
+            HorizontalAlignment="Center"
+            Content=" 自动编码"
+            IsEnabled="{Binding EncoderToggleEnabled}"
+            IsChecked="{Binding UseEncoder}"/>
+        <ComboBox Grid.Row="4"
+            Grid.Column="2"
+            Grid.ColumnSpan="3"
+            PlaceholderText="自动编码"
+            IsEnabled="{Binding UseEncoder}"
+            ItemsSource="{Binding AutoCodes, Mode=OneTime}"
+            SelectedItem="{Binding SelAutoCode}"/>
+        <Slider Grid.Row="4"
+            Grid.Column="6"
+            Padding="0,-9"
+            VerticalAlignment="Center"
+            TickFrequency="1"
+            TickPlacement="Outside"
+            IsSnapToTickEnabled="True"
+            IsEnabled="{Binding UseEncoder}"
+            Minimum="{Binding MinCodeLen}"
+            Maximum="{Binding MaxCodeLen}"
+            Value="{Binding CurCodeLen}"/>
+        <ComboBox Grid.Row="6"
+            Grid.Column="0"
+            IsEnabled="{Binding DictReady}"
+            ItemsSource="{Binding SearchModes, Mode=OneTime}"
+            DisplayMemberBinding="{Binding Value, Mode=OneTime}"
+            SelectedValue="{Binding SelSearchMode}"
+            SelectedValueBinding="{Binding Key, Mode=OneTime}"/>
+        <TextBox Grid.Row="6"
+            Grid.Column="2"
+            Grid.ColumnSpan="5"
+            PlaceholderText="要搜索的内容"
+            IsEnabled="{Binding DictReady}"
+            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+        <Button Grid.Row="0"
+            Grid.Column="8"
+            Content="添加词条"
+            Command="{Binding InsertCommand, Mode=OneTime}"/>
+        <Button Grid.Row="2"
+            Grid.Column="8"
+            Content="删除词条"
+            Command="{Binding RemoveCommand, Mode=OneTime}"/>
+        <Button Grid.Row="4"
+            Grid.Column="8"
+            Content="截短编码"
+            Command="{Binding ShortenCommand, Mode=OneTime}"/>
+        <Button Grid.Row="6"
+            Grid.Column="8"
+            Content="应用修改"
+            Command="{Binding ModifyCommand, Mode=OneTime}"/>
+        <DataGrid Grid.Row="8"
+            Grid.Column="0"
+            Grid.ColumnSpan="9"
+            ItemsSource="{Binding SearchResults, Mode=OneTime}"
+            SelectedItem="{Binding SelSearchResult}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Width="108"
+                    Header="词库"
+                    Binding="{Binding Dict, Mode=OneTime}"/>
+                <DataGridTextColumn Width="108"
+                    Header="行号"
+                    Binding="{Binding Num, Mode=OneTime}"/>
+                <DataGridTextColumn Width="3*"
+                    Header="文本"
+                    Binding="{Binding Text}"/>
+                <DataGridTextColumn Width="3*"
+                    Header="编码"
+                    IsVisible="{Binding HasCode}"
+                    Binding="{Binding Code}"/>
+                <DataGridTextColumn Width="2*"
+                    Header="权重"
+                    IsVisible="{Binding HasWeight}"
+                    Binding="{Binding Weight}"/>
+                <DataGridTextColumn Width="2*"
+                    Header="造词码"
+                    IsVisible="{Binding HasStem}"
+                    Binding="{Binding Stem}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
 </Window>

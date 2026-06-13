@@ -2,13 +2,27 @@ namespace RimeDictManager.Views;
 
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Services.Utils;
 using ViewModels;
 
 public sealed partial class MainWindow: Window {
+    private readonly MainWindowVM _vm = new();
+
     public MainWindow() {
         InitializeComponent();
-        DataContext = new MainWindowVM();
+        DataContext = _vm;
     }
 
-    private void Test(object? _, RoutedEventArgs e) => new DictWindow().ShowDialog(this);
+    private async void ShowDictWindow(object? _, RoutedEventArgs e) {
+        try {
+            await new DictWindow().ShowDialog(this);
+            _vm.RefreshState();
+        } catch (Exception ex) { await ex.Alert("管理词库", this); }
+    }
+
+    private async void ShowLogWindow(object? _, RoutedEventArgs e) {
+        try { await new LogWindow().ShowDialog(this); } catch (Exception ex) {
+            await ex.Alert("查看日志", this);
+        }
+    }
 }

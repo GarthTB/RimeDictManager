@@ -3,14 +3,13 @@ namespace RimeDictManager.Services.Data;
 using System.Diagnostics.CodeAnalysis;
 using Models;
 using static Col;
-using Cols = IReadOnlyList<Col>;
 using FmtEx = FormatException;
 
 public static class LineCodec {
     public static bool Deserialize(
         string l,
         uint num,
-        Cols cols,
+        IReadOnlyList<Col> cols,
         [NotNullWhen(true)] out EntryLine? e,
         [NotNullWhen(false)] out RawLine? r) {
         if (string.IsNullOrWhiteSpace(l)) {
@@ -37,7 +36,7 @@ public static class LineCodec {
         return true;
     }
 
-    public static string Serialize(this EntryLine e, Cols cols) {
+    public static string Serialize(this EntryLine e, IReadOnlyList<Col> cols) {
         var vals = cols.Select(col => col switch {
                 Text => e.Text, Code => e.Code, Weight => e.Weight, _ => e.Stem
             })
@@ -47,11 +46,12 @@ public static class LineCodec {
     }
 
     public static EntryLine? TryNewEntry(
+        uint num,
         string text,
         string? code,
         string? weight,
         string? stem,
-        Cols cols) {
+        IReadOnlyList<Col> cols) {
         if (TrimOrNull(text) is not {} t) return null;
         var c = TrimOrNull(code);
         if (c is {} && !cols.Contains(Code)) return null;
@@ -59,7 +59,7 @@ public static class LineCodec {
         if (w is {} && !cols.Contains(Weight)) return null;
         var s = TrimOrNull(stem);
         if (s is {} && !cols.Contains(Stem)) return null;
-        return new(0, t, c, w, s);
+        return new(num, t, c, w, s);
     }
 
     private static string? TrimOrNull(string? s) =>
