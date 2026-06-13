@@ -23,9 +23,9 @@ public sealed class Dict {
         _rawLines = new(64);
         for (string? l; (l = reader.ReadLine()) is {}; _num++)
             if (LineCodec.Deserialize(l, _num, Cols, out var e, out var r))
-                _entries.Add(e.Value);
+                _entries.Add(e);
             else
-                _rawLines.Add(r.Value);
+                _rawLines.Add(r);
         Cnt = (uint)_entries.Count;
 
         _entriesByText = new(_entries.Count);
@@ -48,7 +48,7 @@ public sealed class Dict {
     public bool Mod { get; private set; }
 
     public void Insert(EntryLine e) {
-        e = e with { Num = ++_num };
+        if (e.Num == 0) e = e with { Num = ++_num };
 
         _entries.Add(e);
         var i = _entries.Count - 1;
@@ -71,10 +71,10 @@ public sealed class Dict {
         var i = idx[j];
         idx[j] = idx[^1];
         idx.RemoveAt(idx.Count - 1);
-        if (!_entriesByCode.Remove(e.Code, i)) throw new UnreachableException("严重错误：请停用并报告异常A");
-        if (idx.Count == 0) _entriesByText.Remove(e.Text);
+        if (!_entriesByCode.Remove(e.Code, i) || (idx.Count == 0 && !_entriesByText.Remove(e.Text)))
+            throw new UnreachableException("严重错误：请停用并报告异常A");
 
-        _entries[i] = e with { Text = "" }; // 标记死亡
+        _entries[i] = e with { Num = 0 }; // 标记死亡
         Cnt--;
         return Mod = true;
     }
@@ -92,34 +92,32 @@ public sealed class Dict {
 
     /// <summary> 保存词库（不迁移路径） </summary>
     /// <param name="path"> null则覆写 </param>
-    /// <param name="reorder"> true：词条先按Code升序，再按Num升序重排，空行丢弃，注释原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
+    /// <param name="reorder"> true：词条先按Code升序再按Num升序重排，空行丢弃，注释原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
     public async Task SaveAsync(string? path, bool reorder) {
         await using StreamWriter writer = new(path ?? Path);
         writer.NewLine = "\n";
         await writer.WriteLineAsync(_header);
 
         if (reorder) {
-            foreach (var e in _entries.Where(static e => e.Text.Length > 0)
+            foreach (var e in _entries.Where(static e => e.Num > 0)
                 .OrderBy(static e => (e.Code, e.Num)))
                 await writer.WriteLineAsync(e.Serialize(Cols));
             foreach (var r in _rawLines.Where(static r => r.Content is {}))
                 await writer.WriteLineAsync(r.Content);
-            Mod = false;
-            return;
+        } else {
+            using var entries = _entries.Where(static e => e.Num > 0).GetEnumerator();
+            using var rawLines = _rawLines.GetEnumerator();
+            bool anyE = entries.MoveNext(), anyR = rawLines.MoveNext();
+            while (anyE || anyR)
+                if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
+                    await writer.WriteLineAsync(entries.Current.Serialize(Cols));
+                    anyE = entries.MoveNext();
+                } else {
+                    await writer.WriteLineAsync(rawLines.Current.Content);
+                    anyR = rawLines.MoveNext();
+                }
         }
 
-        using var entries = _entries.Where(static e => e.Text.Length > 0).GetEnumerator();
-        using var rawLines = _rawLines.GetEnumerator();
-        var anyE = entries.MoveNext();
-        var anyR = rawLines.MoveNext();
-        while (anyE || anyR)
-            if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
-                await writer.WriteLineAsync(entries.Current.Serialize(Cols));
-                anyE = entries.MoveNext();
-            } else {
-                await writer.WriteLineAsync(rawLines.Current.Content);
-                anyR = rawLines.MoveNext();
-            }
         Mod = false;
     }
 }

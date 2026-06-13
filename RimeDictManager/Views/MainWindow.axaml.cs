@@ -11,14 +11,12 @@ public sealed partial class MainWindow: Window {
     public MainWindow() {
         InitializeComponent();
         DataContext = _vm;
-        Loaded += ShowDictWindow;
     }
 
     private async void ShowDictWindow(object? _, RoutedEventArgs e) {
-        try {
-            await new DictWindow().ShowDialog(this);
-            _vm.RefreshState();
-        } catch (Exception ex) { await ex.Alert("管理词库", this); }
+        try { await new DictWindow().ShowDialog(this); } catch (Exception ex) {
+            await ex.Alert("管理词库", this);
+        } finally { _vm.RefreshState(); }
     }
 
     private async void ShowLogWindow(object? _, RoutedEventArgs e) {

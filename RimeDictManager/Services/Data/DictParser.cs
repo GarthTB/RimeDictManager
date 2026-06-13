@@ -1,19 +1,12 @@
 namespace RimeDictManager.Services.Data;
 
 using System.Text;
+using System.Text.Json.Serialization;
 using Common;
+using Models;
 using SharpYaml;
+using SharpYaml.Serialization;
 using FmtEx = FormatException;
-
-public enum Col: byte { Text, Code, Weight, Stem }
-
-// ReSharper disable once ClassNeverInstantiated.Local
-// ReSharper disable InconsistentNaming
-// ReSharper disable UnusedAutoPropertyAccessor.Local
-file sealed class Header {
-    public string? name { get; set; }
-    public string[]? columns { get; set; }
-}
 
 public static class DictParser {
     private static readonly Col[] DefaultCols = [Col.Text, Col.Code, Col.Weight, Col.Stem];
@@ -44,10 +37,13 @@ public static class DictParser {
         var raw = s.ToString();
         if (raw is not [.., '.', '.', '.']) throw new FmtEx($"文件头缺失或未闭合\n文件：{path}");
 
-        var header = YamlSerializer.Deserialize<Header>(raw.AsSpan(start))
+        var header = YamlSerializer.Deserialize(raw.AsSpan(start), HeaderContext.Default.Header)
                   ?? throw new FmtEx($"文件头无法作为YAML解析\n文件：{path}");
-        name = header.name ?? GetName(Path.GetFileName(path));
-        cols = ParseCols(name, header.columns);
+        name = header.Name ?? GetName(Path.GetFileName(path));
+        try { cols = ParseCols(header.Columns); } catch (Exception ex) {
+            throw new FmtEx($"无法解析列定义\n文件：{path}", ex);
+        }
+
         return raw;
     }
 
@@ -56,18 +52,26 @@ public static class DictParser {
             ? path[..^FileTypes.DictExt.Length]
             : path;
 
-    private static Col[] ParseCols(string name, string[]? cols) {
+    private static Col[] ParseCols(string[]? cols) {
         if (cols is null) return DefaultCols;
-        if (cols.Length == 0) throw new FmtEx($"列定义为空\n文件：{name}");
-        if (cols.Length > 4) throw new FmtEx($"词库超过4列\n文件：{name}");
+        if (cols.Length == 0) throw new FmtEx("列定义为空");
+        if (cols.Length > 4) throw new FmtEx("词库超过4列");
         HashSet<Col> result = new(4);
         foreach (var s in cols) {
-            if (!Enum.TryParse(s.Trim(), true, out Col col))
-                throw new FmtEx($"列名无效：'{s}'\n文件：{name}");
-            if (!result.Add(col)) throw new FmtEx($"有重复列名'{s}'\n文件：{name}");
+            if (!Enum.TryParse(s.Trim(), true, out Col col)) throw new FmtEx($"列名无效：'{s}'");
+            if (!result.Add(col)) throw new FmtEx($"有重复列名'{s}'");
         }
         return result.Contains(Col.Text)
             ? result.ToArray()
-            : throw new FmtEx($"未定义文本列\n文件：{name}");
+            : throw new FmtEx("未定义文本列");
     }
 }
+
+public sealed class Header {
+    public string? Name { get; init; }
+    public string[]? Columns { get; init; }
+}
+
+[YamlSerializable(typeof(Header)),
+ YamlSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+public sealed partial class HeaderContext: YamlSerializerContext;

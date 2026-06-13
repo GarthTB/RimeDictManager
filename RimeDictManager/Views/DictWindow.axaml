@@ -67,9 +67,9 @@
                     ColumnDefinitions="84,16,*">
                     <Label Content="编码方案"/>
                     <ComboBox Grid.Column="2"
-                        ItemsSource="{x:Static m:EncodeMethod.All}"
+                        ItemsSource="{x:Static m:InputMethod.All}"
                         DisplayMemberBinding="{Binding Name, Mode=OneTime}"
-                        SelectedItem="{Binding SelEncodeMethod}"/>
+                        SelectedItem="{Binding SelInputMethod}"/>
                 </Grid>
             </Grid>
             <DataGrid Grid.Row="2"

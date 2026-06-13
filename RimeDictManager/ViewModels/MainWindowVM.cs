@@ -3,8 +3,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Models;
 using Services.Core;
-using Services.Data;
+using Services.Utils;
 
 public sealed partial class MainWindowVM: ObservableObject {
     #region 可用性
@@ -29,11 +30,11 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     public void RefreshState() {
         DictReady = DictManager.Ready;
-        var tgtCols = DictManager.TgtCols?.ToHashSet();
+        var tgtCols = DictManager.TgtCols;
         UseCodeBox = DictReady && tgtCols?.Contains(Col.Code) == true;
         UseWeightBox = DictReady && tgtCols?.Contains(Col.Weight) == true;
         UseStemBox = DictReady && tgtCols?.Contains(Col.Stem) == true;
-        var unionCols = DictManager.UnionCols.ToHashSet();
+        var unionCols = DictManager.UnionCols;
         ShowCodeCol = DictReady && unionCols.Contains(Col.Code);
         ShowWeightCol = DictReady && unionCols.Contains(Col.Weight);
         ShowStemCol = DictReady && unionCols.Contains(Col.Stem);
@@ -81,9 +82,15 @@ public sealed partial class MainWindowVM: ObservableObject {
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
     public partial EntryInfo? SelSearchResult { get; set; }
 
-    private void Search() {
-        // TODO
-        ModifyCommand.NotifyCanExecuteChanged();
+    partial void OnSearchTextChanged(string value) => Search();
+
+    private async void Search() {
+        try {
+            SearchResults.Clear();
+            DictManager.Search(SearchText, SelSearchMode, e => SearchResults.Add(e));
+        } catch (Exception ex) { await ex.Alert("搜索"); } finally {
+            ModifyCommand.NotifyCanExecuteChanged();
+        }
     }
 
     #endregion 搜索

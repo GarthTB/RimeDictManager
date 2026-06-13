@@ -1,9 +1,9 @@
 namespace RimeDictManager.Services.Core;
 
-using Data;
 using Models;
 using Utils;
 using ViewModels;
+using ZLinq;
 using OpEx = InvalidOperationException;
 
 public static class DictManager {
@@ -11,15 +11,20 @@ public static class DictManager {
     private static readonly List<Dict> Dicts = [];
 
     public static bool Ready => Dicts.Count > 0;
-    public static IEnumerable<DictInfo> DictInfos => Dicts.Select(static x => new DictInfo(x));
-    public static IReadOnlyList<Col>? TgtCols => Dicts.FirstOrDefault()?.Cols;
-    public static IEnumerable<Col> UnionCols => Dicts.SelectMany(static x => x.Cols);
+
+    public static IReadOnlyList<DictInfo> DictInfos =>
+        Dicts.AsValueEnumerable().Select(static x => new DictInfo(x)).ToArray();
+
+    public static IReadOnlySet<Col>? TgtCols => Dicts.FirstOrDefault()?.Cols.ToHashSet();
+
+    public static IReadOnlySet<Col> UnionCols =>
+        Dicts.AsValueEnumerable().SelectMany(static x => x.Cols).Distinct().ToHashSet();
 
     #region 文件
 
     public static DictInfo AddDict(string path) {
         // 外部保证丢弃变更
-        if (Dicts.Any(x => x.Path == path)) throw new OpEx("词库重复");
+        if (Dicts.AsValueEnumerable().Any(x => x.Path == path)) throw new OpEx("词库重复");
         Dict dict = new(path);
         Dicts.Add(dict);
         Log.Info($"添加词库：{path}");
@@ -41,13 +46,13 @@ public static class DictManager {
         if (i == -1) throw new OpEx("找不到要保存的词库");
         await Dicts[i].SaveAsync(path, reorder);
         dict.NotifySaved();
-        var msg0 = path is {}
-            ? $"另存词库：来源'{dict.Path}'，目标'{path}'"
-            : $"覆写词库：{dict.Path}";
-        var msg1 = reorder
+        var msg0 = reorder
             ? "重新排序"
             : "不重新排序";
-        Log.Info($"{msg0}，{msg1}");
+        var msg1 = path is {}
+            ? $"另存词库，{msg0}：来源'{dict.Path}'，目标'{path}'"
+            : $"覆写词库，{msg0}：{dict.Path}";
+        Log.Info(msg1);
     }
 
     public static string SetTgtDict(DictInfo dict) {
@@ -64,7 +69,15 @@ public static class DictManager {
 
     public enum SearchMode: byte { 编码前缀, 文本精确 }
 
-    public static void Search(string s, SearchMode mode) => throw new NotImplementedException();
+    public static void Search(string s, SearchMode mode, Action<EntryInfo> f) {
+        if (s.Length == 0) return; // 禁止匹配整个Trie或查空词
+        if (mode == SearchMode.编码前缀)
+            foreach (var dict in Dicts)
+                dict.ForEachByCode(s, false, e => f(new(dict.Name, dict.Cols, e)));
+        else if (mode == SearchMode.文本精确)
+            foreach (var dict in Dicts)
+                dict.ForEachByText(s, e => f(new(dict.Name, dict.Cols, e)));
+    }
 
     #endregion 搜索
 }

@@ -1,8 +1,8 @@
 namespace RimeDictManager.Services.Utils;
 
 public static class Log {
-    private static readonly List<string> Logs = new(1024);
     private static readonly DateTime StartTime = DateTime.Now;
+    private static readonly List<string> Logs = new(1024);
     public static IReadOnlyList<string> All => Logs;
 
     public static void Info(string msg) => Logs.Add(msg);

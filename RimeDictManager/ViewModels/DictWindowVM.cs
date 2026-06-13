@@ -15,7 +15,7 @@ public sealed partial class DictWindowVM: ObservableObject {
         foreach (var dict in Encoder.DictList) SingleDicts.Add(dict);
     }
 
-    [ObservableProperty] public partial EncodeMethod SelEncodeMethod { get; set; } = Encoder.Method;
+    [ObservableProperty] public partial InputMethod SelInputMethod { get; set; } = Encoder.Method;
 
     #region 词库
 
@@ -42,9 +42,7 @@ public sealed partial class DictWindowVM: ObservableObject {
             if (dict.Mod && !await MsgBox.Ask<bool>("是否丢弃未保存的变更？")) return;
             var tgtPath = DictManager.RemoveDict(dict);
             if (!DictInfos.Remove(dict)) throw new FatalEx("严重错误：请停用并报告异常B");
-            var tgt = DictInfos.FirstOrDefault(x => x.Path == tgtPath)
-                   ?? throw new FatalEx("严重错误：请停用并报告异常C");
-            tgt.SetTgt(true);
+            if (tgtPath is {}) DictInfos.First(x => x.Path == tgtPath).SetTgt(true);
         } catch (Exception ex) { await ex.Alert("移除词库"); }
     }
 
@@ -53,10 +51,8 @@ public sealed partial class DictWindowVM: ObservableObject {
         try {
             var dict = SelDictInfo!;
             var prevPath = DictManager.SetTgtDict(dict);
-            var prev = DictInfos.FirstOrDefault(x => x.Path == prevPath)
-                    ?? throw new FatalEx("严重错误：请停用并报告异常D");
             dict.SetTgt(true);
-            prev.SetTgt(false);
+            DictInfos.First(x => x.Path == prevPath).SetTgt(false);
         } catch (Exception ex) { await ex.Alert("设置加词目标"); }
     }
 
@@ -70,6 +66,7 @@ public sealed partial class DictWindowVM: ObservableObject {
     public partial SingleDict? SelSingleDict { get; set; }
 
     private bool HasSelSingleDict => SelSingleDict is {};
+
     public void AddSingleDict(string path) => SingleDicts.Add(Encoder.AddDict(path));
 
     [RelayCommand(CanExecute = nameof(HasSelSingleDict))]
@@ -77,7 +74,7 @@ public sealed partial class DictWindowVM: ObservableObject {
         try {
             var dict = SelSingleDict!;
             Encoder.RemoveDict(dict);
-            if (!SingleDicts.Remove(dict)) throw new FatalEx("严重错误：请停用并报告异常E");
+            if (!SingleDicts.Remove(dict)) throw new FatalEx("严重错误：请停用并报告异常C");
         } catch (Exception ex) { await ex.Alert("移除单字码表"); }
     }
 
