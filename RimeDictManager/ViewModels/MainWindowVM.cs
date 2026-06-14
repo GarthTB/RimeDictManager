@@ -87,7 +87,7 @@ public sealed partial class MainWindowVM: ObservableObject {
     private async void Search() {
         try {
             SearchResults.Clear();
-            DictManager.Search(SearchText, SelSearchMode, e => SearchResults.Add(e));
+            DictManager.Search(SearchText, SelSearchMode, e => SearchResults.Add(new(e)));
         } catch (Exception ex) { await ex.Alert("搜索"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }
@@ -111,7 +111,7 @@ public sealed partial class MainWindowVM: ObservableObject {
      && MinCodeLen < MaxCodeLen
      && SelSearchMode == DictManager.SearchMode.编码前缀
      && SearchText.Length >= MinCodeLen
-     && SelSearchResult?.Code.Length >= SearchText.Length;
+     && SelSearchResult?.Code.Length > SearchText.Length;
 
     [RelayCommand(CanExecute = nameof(CanShorten))]
     private Task Shorten() => throw new NotImplementedException();

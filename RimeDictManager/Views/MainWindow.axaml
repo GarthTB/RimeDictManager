@@ -100,7 +100,7 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Width="108"
                     Header="词库"
-                    Binding="{Binding Dict.Name, Mode=OneTime}"/>
+                    Binding="{Binding Src.Dict.Name, Mode=OneTime}"/>
                 <DataGridTextColumn Width="108"
                     Header="行号"
                     Binding="{Binding Num, Mode=OneTime}"/>

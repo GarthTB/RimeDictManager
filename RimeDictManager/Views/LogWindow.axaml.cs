@@ -23,7 +23,7 @@ public sealed partial class LogWindow: Window {
             using var file = await StorageProvider.SaveFilePickerAsync(_saveOptions);
             if (file is null) return;
             await using (var stream = await file.OpenWriteAsync()) await Log.SaveAsync(stream);
-            await MsgBox.Info($"保存成功，路径：{file.TryGetLocalPath() ?? file.Path.LocalPath}'", this);
+            await MsgBox.Info($"保存成功，路径：{file.TryGetLocalPath() ?? file.Path.LocalPath}", this);
         } catch (Exception ex) { await ex.Alert("保存日志", this); }
     }
 }

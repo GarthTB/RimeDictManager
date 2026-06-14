@@ -4,21 +4,21 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Models;
 using Services.Data;
 
-public sealed partial class EntryVM(EntryLine src, IDictInfo dict): ObservableObject {
-    public EntryLine Src { get; } = src;
-    public IDictInfo Dict { get; } = dict;
-    public uint Num => Src.Num;
-    [ObservableProperty] public partial string Text { get; set; } = src.Text;
-    [ObservableProperty] public partial string Code { get; set; } = src.Code ?? "";
-    [ObservableProperty] public partial string Weight { get; set; } = src.Weight ?? "";
-    [ObservableProperty] public partial string Stem { get; set; } = src.Stem ?? "";
+public sealed partial class EntryVM(DictEntry src): ObservableObject {
+    public DictEntry Src { get; } = src;
+    public uint Num => Src.Entry.Num;
+    [ObservableProperty] public partial string Text { get; set; } = src.Entry.Text;
+    [ObservableProperty] public partial string Code { get; set; } = src.Entry.Code ?? "";
+    [ObservableProperty] public partial string Weight { get; set; } = src.Entry.Weight ?? "";
+    [ObservableProperty] public partial string Stem { get; set; } = src.Entry.Stem ?? "";
 
     public bool TryNewIfMod(out EntryLine aft) {
-        if (Text != Src.Text
-         && Code != (Src.Code ?? "")
-         && Weight != (Src.Weight ?? "")
-         && Stem != (Src.Stem ?? ""))
-            return LineCodec.TryNewEntry(Num, Text, Code, Weight, Stem, Dict.Cols, out aft);
+        if (Text != Src.Entry.Text
+         && Code != (Src.Entry.Code ?? "")
+         && Weight != (Src.Entry.Weight ?? "")
+         && Stem != (Src.Entry.Stem ?? "")
+         && LineCodec.TryNewEntry(Num, Text, Code, Weight, Stem, Src.Dict.Cols, out aft))
+            return true;
         aft = default;
         return false;
     }

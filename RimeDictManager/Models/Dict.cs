@@ -72,7 +72,7 @@ public sealed class Dict: IDictInfo {
         idx[j] = idx[^1];
         idx.RemoveAt(idx.Count - 1);
         if (!_entriesByCode.Remove(e.Code, i) || (idx.Count == 0 && !_entriesByText.Remove(e.Text)))
-            throw new UnreachableException("严重错误：请停用并报告异常A");
+            throw new UnreachableException("不可能错误，请停用并报告：前缀树与字典相违");
 
         _entries[i] = e with { Num = 0 }; // 标记死亡
         Cnt--;
