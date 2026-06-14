@@ -4,8 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Common;
-using Services.Core;
-using Services.Utils;
+using Services;
 using ViewModels;
 
 public sealed partial class DictWindow: Window {

@@ -1,4 +1,4 @@
-namespace RimeDictManager.Services.Utils;
+namespace RimeDictManager.Services;
 
 using Avalonia;
 using Avalonia.Controls;

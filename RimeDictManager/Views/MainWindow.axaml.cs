@@ -2,7 +2,7 @@ namespace RimeDictManager.Views;
 
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Services.Utils;
+using Services;
 using ViewModels;
 
 public sealed partial class MainWindow: Window {

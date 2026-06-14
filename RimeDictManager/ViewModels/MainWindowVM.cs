@@ -4,8 +4,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Models;
-using Services.Core;
-using Services.Utils;
+using Services;
 
 public sealed partial class MainWindowVM: ObservableObject {
     #region 可用性
@@ -31,13 +30,13 @@ public sealed partial class MainWindowVM: ObservableObject {
     public void RefreshState() {
         DictReady = DictManager.Ready;
         var tgtCols = DictManager.TgtCols;
-        UseCodeBox = DictReady && tgtCols?.Contains(Col.Code) == true;
-        UseWeightBox = DictReady && tgtCols?.Contains(Col.Weight) == true;
-        UseStemBox = DictReady && tgtCols?.Contains(Col.Stem) == true;
+        UseCodeBox = DictReady && tgtCols?.Contains(Column.Code) == true;
+        UseWeightBox = DictReady && tgtCols?.Contains(Column.Weight) == true;
+        UseStemBox = DictReady && tgtCols?.Contains(Column.Stem) == true;
         var unionCols = DictManager.UnionCols;
-        ShowCodeCol = DictReady && unionCols.Contains(Col.Code);
-        ShowWeightCol = DictReady && unionCols.Contains(Col.Weight);
-        ShowStemCol = DictReady && unionCols.Contains(Col.Stem);
+        ShowCodeCol = DictReady && unionCols.Contains(Column.Code);
+        ShowWeightCol = DictReady && unionCols.Contains(Column.Weight);
+        ShowStemCol = DictReady && unionCols.Contains(Column.Stem);
         OnPropertyChanged(nameof(CanToggleEncoder));
         OnPropertyChanged(nameof(MinCodeLen));
         OnPropertyChanged(nameof(MaxCodeLen));

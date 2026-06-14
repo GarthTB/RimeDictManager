@@ -1,15 +1,14 @@
-namespace RimeDictManager.Services.Data;
+namespace RimeDictManager.Models.Serde;
 
-using Models;
 using ZLinq;
-using static Models.Col;
+using static Column;
 using FmtEx = FormatException;
 
 public static class LineCodec {
     public static bool Deserialize(
         string l,
         uint num,
-        IReadOnlyList<Col> cols,
+        IReadOnlyList<Column> cols,
         out EntryLine e,
         out RawLine r) {
         if (string.IsNullOrWhiteSpace(l)) {
@@ -36,7 +35,7 @@ public static class LineCodec {
         return true;
     }
 
-    public static string Serialize(this EntryLine e, IReadOnlyList<Col> cols) {
+    public static string Serialize(this EntryLine e, IReadOnlyList<Column> cols) {
         var vals = cols.AsValueEnumerable()
             .Select(col =>
                 col switch { Text => e.Text, Code => e.Code, Weight => e.Weight, _ => e.Stem })
@@ -51,7 +50,7 @@ public static class LineCodec {
         string? code,
         string? weight,
         string? stem,
-        IReadOnlyList<Col> cols,
+        IReadOnlyList<Column> cols,
         out EntryLine e) {
         var t = TrimOrNull(text);
         if (t is null) goto Fail;
@@ -64,7 +63,6 @@ public static class LineCodec {
 
         e = new(num, t, c, w, s);
         return true;
-
     Fail:
         e = default;
         return false;

@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Common;
-using Services.Utils;
+using Services;
 
 public sealed partial class LogWindow: Window {
     private readonly FilePickerSaveOptions _saveOptions = new() {

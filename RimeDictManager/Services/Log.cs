@@ -1,4 +1,4 @@
-namespace RimeDictManager.Services.Utils;
+namespace RimeDictManager.Services;
 
 public static class Log {
     private static readonly DateTime StartTime = DateTime.Now;

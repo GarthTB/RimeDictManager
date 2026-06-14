@@ -1,21 +1,21 @@
-namespace RimeDictManager.Services.Data;
+namespace RimeDictManager.Models.Serde;
 
 using System.Text;
 using System.Text.Json.Serialization;
 using Common;
-using Models;
 using SharpYaml;
 using SharpYaml.Serialization;
 using FmtEx = FormatException;
 
 public static class DictParser {
-    private static readonly Col[] DefaultCols = [Col.Text, Col.Code, Col.Weight, Col.Stem];
+    private static readonly Column[] DefaultCols
+        = [Column.Text, Column.Code, Column.Weight, Column.Stem];
 
     public static string ReadHeader(
         TextReader reader,
         string path,
         out string name,
-        out Col[] cols,
+        out Column[] cols,
         out uint num) {
         StringBuilder s = new(1024);
         var start = 0;
@@ -24,10 +24,9 @@ public static class DictParser {
             if (s.Length > 16384) throw new FmtEx($"文件头过长，疑似缺失或未闭合\n文件：{path}");
             if (string.IsNullOrWhiteSpace(l))
                 s.Append('\n');
-            else if (l == "---") {
-                start = s.Length;
-                s.Append(l).Append('\n');
-            } else if (l == "...") {
+            else if (l == "---")
+                start = s.Append(l).Append('\n').Length;
+            else if (l == "...") {
                 s.Append(l);
                 num++;
                 break;
@@ -35,33 +34,32 @@ public static class DictParser {
                 s.Append(l).Append('\n');
         }
         var raw = s.ToString();
-        if (raw is not [.., '.', '.', '.']) throw new FmtEx($"文件头缺失或未闭合\n文件：{path}");
+        if (raw.AsSpan(^3..) is not "...") throw new FmtEx($"文件头缺失或未闭合\n文件：{path}");
 
-        var header = YamlSerializer.Deserialize(raw.AsSpan(start), HeaderContext.Default.Header)
+        var header = YamlSerializer.Deserialize(raw.AsSpan(start..^3), HeaderContext.Default.Header)
                   ?? throw new FmtEx($"文件头无法作为YAML解析\n文件：{path}");
-        name = header.Name ?? GetName(Path.GetFileName(path));
+        name = header.Name ?? TrimExt(Path.GetFileName(path));
         try { cols = ParseCols(header.Columns); } catch (Exception ex) {
             throw new FmtEx($"无法解析列定义\n文件：{path}", ex);
         }
-
         return raw;
     }
 
-    private static string GetName(string path) =>
-        path.EndsWith(FileTypes.DictExt, StringComparison.OrdinalIgnoreCase)
-            ? path[..^FileTypes.DictExt.Length]
-            : path;
+    private static string TrimExt(string name) =>
+        name.EndsWith(FileTypes.DictExt, StringComparison.OrdinalIgnoreCase)
+            ? name[..^FileTypes.DictExt.Length]
+            : name;
 
-    private static Col[] ParseCols(string[]? cols) {
+    private static Column[] ParseCols(string[]? cols) {
         if (cols is null) return DefaultCols;
         if (cols.Length == 0) throw new FmtEx("列定义为空");
         if (cols.Length > 4) throw new FmtEx("词库超过4列");
-        HashSet<Col> result = new(4);
+        HashSet<Column> result = new(4);
         foreach (var s in cols) {
-            if (!Enum.TryParse(s.Trim(), true, out Col col)) throw new FmtEx($"列名无效：'{s}'");
+            if (!Enum.TryParse(s.Trim(), true, out Column col)) throw new FmtEx($"列名无效：'{s}'");
             if (!result.Add(col)) throw new FmtEx($"有重复列名'{s}'");
         }
-        return result.Contains(Col.Text)
+        return result.Contains(Column.Text)
             ? result.ToArray()
             : throw new FmtEx("未定义文本列");
     }

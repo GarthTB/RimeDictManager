@@ -1,7 +1,6 @@
 namespace RimeDictManager.Models;
 
-using System.Diagnostics;
-using Services.Data;
+using Serde;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
 public sealed class Dict: IDictInfo {
@@ -43,7 +42,7 @@ public sealed class Dict: IDictInfo {
 
     public string Name { get; }
     public string Path { get; }
-    public IReadOnlyList<Col> Cols { get; }
+    public IReadOnlyList<Column> Cols { get; }
     public uint Cnt { get; private set; }
     public bool Mod { get; private set; }
 
@@ -72,7 +71,7 @@ public sealed class Dict: IDictInfo {
         idx[j] = idx[^1];
         idx.RemoveAt(idx.Count - 1);
         if (!_entriesByCode.Remove(e.Code, i) || (idx.Count == 0 && !_entriesByText.Remove(e.Text)))
-            throw new UnreachableException("不可能错误，请停用并报告：前缀树与字典相违");
+            throw new InvalidOperationException("请停用并报告：前缀树与字典相违");
 
         _entries[i] = e with { Num = 0 }; // 标记死亡
         Cnt--;
@@ -86,8 +85,8 @@ public sealed class Dict: IDictInfo {
         _entriesByCode.ForEachBy(code, exact, i => f(_entries[i]));
 
     public void ForEachByText(string text, Action<EntryLine> f) {
-        if (!_entriesByText.TryGetValue(text, out var indexes)) return;
-        foreach (var i in indexes) f(_entries[i]);
+        if (!_entriesByText.TryGetValue(text, out var idx)) return;
+        foreach (var i in idx) f(_entries[i]);
     }
 
     /// <summary> 保存词库（不迁移路径） </summary>
@@ -107,7 +106,8 @@ public sealed class Dict: IDictInfo {
         } else {
             using var entries = _entries.Where(static e => e.Num > 0).GetEnumerator();
             using var rawLines = _rawLines.GetEnumerator();
-            bool anyE = entries.MoveNext(), anyR = rawLines.MoveNext();
+            var anyE = entries.MoveNext();
+            var anyR = rawLines.MoveNext();
             while (anyE || anyR)
                 if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
                     await writer.WriteLineAsync(entries.Current.Serialize(Cols));

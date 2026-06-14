@@ -1,13 +1,12 @@
 namespace RimeDictManager.ViewModels;
 
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Models;
-using Services.Core;
-using Services.Utils;
+using Services;
 using ZLinq;
+using OpEx = InvalidOperationException;
 
 public sealed partial class DictWindowVM: ObservableObject {
     public DictWindowVM() {
@@ -41,9 +40,9 @@ public sealed partial class DictWindowVM: ObservableObject {
     private async Task RemoveDict() {
         try {
             var dict = SelDict!;
-            IDictInfo? tgt = null;
-            if (!await DictManager.RemoveDict(dict.Src, x => tgt = x)) return;
-            if (!Dicts.Remove(dict)) throw new UnreachableException("不可能错误，请停用并报告：词库集合VM与底层相违");
+            var (done, tgt) = await DictManager.RemoveDict(dict.Src);
+            if (!done) return;
+            if (!Dicts.Remove(dict)) throw new OpEx("请停用并报告：词库集合的VM与底层相违");
             if (tgt is {}) Dicts.AsValueEnumerable().First(x => x.Src == tgt).SetTgt(true);
         } catch (Exception ex) { await ex.Alert("移除词库"); }
     }
@@ -76,8 +75,7 @@ public sealed partial class DictWindowVM: ObservableObject {
         try {
             var dict = SelSingleDict!;
             Encoder.RemoveDict(dict);
-            if (!SingleDicts.Remove(dict))
-                throw new UnreachableException("不可能错误，请停用并报告：单字集合VM与底层相违");
+            if (!SingleDicts.Remove(dict)) throw new OpEx("请停用并报告：词库集合的VM与底层相违");
         } catch (Exception ex) { await ex.Alert("移除单字码表"); }
     }
 

@@ -1,8 +1,7 @@
-namespace RimeDictManager.Services.Core;
+namespace RimeDictManager.Services;
 
 using System.Collections.Frozen;
 using Models;
-using Utils;
 using ZLinq;
 using OpEx = InvalidOperationException;
 using static System.Runtime.InteropServices.CollectionsMarshal;
@@ -11,6 +10,7 @@ public static class Encoder {
     private static FrozenDictionary<char, string[]>? _merged;
     private static readonly List<SingleDict> Dicts = [];
     public static IReadOnlyList<SingleDict> AllDicts => Dicts;
+
     public static bool Ready => _merged is {};
 
     public static InputMethod Method { get; private set; } = InputMethod.All[0];
@@ -49,7 +49,7 @@ public static class Encoder {
             _merged = null;
         } else {
             _merged = merged.ToFrozenDictionary(static x => x.Key, static x => x.Value.ToArray());
-            Log.Info($"启用编码器：'{method.Name}'方案，覆盖{merged.Count}个字");
+            Log.Info($"启用编码器：'{method.Name}'方案，覆盖{merged.Count}个单字");
         }
         Method = method;
     }

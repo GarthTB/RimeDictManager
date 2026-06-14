@@ -1,7 +1,6 @@
 namespace RimeDictManager.Models;
 
-/// <summary> 词库列：缺省为 [ Text, Code, Weight, Stem ] </summary>
-public enum Col: byte { Text, Code, Weight, Stem }
+using Str = string;
 
 /// <summary> 解析的词条行 </summary>
 /// <param name="Num"> 行号：1开始，0无效 </param>
@@ -9,21 +8,16 @@ public enum Col: byte { Text, Code, Weight, Stem }
 /// <param name="Code"> 编码：省略时null </param>
 /// <param name="Weight"> 权重：省略时null </param>
 /// <param name="Stem"> 造词码：省略时null </param>
-/// <remarks> https://github.com/LEOYoon-Tsaw/Rime_collections/blob/master/Rime_description.md </remarks>
-public readonly record struct EntryLine(
-    uint Num,
-    string Text,
-    string? Code,
-    string? Weight,
-    string? Stem);
+/// <seealso cref="Column"/>
+public readonly record struct EntryLine(uint Num, Str Text, Str? Code, Str? Weight, Str? Stem);
 
 /// <summary> 除词条外的行 </summary>
 /// <param name="Num"> 行号：1开始 </param>
 /// <param name="Content"> 空行为null，注释行首为# </param>
-/// <remarks> https://github.com/rime/home/wiki/RimeWithSchemata </remarks>
-public readonly record struct RawLine(uint Num, string? Content);
+/// <seealso href="https://github.com/rime/home/wiki/RimeWithSchemata"/>
+public readonly record struct RawLine(uint Num, Str? Content);
 
-/// <summary> 词条的完整信息 </summary>
+/// <summary> 完整词条信息 </summary>
 /// <param name="Dict"> 词库 </param>
 /// <param name="Entry"> 词条行 </param>
 public readonly record struct DictEntry(IDictInfo Dict, EntryLine Entry);
