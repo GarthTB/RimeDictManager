@@ -21,7 +21,7 @@
                     Command="{Binding RemoveDictCommand, Mode=OneTime}"/>
                 <Button Grid.Column="4"
                     Content="保存词库"
-                    IsEnabled="{Binding SelDictInfoMod, Mode=OneWay}"
+                    IsEnabled="{Binding SelDictMod, Mode=OneWay}"
                     Click="SaveDict"/>
                 <Button Grid.Column="6"
                     Content="设为加词目标"
@@ -29,18 +29,18 @@
             </Grid>
             <DataGrid Grid.Row="2"
                 IsReadOnly="True"
-                ItemsSource="{Binding DictInfos, Mode=OneTime}"
-                SelectedItem="{Binding SelDictInfo}">
+                ItemsSource="{Binding Dicts, Mode=OneTime}"
+                SelectedItem="{Binding SelDict}">
                 <DataGrid.Columns>
                     <DataGridTextColumn MinWidth="64"
                         Header="名称"
-                        Binding="{Binding Name, Mode=OneTime}"/>
+                        Binding="{Binding Src.Name, Mode=OneTime}"/>
                     <DataGridTextColumn Width="*"
                         Header="路径"
-                        Binding="{Binding Path, Mode=OneTime}"/>
+                        Binding="{Binding Src.Path, Mode=OneTime}"/>
                     <DataGridTextColumn Width="108"
                         Header="词数"
-                        Binding="{Binding Cnt, Mode=OneTime}"/>
+                        Binding="{Binding Src.Cnt, Mode=OneTime}"/>
                     <DataGridTextColumn Width="84"
                         Header="变更"
                         Binding="{Binding ModText, Mode=OneWay}"/>

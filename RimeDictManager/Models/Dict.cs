@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Services.Data;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
-public sealed class Dict {
+public sealed class Dict: IDictInfo {
     private readonly List<EntryLine> _entries;
     private readonly CodeTrie _entriesByCode;
     private readonly Dictionary<string, List<int>> _entriesByText;

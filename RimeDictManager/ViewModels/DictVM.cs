@@ -3,10 +3,8 @@ namespace RimeDictManager.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Models;
 
-public sealed partial class DictInfo(Dict src): ObservableObject {
-    public string Name { get; } = src.Name;
-    public string Path { get; } = src.Path;
-    public uint Cnt { get; } = src.Cnt;
+public sealed partial class DictVM(IDictInfo src): ObservableObject {
+    public IDictInfo Src { get; } = src;
 
     [ObservableProperty, NotifyPropertyChangedFor(nameof(ModText))]
     public partial bool Mod { get; private set; } = src.Mod;

@@ -77,10 +77,10 @@ public sealed partial class MainWindowVM: ObservableObject {
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     public partial string SearchText { get; set; } = "";
 
-    public ObservableCollection<EntryInfo> SearchResults { get; } = [];
+    public ObservableCollection<EntryVM> SearchResults { get; } = [];
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
-    public partial EntryInfo? SelSearchResult { get; set; }
+    public partial EntryVM? SelSearchResult { get; set; }
 
     partial void OnSearchTextChanged(string value) => Search();
 

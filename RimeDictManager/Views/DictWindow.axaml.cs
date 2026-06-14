@@ -46,18 +46,20 @@ public sealed partial class DictWindow: Window {
         try {
             var overwrite = await MsgBox.Ask<bool?>(OverwritePrompt, this);
             if (overwrite is null) return;
-            var dict = _vm.SelDictInfo!;
+            var dict = _vm.SelDict!;
             string? path = null;
             if (overwrite == false) {
-                _saveOptions.SuggestedFileName = dict.Name;
+                _saveOptions.SuggestedFileName = dict.Src.Name;
                 using var file = await StorageProvider.SaveFilePickerAsync(_saveOptions);
                 if (file is null) return;
                 path = file.TryGetLocalPath() ?? file.Path.LocalPath;
             }
             var reorder = await MsgBox.Ask<bool?>(ReorderPrompt, this);
             if (reorder is null) return;
-            await DictManager.SaveDict(dict, path, reorder == true);
-            await MsgBox.Info($"保存成功，路径：{path ?? dict.Path}", this);
+
+            await DictManager.SaveDict(dict.Src, path, reorder == true);
+            dict.NotifySaved();
+            await MsgBox.Info($"保存成功，路径：{path ?? dict.Src.Path}", this);
         } catch (Exception ex) { await ex.Alert("保存词库", this); }
     }
 

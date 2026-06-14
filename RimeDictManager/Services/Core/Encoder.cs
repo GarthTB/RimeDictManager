@@ -10,7 +10,7 @@ using static System.Runtime.InteropServices.CollectionsMarshal;
 public static class Encoder {
     private static FrozenDictionary<char, string[]>? _merged;
     private static readonly List<SingleDict> Dicts = [];
-    public static IReadOnlyList<SingleDict> DictList => Dicts;
+    public static IReadOnlyList<SingleDict> AllDicts => Dicts;
     public static bool Ready => _merged is {};
 
     public static InputMethod Method { get; private set; } = InputMethod.All[0];
