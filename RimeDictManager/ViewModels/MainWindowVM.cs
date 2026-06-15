@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Models;
 using Services;
+using static Services.DictManager;
 
 public sealed partial class MainWindowVM: ObservableObject {
     #region 可用性
@@ -29,12 +30,12 @@ public sealed partial class MainWindowVM: ObservableObject {
     public static byte MaxCodeLen => Encoder.Method.MaxLen;
 
     public void RefreshState() {
-        DictReady = DictManager.Ready;
-        var tgtCols = DictManager.TgtCols;
+        DictReady = Ready;
+        var tgtCols = TgtCols;
         UseCodeBox = DictReady && tgtCols?.Contains(Column.Code) == true;
         UseWeightBox = DictReady && tgtCols?.Contains(Column.Weight) == true;
         UseStemBox = DictReady && tgtCols?.Contains(Column.Stem) == true;
-        var unionCols = DictManager.UnionCols;
+        var unionCols = UnionCols;
         ShowCodeCol = DictReady && unionCols.Contains(Column.Code);
         ShowWeightCol = DictReady && unionCols.Contains(Column.Weight);
         ShowStemCol = DictReady && unionCols.Contains(Column.Stem);
@@ -72,12 +73,11 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     #region 搜索
 
-    public static Dictionary<DictManager.SearchMode, string> SearchModes { get; } = Enum
-        .GetValues<DictManager.SearchMode>()
+    public static Dictionary<SearchMode, string> SearchModes { get; } = Enum.GetValues<SearchMode>()
         .ToDictionary(static x => x, static x => x.ToString());
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
-    public partial DictManager.SearchMode SelSearchMode { get; set; } = DictManager.SearchMode.编码前缀;
+    public partial SearchMode SelSearchMode { get; set; } = SearchMode.编码前缀;
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     public partial string SearchText { get; set; } = "";
@@ -87,19 +87,19 @@ public sealed partial class MainWindowVM: ObservableObject {
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
     public partial EntryVM? SelSearchResult { get; set; }
 
-    partial void OnSearchTextChanged(string value) => Search();
+    partial void OnSearchTextChanged(string value) => _ = SearchAsync();
 
     private void SyncSearchText() =>
         SearchText = SelSearchMode switch {
-            DictManager.SearchMode.编码前缀 => PendingCode ?? "",
-            DictManager.SearchMode.文本精确 => PendingText,
+            SearchMode.编码前缀 => PendingCode ?? "",
+            SearchMode.文本精确 => PendingText,
             _ => throw new UnreachableException()
         };
 
-    private async void Search() {
+    private async Task SearchAsync() {
         try {
             SearchResults.Clear();
-            DictManager.Search(SearchText, SelSearchMode, e => SearchResults.Add(new(e)));
+            Search(SearchText, SelSearchMode, e => SearchResults.Add(new(e)));
         } catch (Exception ex) { await ex.Alert("搜索"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }
@@ -109,14 +109,12 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     #region 操作
 
-    [RelayCommand(CanExecute = nameof(DictReady))]
-    private async Task Insert() {
+    private bool CanInsert => DictReady && PendingText.Length > 0;
+
+    [RelayCommand(CanExecute = nameof(CanInsert))]
+    private async Task InsertAsync() {
         try {
-            var e = await DictManager.InsertEntry(
-                PendingText,
-                PendingCode,
-                PendingWeight,
-                PendingStem);
+            var e = await InsertEntryAsync(PendingText, PendingCode, PendingWeight, PendingStem);
             if (e is null) return;
             var tmp = SearchText;
             SyncSearchText();
@@ -130,10 +128,10 @@ public sealed partial class MainWindowVM: ObservableObject {
     private bool CanRemove => DictReady && SelSearchResult is {};
 
     [RelayCommand(CanExecute = nameof(CanRemove))]
-    private async Task Remove() {
+    private async Task RemoveAsync() {
         try {
             var e = SelSearchResult!;
-            if (await DictManager.RemoveEntry(e.Src)) SearchResults.Remove(e);
+            if (await RemoveEntryAsync(e.Src)) SearchResults.Remove(e);
         } catch (Exception ex) { await ex.Alert("删除词条"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }
@@ -143,28 +141,28 @@ public sealed partial class MainWindowVM: ObservableObject {
         DictReady
      && Encoder.Ready
      && MinCodeLen < MaxCodeLen
-     && SelSearchMode == DictManager.SearchMode.编码前缀
+     && SelSearchMode == SearchMode.编码前缀
      && SearchText.Length >= MinCodeLen
      && SelSearchResult?.Code.Length > SearchText.Length;
 
     [RelayCommand(CanExecute = nameof(CanShorten))]
-    private async Task Shorten() {
+    private async Task ShortenAsync() {
         try {
-            if (await DictManager.ShortenEntry(SelSearchResult!.Src, SearchText)) Search();
+            if (await ShortenEntryAsync(SelSearchResult!.Src, SearchText)) _ = SearchAsync();
         } catch (Exception ex) { await ex.Alert("截短编码"); }
     }
 
     private bool CanModify => DictReady && SearchResults.Count > 0;
 
     [RelayCommand(CanExecute = nameof(CanModify))]
-    private async Task Modify() {
+    private async Task ModifyAsync() {
         try {
             List<(DictEntry Src, EntryLine Tgt)> mods = new(SearchResults.Count);
             foreach (var e in SearchResults)
-                if (e.TryNewIfMod(out var tgt))
+                if (e.TryNewIfModified(out var tgt))
                     mods.Add((e.Src, tgt));
             if (mods.Count == 0) throw new InvalidOperationException("没有改动，什么都没做");
-            if (await DictManager.ModifyEntries(mods)) Search();
+            if (await ModifyEntriesAsync(mods)) _ = SearchAsync();
         } catch (Exception ex) { await ex.Alert("应用修改"); }
     }
 

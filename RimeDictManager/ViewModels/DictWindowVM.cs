@@ -23,11 +23,11 @@ public sealed partial class DictWindowVM: ObservableObject {
 
     [ObservableProperty,
      NotifyCanExecuteChangedFor(nameof(RemoveDictCommand), nameof(SetTgtDictCommand)),
-     NotifyPropertyChangedFor(nameof(SelDictMod))]
+     NotifyPropertyChangedFor(nameof(SelDictModified))]
     public partial DictVM? SelDict { get; set; }
 
     private bool HasSelDict => SelDict is {};
-    public bool SelDictMod => SelDict is { Mod: true };
+    public bool SelDictModified => SelDict is { Modified: true };
     private bool SelDictNotTgt => SelDict is { Tgt: false };
 
     public void AddDict(string path) {
@@ -37,24 +37,24 @@ public sealed partial class DictWindowVM: ObservableObject {
     }
 
     [RelayCommand(CanExecute = nameof(HasSelDict))]
-    private async Task RemoveDict() {
+    private async Task RemoveDictAsync() {
         try {
             var dict = SelDict!;
-            var (done, tgt) = await DictManager.RemoveDict(dict.Src);
+            var (done, tgt) = await DictManager.RemoveDictAsync(dict.Src);
             if (!done) return;
             if (!Dicts.Remove(dict)) throw new OpEx("请停用并报告：词库集合的VM与底层相违");
             if (tgt is {}) Dicts.AsValueEnumerable().First(x => x.Src == tgt).SetTgt(true);
         } catch (Exception ex) { await ex.Alert("移除词库"); }
     }
 
-    public async Task SaveDict(DictVM dict, string? path, bool reorder) {
-        await DictManager.SaveDict(dict.Src, path, reorder);
+    public async Task SaveAsync(DictVM dict, string? path, bool reorder) {
+        await DictManager.SaveAsync(dict.Src, path, reorder);
         dict.NotifySaved();
-        OnPropertyChanged(nameof(SelDictMod));
+        OnPropertyChanged(nameof(SelDictModified));
     }
 
     [RelayCommand(CanExecute = nameof(SelDictNotTgt))]
-    private async Task SetTgtDict() {
+    private async Task SetTgtDictAsync() {
         try {
             var dict = SelDict!;
             var old = DictManager.SetTgtDict(dict.Src);
@@ -77,7 +77,7 @@ public sealed partial class DictWindowVM: ObservableObject {
     public void AddSingleDict(string path) => SingleDicts.Add(Encoder.AddDict(path));
 
     [RelayCommand(CanExecute = nameof(HasSelSingleDict))]
-    private async Task RemoveSingleDict() {
+    private async Task RemoveSingleDictAsync() {
         try {
             var dict = SelSingleDict!;
             Encoder.RemoveDict(dict);

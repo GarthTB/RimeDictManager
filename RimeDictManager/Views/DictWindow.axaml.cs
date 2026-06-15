@@ -56,7 +56,7 @@ public sealed partial class DictWindow: Window {
             var reorder = await MsgBox.Ask<bool?>(ReorderPrompt, this);
             if (reorder is null) return;
 
-            await _vm.SaveDict(dict, path, reorder == true);
+            await _vm.SaveAsync(dict, path, reorder == true);
             await MsgBox.Info($"保存成功，路径：{path ?? dict.Src.Path}", this);
         } catch (Exception ex) { await ex.Alert("保存词库", this); }
     }

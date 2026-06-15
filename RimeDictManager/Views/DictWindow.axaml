@@ -21,7 +21,7 @@
                     Command="{Binding RemoveDictCommand, Mode=OneTime}"/>
                 <Button Grid.Column="4"
                     Content="保存词库"
-                    IsEnabled="{Binding SelDictMod, Mode=OneWay}"
+                    IsEnabled="{Binding SelDictModified, Mode=OneWay}"
                     Click="SaveDict"/>
                 <Button Grid.Column="6"
                     Content="设为加词目标"

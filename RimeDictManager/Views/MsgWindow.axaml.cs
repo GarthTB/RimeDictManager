@@ -3,6 +3,7 @@ namespace RimeDictManager.Views;
 using Avalonia.Controls;
 
 public sealed partial class MsgWindow: Window {
+    // ReSharper disable once UnusedMember.Global
     /// <summary> 设计器专用 </summary>
     public MsgWindow(): this("标题", "内容", true) {}
 
@@ -18,6 +19,7 @@ public sealed partial class MsgWindow: Window {
         }
         BtnYes.Content = "是";
         BtnYes.Click += (_, _) => Close(true);
+        BtnNo.Content = "否";
         BtnNo.Click += (_, _) => Close(false);
     }
 }

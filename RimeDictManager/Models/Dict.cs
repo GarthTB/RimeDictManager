@@ -44,7 +44,7 @@ public sealed class Dict: IDictInfo {
     public string Path { get; }
     public IReadOnlyList<Column> Cols { get; }
     public uint Cnt { get; private set; }
-    public bool Mod { get; private set; }
+    public bool Modified { get; private set; }
 
     public void Insert(EntryLine e) {
         if (e.Num == 0) e = e with { Num = ++_num };
@@ -59,7 +59,7 @@ public sealed class Dict: IDictInfo {
         _entriesByCode.Insert(e.Code, i);
 
         Cnt++;
-        Mod = true;
+        Modified = true;
     }
 
     public bool Remove(EntryLine e) {
@@ -75,7 +75,7 @@ public sealed class Dict: IDictInfo {
 
         _entries[i] = e with { Num = 0 }; // 标记死亡
         Cnt--;
-        return Mod = true;
+        return Modified = true;
     }
 
     public bool ContainsCode(string? code) => _entriesByCode.HasValue(code);
@@ -118,6 +118,6 @@ public sealed class Dict: IDictInfo {
                 }
         }
 
-        Mod = false;
+        Modified = false;
     }
 }

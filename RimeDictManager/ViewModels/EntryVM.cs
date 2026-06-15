@@ -13,7 +13,7 @@ public sealed partial class EntryVM(DictEntry src): ObservableObject {
     [ObservableProperty] public partial string Weight { get; set; } = src.Entry.Weight ?? "";
     [ObservableProperty] public partial string Stem { get; set; } = src.Entry.Stem ?? "";
 
-    public bool TryNewIfMod(out EntryLine aft) {
+    public bool TryNewIfModified(out EntryLine aft) {
         if (Text != Src.Entry.Text
          || Code != (Src.Entry.Code ?? "")
          || Weight != (Src.Entry.Weight ?? "")

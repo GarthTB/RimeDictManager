@@ -5,5 +5,5 @@ public interface IDictInfo {
     string Path { get; }
     IReadOnlyList<Column> Cols { get; }
     uint Cnt { get; }
-    bool Mod { get; }
+    bool Modified { get; }
 }

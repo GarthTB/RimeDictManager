@@ -7,10 +7,10 @@ public sealed partial class DictVM(IDictInfo src): ObservableObject {
     public IDictInfo Src { get; } = src;
 
     [ObservableProperty, NotifyPropertyChangedFor(nameof(ModText))]
-    public partial bool Mod { get; private set; } = src.Mod;
+    public partial bool Modified { get; private set; } = src.Modified;
 
     public string ModText =>
-        Mod
+        Modified
             ? "●"
             : "○";
 
@@ -22,6 +22,6 @@ public sealed partial class DictVM(IDictInfo src): ObservableObject {
             ? "●"
             : "";
 
-    public void NotifySaved() => Mod = false;
+    public void NotifySaved() => Modified = false;
     public void SetTgt(bool tgt) => Tgt = tgt;
 }

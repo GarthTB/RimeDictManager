@@ -29,14 +29,14 @@ public static class DictManager {
     /// <summary> 移除词库 </summary>
     /// <param name="dict"> 词库 </param>
     /// <returns> (是否已删除, 新加词目标) </returns>
-    public static async Task<(bool, IDictInfo?)> RemoveDict(IDictInfo dict) {
-        if (dict.Mod && !await MsgBox.Ask<bool>("变更未保存，是否丢弃？")) return (false, null);
+    public static async Task<(bool, IDictInfo?)> RemoveDictAsync(IDictInfo dict) {
+        if (dict.Modified && !await MsgBox.Ask<bool>("变更未保存，是否丢弃？")) return (false, null);
         if (!Dicts.Remove((Dict)dict)) throw new OpEx("移除失败");
         Log.Info($"移除词库：{dict.Path}");
         return (true, Dicts.FirstOrDefault());
     }
 
-    public static async Task SaveDict(IDictInfo dict, string? path, bool reorder) {
+    public static async Task SaveAsync(IDictInfo dict, string? path, bool reorder) {
         await ((Dict)dict).SaveAsync(path, reorder);
         var msg0 = reorder
             ? "重新排序"
@@ -78,7 +78,7 @@ public static class DictManager {
 
     #region 操作
 
-    public static async Task<DictEntry?> InsertEntry(
+    public static async Task<DictEntry?> InsertEntryAsync(
         string text,
         string? code,
         string? weight,
@@ -102,7 +102,7 @@ public static class DictManager {
         return new(dict, e);
     }
 
-    public static async Task<bool> RemoveEntry(DictEntry e) {
+    public static async Task<bool> RemoveEntryAsync(DictEntry e) {
         var dict = (Dict)e.Dict;
         var eStr = e.Entry.Serialize(dict.Cols);
 
@@ -116,7 +116,7 @@ public static class DictManager {
         return true;
     }
 
-    public static async Task<bool> ShortenEntry(DictEntry e, string tgt) {
+    public static async Task<bool> ShortenEntryAsync(DictEntry e, string tgt) {
         var dict = (Dict)e.Dict;
         var cols = dict.Cols;
 
@@ -183,7 +183,7 @@ public static class DictManager {
         }
     }
 
-    public static async Task<bool> ModifyEntries(
+    public static async Task<bool> ModifyEntriesAsync(
         IReadOnlyList<(DictEntry Src, EntryLine Tgt)> mods) {
         List<string> msg = new(1 + 3 * mods.Count) { "确认应用修改？\n" };
         var newCodes = mods.AsValueEnumerable().Select(static m => m.Tgt.Code).ToHashSet();
