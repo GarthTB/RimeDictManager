@@ -1,6 +1,7 @@
 namespace RimeDictManager.Models;
 
 using Serde;
+using ZLinq;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
 public sealed class Dict: IDictInfo {
@@ -31,11 +32,11 @@ public sealed class Dict: IDictInfo {
         _entriesByCode = new(4 * _entries.Count);
         for (var i = 0; i < _entries.Count; i++) {
             var e = _entries[i];
-            ref var idx = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
+            ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
             if (exists)
-                idx!.Add(i);
+                indexes!.Add(i);
             else
-                idx = [i];
+                indexes = [i];
             _entriesByCode.Insert(e.Code, i);
         }
     }
@@ -46,16 +47,30 @@ public sealed class Dict: IDictInfo {
     public uint Cnt { get; private set; }
     public bool Modified { get; private set; }
 
+    public bool ContainsCode(string code) => _entriesByCode[code]?.Count > 0;
+    public bool IsCodePrefix(string code) => _entriesByCode.AnyDescendantValue(code);
+
+    public IReadOnlyList<EntryLine> GetByText(string text) =>
+        _entriesByText.TryGetValue(text, out var indexes)
+            ? indexes.AsValueEnumerable().Select(i => _entries[i]).ToArray()
+            : [];
+
+    public IReadOnlyList<EntryLine> GetByCodePrefix(string code) {
+        List<EntryLine> result = [];
+        _entriesByCode.ForEachSubtreeValue(code, i => result.Add(_entries[i]));
+        return result;
+    }
+
     public void Insert(EntryLine e) {
         if (e.Num == 0) e = e with { Num = ++_num };
-
         _entries.Add(e);
+
         var i = _entries.Count - 1;
-        ref var idx = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
+        ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
         if (exists)
-            idx!.Add(i);
+            indexes!.Add(i);
         else
-            idx = [i];
+            indexes = [i];
         _entriesByCode.Insert(e.Code, i);
 
         Cnt++;
@@ -63,35 +78,25 @@ public sealed class Dict: IDictInfo {
     }
 
     public bool Remove(EntryLine e) {
-        if (!_entriesByText.TryGetValue(e.Text, out var idx)
-         || idx.FindIndex(x => _entries[x] == e) is not (>= 0 and var j))
+        if (!_entriesByText.TryGetValue(e.Text, out var indexes)
+         || indexes.FindIndex(x => _entries[x] == e) is not (>= 0 and var j))
             return false;
 
-        var i = idx[j];
-        idx[j] = idx[^1];
-        idx.RemoveAt(idx.Count - 1);
-        if (!_entriesByCode.Remove(e.Code, i) || (idx.Count == 0 && !_entriesByText.Remove(e.Text)))
-            throw new InvalidOperationException("请停用并报告：前缀树与字典相违");
+        var i = indexes[j];
+        indexes[j] = indexes[^1];
+        indexes.RemoveAt(indexes.Count - 1);
+        if (!_entriesByCode.Remove(e.Code, i)
+         || (indexes.Count == 0 && !_entriesByText.Remove(e.Text)))
+            throw new InvalidOperationException("请停用并报告：数据结构内部相悖");
 
         _entries[i] = e with { Num = 0 }; // 标记死亡
         Cnt--;
         return Modified = true;
     }
 
-    public bool ContainsCode(string? code) => _entriesByCode.HasValue(code);
-    public bool IsCodePrefix(string? code) => _entriesByCode.HasChildValue(code);
-
-    public void ForEachByCode(string? code, bool exact, Action<EntryLine> f) =>
-        _entriesByCode.ForEachBy(code, exact, i => f(_entries[i]));
-
-    public void ForEachByText(string text, Action<EntryLine> f) {
-        if (!_entriesByText.TryGetValue(text, out var idx)) return;
-        foreach (var i in idx) f(_entries[i]);
-    }
-
     /// <summary> 保存词库（不迁移路径） </summary>
     /// <param name="path"> null则覆写 </param>
-    /// <param name="reorder"> true：词条先按Code升序再按Num升序重排，空行丢弃，注释原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
+    /// <param name="reorder"> true：词条先按Code升序再按Num升序重排，非词条行按原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
     public async Task SaveAsync(string? path, bool reorder) {
         await using StreamWriter writer = new(path ?? Path);
         writer.NewLine = "\n";
@@ -101,8 +106,7 @@ public sealed class Dict: IDictInfo {
             foreach (var e in _entries.Where(static e => e.Num > 0)
                 .OrderBy(static e => (e.Code, e.Num)))
                 await writer.WriteLineAsync(e.Serialize(Cols));
-            foreach (var r in _rawLines.Where(static r => r.Content is {}))
-                await writer.WriteLineAsync(r.Content);
+            foreach (var r in _rawLines) await writer.WriteLineAsync(r.Content);
         } else {
             using var entries = _entries.Where(static e => e.Num > 0).GetEnumerator();
             using var rawLines = _rawLines.GetEnumerator();

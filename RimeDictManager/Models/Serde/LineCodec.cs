@@ -1,75 +1,73 @@
 namespace RimeDictManager.Models.Serde;
 
-using ZLinq;
+using System.Diagnostics;
 using static Column;
-using FmtEx = FormatException;
 
 public static class LineCodec {
     public static bool Deserialize(
-        string l,
+        string line,
         uint num,
         IReadOnlyList<Column> cols,
         out EntryLine e,
         out RawLine r) {
-        if (string.IsNullOrWhiteSpace(l)) {
+        var span = line.AsSpan().TrimStart(' ');
+        if (span.Length == 0 || span[0] == '#') {
             e = default;
-            r = new(num, null);
-            return false;
-        }
-        if (l[0] == '#') {
-            e = default;
-            r = new(num, l);
+            r = new(num, line);
             return false;
         }
 
         var cnt = cols.Count;
-        var parts = l.Split('\t', cnt + 1);
-        if (parts.Length > cnt) throw new FmtEx($"第{num}行词条超过{cnt}列");
+        var parts = line.Split('\t', cnt + 1, StringSplitOptions.TrimEntries);
+        if (parts.Length > cnt) throw new FormatException($"第{num}行词条超过定义的{cnt}列");
 
-        var vals = new string?[4];
-        for (var i = 0; i < parts.Length; i++) vals[(int)cols[i]] = TrimOrNull(parts[i]);
-        if (vals[(int)Text] is not {} t) throw new FmtEx($"第{num}行词条文本为空");
+        string text = "", code = "", weight = "", stem = "";
+        for (var i = 0; i < parts.Length; i++)
+            switch (cols[i]) {
+            case Text: text = parts[i]; break;
+            case Code: code = parts[i]; break;
+            case Weight: weight = parts[i]; break;
+            case Stem: stem = parts[i]; break;
+            default: throw new UnreachableException();
+            }
+        if (text.Length == 0) throw new FormatException($"第{num}行词条文本为空");
 
-        e = new(num, t, vals[(int)Code], vals[(int)Weight], vals[(int)Stem]);
+        e = new(num, text, code, weight, stem);
         r = default;
         return true;
     }
 
     public static string Serialize(this EntryLine e, IReadOnlyList<Column> cols) {
-        var vals = cols.AsValueEnumerable()
-            .Select(col =>
-                col switch { Text => e.Text, Code => e.Code, Weight => e.Weight, _ => e.Stem })
-            .ToArray();
-        var last = Array.FindLastIndex(vals, static x => x is {});
-        return string.Join('\t', vals.AsSpan(..(last + 1)));
+        var cnt = cols.Count;
+        for (var i = cnt - 1; e[cols[i]].Length == 0; i--) cnt--;
+        var vals = new string[cnt];
+        for (var i = 0; i < cnt; i++) vals[i] = e[cols[i]];
+        return string.Join('\t', vals);
     }
 
     public static bool TryNewEntry(
         uint num,
         string text,
-        string? code,
-        string? weight,
-        string? stem,
+        string code,
+        string weight,
+        string stem,
         IReadOnlyList<Column> cols,
         out EntryLine e) {
-        var t = TrimOrNull(text);
-        if (t is null) goto Fail;
-        var c = TrimOrNull(code);
-        if (c is {} && !cols.Contains(Code)) goto Fail;
-        var w = TrimOrNull(weight);
-        if (w is {} && !cols.Contains(Weight)) goto Fail;
-        var s = TrimOrNull(stem);
-        if (s is {} && !cols.Contains(Stem)) goto Fail;
+        if (string.IsNullOrWhiteSpace(text)) goto Fail;
 
-        e = new(num, t, c, w, s);
-        return true;
+        // ReSharper disable LoopCanBeConvertedToQuery
+        var mask = 0;
+        foreach (var c in cols) mask |= 1 << (int)c;
+
+        if ((string.IsNullOrWhiteSpace(code) || (mask & (1 << (int)Code)) != 0)
+         && (string.IsNullOrWhiteSpace(weight) || (mask & (1 << (int)Weight)) != 0)
+         && (string.IsNullOrWhiteSpace(stem) || (mask & (1 << (int)Stem)) != 0)) {
+            e = new(num, text.Trim(), code.Trim(), weight.Trim(), stem.Trim());
+            return true;
+        }
+
     Fail:
         e = default;
         return false;
     }
-
-    private static string? TrimOrNull(string? s) =>
-        string.IsNullOrWhiteSpace(s)
-            ? null
-            : s.Trim();
 }

@@ -8,9 +8,6 @@ using SharpYaml.Serialization;
 using FmtEx = FormatException;
 
 public static class DictParser {
-    private static readonly Column[] DefaultCols
-        = [Column.Text, Column.Code, Column.Weight, Column.Stem];
-
     public static string ReadHeader(
         TextReader reader,
         string path,
@@ -34,14 +31,17 @@ public static class DictParser {
                 s.Append(l).Append('\n');
         }
         var raw = s.ToString();
-        if (raw.AsSpan(^3..) is not "...") throw new FmtEx($"文件头缺失或未闭合\n文件：{path}");
+        if (raw.Length < 3 || raw.AsSpan(^3..) is not "...")
+            throw new FmtEx($"文件头缺失或未闭合\n文件：{path}");
 
-        var header = YamlSerializer.Deserialize(raw.AsSpan(start..^3), HeaderContext.Default.Header)
-                  ?? throw new FmtEx($"文件头无法作为YAML解析\n文件：{path}");
-        name = header.Name ?? TrimExt(Path.GetFileName(path));
-        try { cols = ParseCols(header.Columns); } catch (Exception ex) {
-            throw new FmtEx($"无法解析列定义\n文件：{path}", ex);
-        }
+        try {
+            var yaml = raw.AsSpan(start..^3);
+            var header = YamlSerializer.Deserialize(yaml, HeaderContext.Default.Header)
+                      ?? throw new FmtEx("解析器返回NULL");
+            name = header.Name ?? TrimExt(Path.GetFileName(path));
+            cols = ParseCols(header.Columns);
+        } catch (Exception ex) { throw new FmtEx($"文件头解析失败\n文件：{path}", ex); }
+
         return raw;
     }
 
@@ -51,17 +51,23 @@ public static class DictParser {
             : name;
 
     private static Column[] ParseCols(string[]? cols) {
-        if (cols is null) return DefaultCols;
+        if (cols is null) return Columns.Default;
         if (cols.Length == 0) throw new FmtEx("列定义为空");
-        if (cols.Length > 4) throw new FmtEx("词库超过4列");
-        HashSet<Column> result = new(4);
-        foreach (var s in cols) {
-            if (!Enum.TryParse(s.Trim(), true, out Column col)) throw new FmtEx($"列名无效：'{s}'");
-            if (!result.Add(col)) throw new FmtEx($"有重复列名'{s}'");
+        if (cols.Length > Columns.Cnt) throw new FmtEx($"词库超过{Columns.Cnt}列");
+
+        var vals = (stackalloc Column[cols.Length]);
+        var mask = 0;
+        for (var i = 0; i < cols.Length; i++) {
+            var s = cols[i]; // Yaml解析器会Trim
+            if (!Enum.TryParse(s, true, out Column col)) throw new FmtEx($"列名无效：'{s}'");
+            vals[i] = col;
+            var bit = 1 << (int)col;
+            if ((mask & bit) != 0) throw new FmtEx($"列名重复：'{s}'");
+            mask |= bit;
         }
-        return result.Contains(Column.Text)
-            ? result.ToArray()
-            : throw new FmtEx("未定义文本列");
+
+        if ((mask & (1 << (int)Column.Text)) == 0) throw new FmtEx("未定义文本列");
+        return vals.ToArray();
     }
 }
 

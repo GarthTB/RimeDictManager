@@ -6,22 +6,38 @@ public sealed class CodeTrie(int cap) {
     private readonly List<Dictionary<char, int>?> _children = new(cap) { null };
     private readonly List<List<int>?> _values = new(cap) { null };
 
-    public void Insert(string? code, int v) {
+    public IReadOnlyList<int>? this[string code] =>
+        IndexOf(code) is >= 0 and var i
+            ? _values[i]
+            : null;
+
+    private int IndexOf(string code) {
         var i = 0;
-        for (var j = 0; j < code?.Length; j++) {
-            ref var k = ref GetValueRefOrAddDefault(_children[i] ??= [], code[j], out var exists);
+        foreach (var c in code)
+            if (_children[i] is not {} ch || !ch.TryGetValue(c, out i))
+                return -1;
+        return i;
+    }
+
+    public void Insert(string code, int v) {
+        var i = 0;
+        foreach (var c in code) {
+            ref var j = ref GetValueRefOrAddDefault(_children[i] ??= [], c, out var exists);
             if (!exists) {
                 _children.Add(null);
                 _values.Add(null);
-                k = _children.Count - 1;
+                j = _children.Count - 1;
             }
-            i = k;
+            i = j;
         }
-        (_values[i] ??= []).Add(v);
+        if (_values[i] is {} vals)
+            vals.Add(v);
+        else
+            _values[i] = [v];
     }
 
-    public bool Remove(string? code, int v) {
-        if (!TryFind(code, out var i)
+    public bool Remove(string code, int v) {
+        if (IndexOf(code) is not (>= 0 and var i)
          || _values[i] is not {} vals
          || vals.IndexOf(v) is not (>= 0 and var j))
             return false;
@@ -30,36 +46,24 @@ public sealed class CodeTrie(int cap) {
         return true;
     }
 
-    public bool HasValue(string? code) => TryFind(code, out var i) && _values[i]?.Count > 0;
-    public bool HasChildValue(string? code) => TryFind(code, out var i) && HasChildValue(i);
+    public bool AnyDescendantValue(string code) =>
+        IndexOf(code) is >= 0 and var i && AnyDescendantValue(i);
 
-    public void ForEachBy(string? code, bool exact, Action<int> f) {
-        if (!TryFind(code, out var i)) return;
-        _values[i]?.ForEach(f);
-        if (!exact) Dfs(i);
-
-        void Dfs(int j) {
-            if (_children[j] is not {} ch) return;
-            foreach (var (_, k) in ch) {
-                _values[k]?.ForEach(f);
-                Dfs(k);
-            }
-        }
-    }
-
-    private bool TryFind(string? code, out int i) {
-        i = 0;
-        for (var j = 0; j < code?.Length; j++)
-            if (_children[i] is not {} ch || !ch.TryGetValue(code[j], out i))
-                return false;
-        return true;
-    }
-
-    private bool HasChildValue(int i) {
+    private bool AnyDescendantValue(int i) {
         if (_children[i] is not {} ch) return false;
         foreach (var (_, j) in ch)
-            if (_values[j]?.Count > 0 || HasChildValue(j))
+            if (_values[j]?.Count > 0 || AnyDescendantValue(j))
                 return true;
         return false;
+    }
+
+    public void ForEachSubtreeValue(string code, Action<int> f) {
+        if (IndexOf(code) is >= 0 and var i) ForEachSubtreeValue(i, f);
+    }
+
+    private void ForEachSubtreeValue(int i, Action<int> f) {
+        _values[i]?.ForEach(f);
+        if (_children[i] is not {} ch) return;
+        foreach (var (_, j) in ch) ForEachSubtreeValue(j, f);
     }
 }

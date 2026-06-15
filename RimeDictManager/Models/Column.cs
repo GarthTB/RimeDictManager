@@ -1,7 +1,11 @@
 namespace RimeDictManager.Models;
 
-using Serde;
+using static Column;
 
-/// <summary> 词库列：缺省集合见 <see cref="DictParser.DefaultCols"/> </summary>
-/// <seealso href="https://github.com/LEOYoon-Tsaw/Rime_collections/blob/master/Rime_description.md"/>
+/// <summary> 词库列 </summary>
 public enum Column: byte { Text, Code, Weight, Stem }
+
+public static class Columns {
+    public const byte Cnt = 4;
+    public static readonly Column[] Default = [Text, Code, Weight, Stem];
+}
