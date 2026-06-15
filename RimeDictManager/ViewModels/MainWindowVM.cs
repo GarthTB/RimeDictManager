@@ -1,4 +1,6 @@
-﻿namespace RimeDictManager.ViewModels;
+﻿// ReSharper disable UnusedParameterInPartialMethod
+
+namespace RimeDictManager.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -6,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Models;
 using Services;
+using ZLinq;
 using static Services.DictManager;
 
 public sealed partial class MainWindowVM: ObservableObject {
@@ -42,14 +45,19 @@ public sealed partial class MainWindowVM: ObservableObject {
         OnPropertyChanged(nameof(CanToggleEncoder));
         OnPropertyChanged(nameof(MinCodeLen));
         OnPropertyChanged(nameof(MaxCodeLen));
-        ShortenCommand.NotifyCanExecuteChanged();
+        _fullCodes.Clear();
+        AutoCodes.Clear();
+        MultiAutoCodes = AutoCodes.Count > 1;
+        _ = SearchAsync();
     }
 
     #endregion 可用性
 
     #region 词条
 
-    [ObservableProperty] public partial string PendingText { get; set; } = "";
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(InsertCommand))]
+    public partial string PendingText { get; set; } = "";
+
     [ObservableProperty] public partial string ManualCode { get; set; } = "";
     [ObservableProperty] public partial string PendingWeight { get; set; } = "";
     [ObservableProperty] public partial string PendingStem { get; set; } = "";
@@ -59,22 +67,66 @@ public sealed partial class MainWindowVM: ObservableObject {
             ? SelAutoCode
             : ManualCode;
 
+    partial void OnPendingTextChanged(string value) {
+        SyncSearchText();
+        if (UseEncoder) _ = UpdateAutoCodesAsync(true);
+    }
+
+    partial void OnManualCodeChanged(string value) => SyncSearchText();
+
     #endregion 词条
 
     #region 自动编码
 
     [ObservableProperty] public partial bool UseEncoder { get; set; }
     [ObservableProperty] public partial byte CurCodeLen { get; set; }
-    private readonly List<string> _fullAutoCodes = new(64);
+    private readonly List<string> _fullCodes = new(64);
     public ObservableCollection<string> AutoCodes { get; } = [];
     [ObservableProperty] public partial string? SelAutoCode { get; set; }
+    [ObservableProperty] public partial bool MultiAutoCodes { get; private set; }
+
+    partial void OnUseEncoderChanged(bool value) {
+        SyncSearchText();
+        _ = UpdateAutoCodesAsync(true);
+    }
+
+    partial void OnCurCodeLenChanged(byte value) => _ = UpdateAutoCodesAsync(false);
+    partial void OnSelAutoCodeChanged(string? value) => SyncSearchText();
+
+    private async Task UpdateAutoCodesAsync(bool needEncode) {
+        try {
+            if (!Encoder.Ready) return;
+            if (needEncode) {
+                _fullCodes.Clear();
+                _fullCodes.AddRange(Encoder.Encode(PendingText));
+            }
+
+            var oldSel = SelAutoCode;
+            AutoCodes.Clear();
+            if (CurCodeLen < MaxCodeLen) {
+                var shortCodes = _fullCodes.AsValueEnumerable().Select(s => s[..CurCodeLen]);
+                foreach (var code in shortCodes.Distinct().Order()) AutoCodes.Add(code);
+            } else
+                foreach (var code in _fullCodes.AsValueEnumerable().Order())
+                    AutoCodes.Add(code);
+
+            if (AutoCodes is [var first, ..])
+                SelAutoCode = oldSel is {} o && Math.Min(o.Length, CurCodeLen) is var len
+                    ? AutoCodes.FirstOrDefault(s => s[..len] == o[..len], first)
+                    : first;
+        } catch (Exception ex) {
+            _fullCodes.Clear();
+            AutoCodes.Clear();
+            await ex.Alert("自动编码");
+        } finally { MultiAutoCodes = AutoCodes.Count > 1; }
+    }
 
     #endregion 自动编码
 
     #region 搜索
 
-    public static Dictionary<SearchMode, string> SearchModes { get; } = Enum.GetValues<SearchMode>()
-        .ToDictionary(static x => x, static x => x.ToString());
+    public static Dictionary<SearchMode, string> SearchModes =>
+        Enum.GetValues<SearchMode>().ToDictionary(static x => x, static x => x.ToString());
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     public partial SearchMode SelSearchMode { get; set; } = SearchMode.编码前缀;
@@ -87,6 +139,7 @@ public sealed partial class MainWindowVM: ObservableObject {
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
     public partial EntryVM? SelSearchResult { get; set; }
 
+    partial void OnSelSearchModeChanged(SearchMode value) => SyncSearchText();
     partial void OnSearchTextChanged(string value) => _ = SearchAsync();
 
     private void SyncSearchText() =>
@@ -98,11 +151,13 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     private async Task SearchAsync() {
         try {
+            if (!DictReady) return;
             SearchResults.Clear();
             Search(SearchText, SelSearchMode, e => SearchResults.Add(new(e)));
-        } catch (Exception ex) { await ex.Alert("搜索"); } finally {
-            ModifyCommand.NotifyCanExecuteChanged();
-        }
+        } catch (Exception ex) {
+            SearchResults.Clear();
+            await ex.Alert("搜索");
+        } finally { ModifyCommand.NotifyCanExecuteChanged(); }
     }
 
     #endregion 搜索

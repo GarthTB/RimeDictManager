@@ -52,7 +52,14 @@
             IsEnabled="{Binding UseEncoder}"
             ItemsSource="{Binding AutoCodes, Mode=OneTime}"
             SelectedItem="{Binding SelAutoCode}"
-            Foreground="{Binding AutoCodeColor}"/>
+            Classes.Multi="{Binding MultiAutoCodes}">
+            <ComboBox.Styles>
+                <Style Selector="ComboBox.Multi">
+                    <Setter Property="Foreground"
+                        Value="Red"/>
+                </Style>
+            </ComboBox.Styles>
+        </ComboBox>
         <Slider Grid.Row="4"
             Grid.Column="6"
             Padding="0,-9"
@@ -66,7 +73,6 @@
             Value="{Binding CurCodeLen}"/>
         <ComboBox Grid.Row="6"
             Grid.Column="0"
-            PlaceholderText="搜索模式"
             IsEnabled="{Binding DictReady}"
             ItemsSource="{Binding SearchModes, Mode=OneTime}"
             DisplayMemberBinding="{Binding Value, Mode=OneTime}"
