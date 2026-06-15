@@ -47,6 +47,12 @@ public sealed partial class DictWindowVM: ObservableObject {
         } catch (Exception ex) { await ex.Alert("移除词库"); }
     }
 
+    public async Task SaveDict(DictVM dict, string? path, bool reorder) {
+        await DictManager.SaveDict(dict.Src, path, reorder);
+        dict.NotifySaved();
+        OnPropertyChanged(nameof(SelDictMod));
+    }
+
     [RelayCommand(CanExecute = nameof(SelDictNotTgt))]
     private async Task SetTgtDict() {
         try {
