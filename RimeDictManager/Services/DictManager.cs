@@ -150,8 +150,8 @@ public static class DictManager {
 
         var msg = $"截短前：\t'{olStr}'\n"
                 + $"截短后：\t'{nsStr}'\n"
-                + $"延长前：\t'{nsStr}'\n"
-                + $"延长后：\t'{nsStr}'";
+                + $"延长前：\t'{osStr}'\n"
+                + $"延长后：\t'{nlStr}'";
         if (ol.Code != nl.Code && dict.IsCodePrefix(ol.Code))
             msg += $"\n\n截短后，编码'{ol.Code}'将空缺，有更长编码可被截短";
         if (!await MsgBox.Ask<bool>($"确认截短并延长编码？\n\n{msg}")) return false;

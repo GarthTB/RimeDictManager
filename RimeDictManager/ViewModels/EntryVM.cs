@@ -13,13 +13,7 @@ public sealed partial class EntryVM(DictEntry src): ObservableObject {
     [ObservableProperty] public partial string Weight { get; set; } = src.Entry.Weight;
     [ObservableProperty] public partial string Stem { get; set; } = src.Entry.Stem;
 
-    public bool TryNewIfModified(out EntryLine aft) {
-        if (Text != Src.Entry.Text
-         || Code != Src.Entry.Code
-         || Weight != Src.Entry.Weight
-         || Stem != Src.Entry.Stem)
-            return LineCodec.TryNewEntry(Num, Text, Code, Weight, Stem, Src.Dict.Cols, out aft);
-        aft = default;
-        return false;
-    }
+    public bool TryNewIfModified(out EntryLine aft) =>
+        LineCodec.TryNewEntry(Num, Text, Code, Weight, Stem, Src.Dict.Cols, out aft)
+     && aft != Src.Entry;
 }
