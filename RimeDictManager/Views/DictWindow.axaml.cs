@@ -9,7 +9,7 @@ using ViewModels;
 
 public sealed partial class DictWindow: Window {
     private const string OverwritePrompt = "是：覆写原词库\n否：另存副本（如果下一次选择覆写，覆写原文件而不是副本）",
-        ReorderPrompt = "是：词条先按编码升序再按原序重排，空行丢弃，注释原序排在末尾\n否：保持原有行，新词条按插入顺序排在末尾";
+        ReorderPrompt = "是：词条先按编码升序再按原序重排，非词条行按原序排在末尾\n否：保持原有行，新词条按插入顺序排在末尾";
 
     private readonly FilePickerOpenOptions _openOptions = new() {
         AllowMultiple = true,

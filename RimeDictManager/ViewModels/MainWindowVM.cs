@@ -62,14 +62,14 @@ public sealed partial class MainWindowVM: ObservableObject {
     [ObservableProperty] public partial string PendingWeight { get; set; } = "";
     [ObservableProperty] public partial string PendingStem { get; set; } = "";
 
-    private string? PendingCode =>
+    private string PendingCode =>
         Encoder.Ready && UseEncoder
-            ? SelAutoCode
+            ? SelAutoCode ?? ""
             : ManualCode;
 
     partial void OnPendingTextChanged(string value) {
         SyncSearchText();
-        if (UseEncoder) _ = UpdateAutoCodesAsync(true);
+        _ = UpdateAutoCodesAsync(true);
     }
 
     partial void OnManualCodeChanged(string value) => SyncSearchText();
@@ -95,13 +95,13 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     private async Task UpdateAutoCodesAsync(bool needEncode) {
         try {
-            if (!Encoder.Ready) return;
+            if (!Encoder.Ready || !UseEncoder) return;
+
             if (needEncode) {
                 _fullCodes.Clear();
                 _fullCodes.AddRange(Encoder.Encode(PendingText));
             }
-
-            var oldSel = SelAutoCode;
+            var prev = SelAutoCode;
             AutoCodes.Clear();
             if (CurCodeLen < MaxCodeLen) {
                 var shortCodes = _fullCodes.AsValueEnumerable().Select(s => s[..CurCodeLen]);
@@ -111,8 +111,8 @@ public sealed partial class MainWindowVM: ObservableObject {
                     AutoCodes.Add(code);
 
             if (AutoCodes is [var first, ..])
-                SelAutoCode = oldSel is {} o && Math.Min(o.Length, CurCodeLen) is var len
-                    ? AutoCodes.FirstOrDefault(s => s[..len] == o[..len], first)
+                SelAutoCode = prev is {} p && Math.Min(p.Length, CurCodeLen) is var len
+                    ? AutoCodes.FirstOrDefault(s => s[..len] == p[..len], first)
                     : first;
         } catch (Exception ex) {
             _fullCodes.Clear();
@@ -144,7 +144,7 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     private void SyncSearchText() =>
         SearchText = SelSearchMode switch {
-            SearchMode.编码前缀 => PendingCode ?? "",
+            SearchMode.编码前缀 => PendingCode,
             SearchMode.文本精确 => PendingText,
             _ => throw new UnreachableException()
         };
@@ -152,8 +152,9 @@ public sealed partial class MainWindowVM: ObservableObject {
     private async Task SearchAsync() {
         try {
             if (!DictReady) return;
+            var results = Search(SearchText, SelSearchMode);
             SearchResults.Clear();
-            Search(SearchText, SelSearchMode, e => SearchResults.Add(new(e)));
+            foreach (var result in results) SearchResults.Add(new(result));
         } catch (Exception ex) {
             SearchResults.Clear();
             await ex.Alert("搜索");
@@ -186,7 +187,8 @@ public sealed partial class MainWindowVM: ObservableObject {
     private async Task RemoveAsync() {
         try {
             var e = SelSearchResult!;
-            if (await RemoveEntryAsync(e.Src)) SearchResults.Remove(e);
+            if (!await RemoveEntryAsync(e.Src)) return;
+            if (!SearchResults.Remove(e)) throw new InvalidOperationException("表格删除词条失败");
         } catch (Exception ex) { await ex.Alert("删除词条"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }

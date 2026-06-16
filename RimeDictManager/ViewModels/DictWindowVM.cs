@@ -42,7 +42,7 @@ public sealed partial class DictWindowVM: ObservableObject {
             var dict = SelDict!;
             var (done, tgt) = await DictManager.RemoveDictAsync(dict.Src);
             if (!done) return;
-            if (!Dicts.Remove(dict)) throw new OpEx("请停用并报告：词库集合的VM与底层相违");
+            if (!Dicts.Remove(dict)) throw new OpEx("表格移除词库失败");
             if (tgt is {}) Dicts.AsValueEnumerable().First(x => x.Src == tgt).SetTgt(true);
         } catch (Exception ex) { await ex.Alert("移除词库"); }
     }
@@ -57,9 +57,9 @@ public sealed partial class DictWindowVM: ObservableObject {
     private async Task SetTgtDictAsync() {
         try {
             var dict = SelDict!;
-            var old = DictManager.SetTgtDict(dict.Src);
+            var prev = DictManager.SetTgtDict(dict.Src);
             dict.SetTgt(true);
-            Dicts.AsValueEnumerable().First(x => x.Src == old).SetTgt(false);
+            Dicts.AsValueEnumerable().First(x => x.Src == prev).SetTgt(false);
         } catch (Exception ex) { await ex.Alert("设置加词目标"); }
     }
 
@@ -81,7 +81,7 @@ public sealed partial class DictWindowVM: ObservableObject {
         try {
             var dict = SelSingleDict!;
             Encoder.RemoveDict(dict);
-            if (!SingleDicts.Remove(dict)) throw new OpEx("请停用并报告：词库集合的VM与底层相违");
+            if (!SingleDicts.Remove(dict)) throw new OpEx("表格移除单字码表失败");
         } catch (Exception ex) { await ex.Alert("移除单字码表"); }
     }
 

@@ -13,8 +13,10 @@ public static class MsgBox {
         new MsgWindow("确认", msg, true).ShowDialog<T>(owner ?? GetTopWindow());
 
     public static Task Alert(this Exception ex, string op, Window? owner = null) {
-        Log.Err(ex, op);
-        return new MsgWindow("错误", $"{op}时：\n{ex}", false).ShowDialog(owner ?? GetTopWindow());
+        var msg = $"{op}时出错：{ex.Message}";
+        Log.Err(msg);
+        return new MsgWindow("错误", $"{msg}\n\n详情：\n\n{ex}", false).ShowDialog(
+            owner ?? GetTopWindow());
     }
 
     private static Window GetTopWindow() {

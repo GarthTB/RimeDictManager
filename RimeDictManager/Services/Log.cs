@@ -11,7 +11,7 @@ public static class Log {
     public static void Crud(string op, string entry) => Logs.Add($"{op}\t{entry}");
 
     /// <summary> MsgBox专用 </summary>
-    public static void Err(Exception ex, string op) => Logs.Add($"{op}时：\n{ex}");
+    public static void Err(string exMsg) => Logs.Add(exMsg);
 
     public static async Task SaveAsync(Stream stream) {
         await using StreamWriter writer = new(stream);

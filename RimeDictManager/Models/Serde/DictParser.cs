@@ -37,7 +37,7 @@ public static class DictParser {
         try {
             var yaml = raw.AsSpan(start..^3);
             var header = YamlSerializer.Deserialize(yaml, HeaderContext.Default.Header)
-                      ?? throw new FmtEx("解析器返回NULL");
+                      ?? throw new FmtEx("YAML解析器返回NULL");
             name = header.Name ?? TrimExt(Path.GetFileName(path));
             cols = ParseCols(header.Columns);
         } catch (Exception ex) { throw new FmtEx($"文件头解析失败\n文件：{path}", ex); }

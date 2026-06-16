@@ -1,7 +1,6 @@
 namespace RimeDictManager.Models;
 
 using Serde;
-using ZLinq;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
 public sealed class Dict: IDictInfo {
@@ -50,17 +49,6 @@ public sealed class Dict: IDictInfo {
     public bool ContainsCode(string code) => _entriesByCode[code]?.Count > 0;
     public bool IsCodePrefix(string code) => _entriesByCode.AnyDescendantValue(code);
 
-    public IReadOnlyList<EntryLine> GetByText(string text) =>
-        _entriesByText.TryGetValue(text, out var indexes)
-            ? indexes.AsValueEnumerable().Select(i => _entries[i]).ToArray()
-            : [];
-
-    public IReadOnlyList<EntryLine> GetByCodePrefix(string code) {
-        List<EntryLine> result = [];
-        _entriesByCode.ForEachSubtreeValue(code, i => result.Add(_entries[i]));
-        return result;
-    }
-
     public void Insert(EntryLine e) {
         if (e.Num == 0) e = e with { Num = ++_num };
         _entries.Add(e);
@@ -79,7 +67,7 @@ public sealed class Dict: IDictInfo {
 
     public bool Remove(EntryLine e) {
         if (!_entriesByText.TryGetValue(e.Text, out var indexes)
-         || indexes.FindIndex(x => _entries[x] == e) is not (>= 0 and var j))
+         || indexes.FindIndex(i => _entries[i] == e) is not (>= 0 and var j))
             return false;
 
         var i = indexes[j];
@@ -93,6 +81,20 @@ public sealed class Dict: IDictInfo {
         Cnt--;
         return Modified = true;
     }
+
+    public void ForEachByText(string text, Action<EntryLine> f) {
+        if (!_entriesByText.TryGetValue(text, out var indexes)) return;
+        foreach (var i in indexes) f(_entries[i]);
+    }
+
+    public void ForEachByCode(string code, Action<EntryLine> f) {
+        var indexes = _entriesByCode[code];
+        if (indexes is null) return;
+        foreach (var i in indexes) f(_entries[i]);
+    }
+
+    public void ForEachByCodePrefix(string code, Action<EntryLine> f) =>
+        _entriesByCode.ForEachSubtreeValue(code, i => f(_entries[i]));
 
     /// <summary> 保存词库（不迁移路径） </summary>
     /// <param name="path"> null则覆写 </param>

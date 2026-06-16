@@ -39,9 +39,9 @@ public static class Encoder {
         foreach (var (c, codes) in dict.Entries) {
             ref var mCodes = ref GetValueRefOrAddDefault(merged, c, out var exists);
             if (!exists) mCodes = new(codes.Count);
-            foreach (var code in codes)
-                if (code.Length >= method.StemLen)
-                    mCodes!.Add(code[..method.StemLen]);
+            foreach (var code in codes.AsValueEnumerable()
+                .Where(code => code.Length >= method.StemLen))
+                mCodes!.Add(code[..method.StemLen]);
         }
 
         if (merged.Count == 0) {
