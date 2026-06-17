@@ -2,68 +2,68 @@ namespace RimeDictManager.Models;
 
 using static System.Runtime.InteropServices.CollectionsMarshal;
 
-internal sealed class CodeTrie(int poolCap) {
-    private readonly List<Dictionary<char, int>?> _children = new(poolCap) { null };
-    private readonly List<List<int>?> _values = new(poolCap) { null };
+public sealed class CodeTrie(int cap) {
+    private readonly List<Dictionary<char, int>?> _children = new(cap) { null };
+    private readonly List<List<int>?> _values = new(cap) { null };
 
-    public void Insert(string? code, int v) {
+    public IReadOnlyList<int>? this[string code] =>
+        IndexOf(code) is >= 0 and var i
+            ? _values[i]
+            : null;
+
+    private int IndexOf(string code) {
         var i = 0;
-        for (var j = 0; j < code?.Length; j++) {
-            ref var k = ref GetValueRefOrAddDefault(_children[i] ??= [], code[j], out var exists);
+        foreach (var c in code)
+            if (_children[i] is not {} ch || !ch.TryGetValue(c, out i))
+                return -1;
+        return i;
+    }
+
+    public void Insert(string code, int v) {
+        var i = 0;
+        foreach (var c in code) {
+            ref var j = ref GetValueRefOrAddDefault(_children[i] ??= [], c, out var exists);
             if (!exists) {
                 _children.Add(null);
                 _values.Add(null);
-                k = _children.Count - 1;
+                j = _children.Count - 1;
             }
-            i = k;
+            i = j;
         }
-        (_values[i] ??= []).Add(v);
+        if (_values[i] is {} vals)
+            vals.Add(v);
+        else
+            _values[i] = [v];
     }
 
-    public bool Remove(string? code, int v) {
-        if (TryFind(code) is not (>= 0 and var i)
+    public bool Remove(string code, int v) {
+        if (IndexOf(code) is not (>= 0 and var i)
          || _values[i] is not {} vals
          || vals.IndexOf(v) is not (>= 0 and var j))
             return false;
-
         vals[j] = vals[^1];
         vals.RemoveAt(vals.Count - 1);
         return true;
     }
 
-    public bool ContainsKey(string? key) => TryFind(key) is >= 0 and var i && _values[i]?.Count > 0;
+    public bool AnyDescendantValue(string code) =>
+        IndexOf(code) is >= 0 and var i && AnyDescendantValue(i);
 
-    public void ForEachByKey(string? key, bool exact, Action<int> f) {
-        if (TryFind(key) is not (>= 0 and var i)) return;
+    private bool AnyDescendantValue(int i) {
+        if (_children[i] is not {} ch) return false;
+        foreach (var (_, j) in ch)
+            if (_values[j]?.Count > 0 || AnyDescendantValue(j))
+                return true;
+        return false;
+    }
+
+    public void ForEachSubtreeValue(string code, Action<int> f) {
+        if (IndexOf(code) is >= 0 and var i) ForEachSubtreeValue(i, f);
+    }
+
+    private void ForEachSubtreeValue(int i, Action<int> f) {
         _values[i]?.ForEach(f);
-        if (!exact) Dfs(i);
-
-        void Dfs(int j) {
-            if (_children[j] is not {} ch) return;
-            foreach (var k in ch.Values) {
-                _values[k]?.ForEach(f);
-                Dfs(k);
-            }
-        }
-    }
-
-    public bool IsPrefix(string? key) {
-        return TryFind(key) is >= 0 and var i && HasChildValue(i);
-
-        bool HasChildValue(int j) {
-            if (_children[j] is not {} ch) return false;
-            foreach (var k in ch.Values)
-                if (_values[k]?.Count > 0 || HasChildValue(k))
-                    return true;
-            return false;
-        }
-    }
-
-    private int TryFind(string? key) {
-        var i = 0;
-        for (var j = 0; j < key?.Length; j++)
-            if (_children[i] is not {} ch || !ch.TryGetValue(key[j], out i))
-                return -1;
-        return i;
+        if (_children[i] is not {} ch) return;
+        foreach (var (_, j) in ch) ForEachSubtreeValue(j, f);
     }
 }

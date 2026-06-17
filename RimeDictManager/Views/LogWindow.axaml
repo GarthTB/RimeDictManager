@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="RimeDictManager.Views.LogWindow"
+    Height="480"
+    Width="720"
+    Title="RIME 词库管理器 - 日志"
+    Icon="/Assets/RDM4.ico">
+    <Grid Margin="16,14"
+        RowDefinitions="*,14,Auto">
+        <ScrollViewer>
+            <TextBlock x:Name="Logs"
+                TextWrapping="Wrap"
+                Text="暂未记录任何操作"/>
+        </ScrollViewer>
+        <Button Grid.Row="2"
+            x:Name="BtnSave"
+            Width="108"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Content="保存日志"
+            Click="SaveLog"/>
+    </Grid>
+</Window>

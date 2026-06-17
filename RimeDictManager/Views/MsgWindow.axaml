@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="RimeDictManager.Views.MsgWindow"
+    SizeToContent="WidthAndHeight"
+    WindowStartupLocation="CenterOwner"
+    Icon="/Assets/RDM4.ico">
+    <Grid Margin="16,14"
+        RowDefinitions="*,14,Auto">
+        <ScrollViewer>
+            <TextBlock x:Name="Msg"
+                TextWrapping="Wrap"/>
+        </ScrollViewer>
+        <Grid Grid.Row="2"
+            ColumnDefinitions="*,16,*"
+            HorizontalAlignment="Right">
+            <Button x:Name="BtnNo"/>
+            <Button x:Name="BtnYes"
+                Grid.Column="2"/>
+        </Grid>
+    </Grid>
+</Window>

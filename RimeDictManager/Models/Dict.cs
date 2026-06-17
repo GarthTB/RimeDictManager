@@ -1,141 +1,127 @@
 namespace RimeDictManager.Models;
 
-using System.IO;
+using Serde;
 using static System.Runtime.InteropServices.CollectionsMarshal;
-using static Services.LineCodec;
-using FmtEx = FormatException;
-using NeverEx = System.Diagnostics.UnreachableException;
 
-internal sealed class Dict {
-    private readonly CodeTrie _codeTrie;
-    private readonly List<Entry> _entries;
-    private readonly List<string?> _header;
-    private readonly Action _onModifiedChanged;
-    private readonly string _path;
+public sealed class Dict: IDictInfo {
+    private readonly List<EntryLine> _entries;
+    private readonly CodeTrie _entriesByCode;
+    private readonly Dictionary<string, List<int>> _entriesByText;
+    private readonly string _header;
     private readonly List<RawLine> _rawLines;
-    private readonly Dictionary<string, List<int>> _textDict;
+    private uint _num;
 
-    public Dict(string path, Action onModifiedChanged) {
-        using StreamReader reader = new(_path = path);
-        string? l;
+    public Dict(string path) {
+        using StreamReader reader = new(path);
+        _header = DictParser.ReadHeader(reader, path, out var name, out var cols, out _num);
+        Name = name;
+        Path = path;
+        Cols = cols;
 
-        _header = new(64);
-        for (var pos = 0; (l = reader.ReadLine()) is {}; _header.Add(l)) {
-            if (_header.Count - pos > 1023) throw new FmtEx("词库文件头过长，疑似缺失");
-            if (string.IsNullOrWhiteSpace(l))
-                l = null;
-            else if (l == "---")
-                pos = _header.Count + 1;
-            else if (l == "...") {
-                SetCols(_header[pos..]);
-                break;
-            }
-        }
-        if (reader.EndOfStream) throw new FmtEx("词库文件头缺失或未闭合");
-
+        _entries = new(4096);
         _rawLines = new(64);
-        _entries = new(16384);
-        for (var num = (uint)_header.Count + 2; (l = reader.ReadLine()) is {}; num++)
-            if (string.IsNullOrWhiteSpace(l))
-                _rawLines.Add(new(num, null));
-            else if (l[0] == '#')
-                _rawLines.Add(new(num, l));
+        for (string? l; (l = reader.ReadLine()) is {}; _num++)
+            if (LineCodec.Deserialize(l, _num, Cols, out var e, out var r))
+                _entries.Add(e);
             else
-                _entries.Add(Deserialize(num, l));
-        if (_entries.Count == 0) throw new FmtEx("词库为空");
-        Count = (uint)_entries.Count;
+                _rawLines.Add(r);
+        Cnt = (uint)_entries.Count;
 
-        _textDict = new(16384);
-        _codeTrie = new(65536);
+        _entriesByText = new(_entries.Count);
+        _entriesByCode = new(4 * _entries.Count);
         for (var i = 0; i < _entries.Count; i++) {
             var e = _entries[i];
-            ref var indexes = ref GetValueRefOrAddDefault(_textDict, e.Text, out var exists);
+            ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
             if (exists)
                 indexes!.Add(i);
             else
                 indexes = [i];
-            _codeTrie.Insert(e.Code, i);
-        }
-
-        _onModifiedChanged = onModifiedChanged;
-    }
-
-    public uint Count { get; private set; }
-
-    public bool Modified {
-        get;
-        private set {
-            if (field == value) return;
-            field = value;
-            _onModifiedChanged();
+            _entriesByCode.Insert(e.Code, i);
         }
     }
 
-    public void Insert(Entry e) {
+    public string Name { get; }
+    public string Path { get; }
+    public IReadOnlyList<Column> Cols { get; }
+    public uint Cnt { get; private set; }
+    public bool Modified { get; private set; }
+
+    public bool ContainsCode(string code) => _entriesByCode[code]?.Count > 0;
+    public bool IsCodePrefix(string code) => _entriesByCode.AnyDescendantValue(code);
+
+    public void Insert(EntryLine e) {
+        if (e.Num == 0) e = e with { Num = ++_num };
         _entries.Add(e);
+
         var i = _entries.Count - 1;
-        ref var indexes = ref GetValueRefOrAddDefault(_textDict, e.Text, out var exists);
+        ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
         if (exists)
             indexes!.Add(i);
         else
             indexes = [i];
-        _codeTrie.Insert(e.Code, i);
+        _entriesByCode.Insert(e.Code, i);
 
-        Count++;
+        Cnt++;
         Modified = true;
     }
 
-    public bool Remove(Entry e) {
-        if (!_textDict.TryGetValue(e.Text, out var indexes)
+    public bool Remove(EntryLine e) {
+        if (!_entriesByText.TryGetValue(e.Text, out var indexes)
          || indexes.FindIndex(i => _entries[i] == e) is not (>= 0 and var j))
             return false;
 
         var i = indexes[j];
         indexes[j] = indexes[^1];
         indexes.RemoveAt(indexes.Count - 1);
-        if (!_codeTrie.Remove(e.Code, i)) throw new NeverEx("程序内部不一致，请停用并报告异常A");
-        if (indexes.Count == 0) _textDict.Remove(e.Text);
+        if (!_entriesByCode.Remove(e.Code, i)
+         || (indexes.Count == 0 && !_entriesByText.Remove(e.Text)))
+            throw new InvalidOperationException("请停用并报告：数据结构内部相悖");
 
-        _entries[i] = e with { Text = "" };
-        Count--;
+        _entries[i] = e with { Num = 0 }; // 标记死亡
+        Cnt--;
         return Modified = true;
     }
 
-    public bool ContainsCode(string? code) => _codeTrie.ContainsKey(code);
-    public bool IsCodePrefix(string? code) => _codeTrie.IsPrefix(code);
-
-    public void ForEachByText(string text, Action<Entry> f) {
-        if (!_textDict.TryGetValue(text, out var indexes)) return;
+    public void ForEachByText(string text, Action<EntryLine> f) {
+        if (!_entriesByText.TryGetValue(text, out var indexes)) return;
         foreach (var i in indexes) f(_entries[i]);
     }
 
-    public void ForEachByCode(string? code, bool exact, Action<Entry> f) =>
-        _codeTrie.ForEachByKey(code, exact, i => f(_entries[i]));
+    public void ForEachByCode(string code, Action<EntryLine> f) {
+        var indexes = _entriesByCode[code];
+        if (indexes is null) return;
+        foreach (var i in indexes) f(_entries[i]);
+    }
+
+    public void ForEachByCodePrefix(string code, Action<EntryLine> f) =>
+        _entriesByCode.ForEachSubtreeValue(code, i => f(_entries[i]));
 
     /// <summary> 保存词库（不迁移路径） </summary>
     /// <param name="path"> null则覆写 </param>
-    /// <param name="reorder"> true：词条先按Code升序，再按Num升序重排，空行丢弃，注释原序排在末尾；false：保持原有行，新词条按Code升序排在末尾 </param>
-    public void Save(string? path, bool reorder) {
-        using StreamWriter writer = new(path ?? _path);
+    /// <param name="reorder"> true：词条先按Code升序再按Num升序重排，非词条行按原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
+    public async Task SaveAsync(string? path, bool reorder) {
+        await using StreamWriter writer = new(path ?? Path);
         writer.NewLine = "\n";
-        foreach (var l in _header) writer.WriteLine(l);
-        writer.WriteLine("...");
+        await writer.WriteLineAsync(_header);
 
         if (reorder) {
-            foreach (var e in _entries.Where(static e => e.Text.Length > 0)
+            foreach (var e in _entries.Where(static e => e.Num > 0)
                 .OrderBy(static e => (e.Code, e.Num)))
-                writer.WriteLine(Serialize(e));
-            foreach (var l in _rawLines.Where(static l => l.Content is {}))
-                writer.WriteLine(l.Content);
+                await writer.WriteLineAsync(e.Serialize(Cols));
+            foreach (var r in _rawLines) await writer.WriteLineAsync(r.Content);
         } else {
-            var oldEntries = _entries.Where(static e => e is { Num: > 0, Text.Length: > 0 })
-                .Select(static e => (e.Num, (string?)Serialize(e)));
-            var comments = _rawLines.Select(static l => (l.Num, l.Content));
-            foreach (var (_, l) in oldEntries.Concat(comments).OrderBy(static x => x.Num))
-                writer.WriteLine(l);
-            foreach (var e in _entries.Where(static e => e is { Num: 0, Text.Length: > 0 })
-                .OrderBy(static e => e.Code))
-                writer.WriteLine(Serialize(e));
+            using var entries = _entries.Where(static e => e.Num > 0).GetEnumerator();
+            using var rawLines = _rawLines.GetEnumerator();
+            var anyE = entries.MoveNext();
+            var anyR = rawLines.MoveNext();
+            while (anyE || anyR)
+                if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
+                    await writer.WriteLineAsync(entries.Current.Serialize(Cols));
+                    anyE = entries.MoveNext();
+                } else {
+                    await writer.WriteLineAsync(rawLines.Current.Content);
+                    anyR = rawLines.MoveNext();
+                }
         }
 
         Modified = false;

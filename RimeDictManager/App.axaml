@@ -1,0 +1,46 @@
+<Application xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="RimeDictManager.App">
+    <Application.Styles>
+        <FluentTheme/>
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+        <Style Selector="Button">
+            <Setter Property="HorizontalAlignment"
+                Value="Stretch"/>
+            <Setter Property="VerticalAlignment"
+                Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment"
+                Value="Center"/>
+            <Setter Property="VerticalContentAlignment"
+                Value="Center"/>
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="HorizontalAlignment"
+                Value="Stretch"/>
+            <Setter Property="VerticalAlignment"
+                Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment"
+                Value="Center"/>
+        </Style>
+        <Style Selector="DataGrid">
+            <Setter Property="CanUserReorderColumns"
+                Value="True"/>
+            <Setter Property="CanUserResizeColumns"
+                Value="True"/>
+            <Setter Property="CanUserSortColumns"
+                Value="True"/>
+            <Setter Property="SelectionMode"
+                Value="Single"/>
+        </Style>
+        <Style Selector="Label">
+            <Setter Property="HorizontalAlignment"
+                Value="Stretch"/>
+            <Setter Property="VerticalAlignment"
+                Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment"
+                Value="Center"/>
+            <Setter Property="VerticalContentAlignment"
+                Value="Center"/>
+        </Style>
+    </Application.Styles>
+</Application>
