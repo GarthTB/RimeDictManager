@@ -1,7 +1,0 @@
-namespace RimeDictManager.Models;
-
-/// <summary> 除词条外的行 </summary>
-/// <param name="Num"> 行号：1开始 </param>
-/// <param name="Content"> 空行为null，注释行首为# </param>
-/// <remarks> https://github.com/rime/home/wiki/RimeWithSchemata </remarks>
-internal readonly record struct RawLine(uint Num, string? Content);
