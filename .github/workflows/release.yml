@@ -1,0 +1,49 @@
+name: 发布新版本
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: 构建并发布到 ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
+
+    steps:
+      - name: 禁用换行符转换
+        run: git config --global core.autocrlf false
+
+      - name: 检出代码
+        uses: actions/checkout@v6
+
+      - name: 安装 .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 编译发布
+        run: dotnet publish -c Release -r ${{ matrix.rid }} -o publish
+
+      - name: 打包压缩
+        shell: bash
+        run: |
+          cp LICENSE README.md publish/
+          cd publish
+          7z a -t7z -m0=lzma2 -mx=9 ../RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}.7z *
+
+      - name: 上传发布
+        uses: softprops/action-gh-release@v3
+        with:
+          files: RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}.7z

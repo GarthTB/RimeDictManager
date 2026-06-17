@@ -49,7 +49,7 @@
         <ComboBox Grid.Row="4"
             Grid.Column="2"
             Grid.ColumnSpan="3"
-            PlaceholderText="选择自动编码"
+            PlaceholderText="自动编码"
             IsEnabled="{Binding UseEncoder}"
             ItemsSource="{Binding AutoCodes, Mode=OneTime}"
             SelectedItem="{Binding SelAutoCode}"
