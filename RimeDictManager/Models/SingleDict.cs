@@ -22,6 +22,8 @@ public sealed class SingleDict {
             else
                 codes = [code];
         }
+        if (entries.Count == 0) throw new InvalidOperationException("码表不含有效单字");
+
         Entries = entries;
     }
 

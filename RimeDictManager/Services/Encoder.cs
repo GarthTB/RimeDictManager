@@ -20,14 +20,14 @@ public static class Encoder {
         SingleDict dict = new(path);
         Dicts.Add(dict);
         _merged = null;
-        Log.Info($"添加单字码表：{path}");
+        Log.Info($"添加单字码表\t{path}");
         return dict;
     }
 
     public static void RemoveDict(SingleDict dict) {
         if (!Dicts.Remove(dict)) throw new OpEx("移除失败");
         _merged = null;
-        Log.Info($"移除单字码表：{dict.Path}");
+        Log.Info($"移除单字码表\t{dict.Path}");
     }
 
     public static void Prepare(InputMethod method) {
@@ -49,7 +49,7 @@ public static class Encoder {
             _merged = null;
         } else {
             _merged = merged.ToFrozenDictionary(static x => x.Key, static x => x.Value.ToArray());
-            Log.Info($"启用编码器：'{method.Name}'方案，覆盖{merged.Count}个单字");
+            Log.Info($"启用编码器\t'{method.Name}'方案，覆盖{merged.Count}个单字");
         }
         Method = method;
     }

@@ -6,7 +6,6 @@ using CommunityToolkit.Mvvm.Input;
 using Models;
 using Services;
 using ZLinq;
-using OpEx = InvalidOperationException;
 
 public sealed partial class DictWindowVM: ObservableObject {
     public DictWindowVM() {
@@ -14,8 +13,6 @@ public sealed partial class DictWindowVM: ObservableObject {
         Dicts.FirstOrDefault()?.SetTgt(true);
         foreach (var dict in Encoder.AllDicts) SingleDicts.Add(dict);
     }
-
-    [ObservableProperty] public partial InputMethod SelInputMethod { get; set; } = Encoder.Method;
 
     #region 词库
 
@@ -42,7 +39,7 @@ public sealed partial class DictWindowVM: ObservableObject {
             var dict = SelDict!;
             var (done, tgt) = await DictManager.RemoveDictAsync(dict.Src);
             if (!done) return;
-            if (!Dicts.Remove(dict)) throw new OpEx("表格移除词库失败");
+            if (!Dicts.Remove(dict)) throw new InvalidOperationException("表格移除词库失败");
             if (tgt is {}) Dicts.AsValueEnumerable().First(x => x.Src == tgt).SetTgt(true);
         } catch (Exception ex) { await ex.Alert("移除词库"); }
     }
@@ -65,25 +62,32 @@ public sealed partial class DictWindowVM: ObservableObject {
 
     #endregion 词库
 
-    #region 单字
+    #region 单字和编码方案
 
     public ObservableCollection<SingleDict> SingleDicts { get; } = [];
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveSingleDictCommand))]
     public partial SingleDict? SelSingleDict { get; set; }
 
+    [ObservableProperty] public partial InputMethod SelInputMethod { get; set; } = Encoder.Method;
+
+    public bool CanSelectMethod => SingleDicts.Count > 0;
     private bool HasSelSingleDict => SelSingleDict is {};
 
-    public void AddSingleDict(string path) => SingleDicts.Add(Encoder.AddDict(path));
+    public void AddSingleDict(string path) {
+        SingleDicts.Add(Encoder.AddDict(path));
+        OnPropertyChanged(nameof(CanSelectMethod));
+    }
 
     [RelayCommand(CanExecute = nameof(HasSelSingleDict))]
     private async Task RemoveSingleDictAsync() {
         try {
             var dict = SelSingleDict!;
             Encoder.RemoveDict(dict);
-            if (!SingleDicts.Remove(dict)) throw new OpEx("表格移除单字码表失败");
+            if (!SingleDicts.Remove(dict)) throw new InvalidOperationException("表格移除单字码表失败");
+            OnPropertyChanged(nameof(CanSelectMethod));
         } catch (Exception ex) { await ex.Alert("移除单字码表"); }
     }
 
-    #endregion 单字
+    #endregion 单字和编码方案
 }

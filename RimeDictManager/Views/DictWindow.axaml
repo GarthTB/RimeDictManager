@@ -6,7 +6,8 @@
     x:DataType="vm:DictWindowVM"
     Height="480"
     Width="720"
-    Title="RIME 词库管理器 - 词库">
+    Title="RIME 词库管理器 - 词库"
+    Icon="/Assets/RDM4.ico">
     <Design.DataContext>
         <vm:DictWindowVM/>
     </Design.DataContext>
@@ -21,7 +22,7 @@
                     Command="{Binding RemoveDictCommand, Mode=OneTime}"/>
                 <Button Grid.Column="4"
                     Content="保存词库"
-                    IsEnabled="{Binding SelDictModified, Mode=OneWay}"
+                    IsEnabled="{Binding SelDictModified}"
                     Click="SaveDict"/>
                 <Button Grid.Column="6"
                     Content="设为加词目标"
@@ -51,7 +52,7 @@
             </DataGrid>
         </Grid>
         <GridSplitter Grid.Row="1"
-            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+            Background="{DynamicResource ButtonBackground}"/>
         <Grid Grid.Row="2"
             Margin="16,14"
             RowDefinitions="Auto,14,*">
@@ -67,6 +68,7 @@
                     ColumnDefinitions="84,16,*">
                     <Label Content="编码方案"/>
                     <ComboBox Grid.Column="2"
+                        IsEnabled="{Binding CanSelectMethod}"
                         ItemsSource="{x:Static m:InputMethod.All}"
                         DisplayMemberBinding="{Binding Name, Mode=OneTime}"
                         SelectedItem="{Binding SelInputMethod}"/>

@@ -22,7 +22,7 @@ public static class DictManager {
         if (Dicts.AsValueEnumerable().Any(x => x.Path == path)) throw new OpEx("词库重复");
         Dict dict = new(path);
         Dicts.Add(dict);
-        Log.Info($"添加词库：{path}");
+        Log.Info($"添加词库\t{path}");
         return dict;
     }
 
@@ -32,7 +32,7 @@ public static class DictManager {
     public static async Task<(bool, IDictInfo?)> RemoveDictAsync(IDictInfo dict) {
         if (dict.Modified && !await MsgBox.Ask<bool>("变更未保存，是否丢弃？")) return (false, null);
         if (!Dicts.Remove((Dict)dict)) throw new OpEx("移除失败");
-        Log.Info($"移除词库：{dict.Path}");
+        Log.Info($"移除词库\t{dict.Path}");
         return (true, Dicts.FirstOrDefault());
     }
 
@@ -42,8 +42,8 @@ public static class DictManager {
             ? "重新排序"
             : "不重新排序";
         var msg1 = path is {}
-            ? $"另存词库，{msg0}：来源'{dict.Path}'，目标'{path}'"
-            : $"覆写词库，{msg0}：{dict.Path}";
+            ? $"另存词库，{msg0}\t来源'{dict.Path}'，目标'{path}'"
+            : $"覆写词库，{msg0}\t{dict.Path}";
         Log.Info(msg1);
     }
 
@@ -54,7 +54,7 @@ public static class DictManager {
         var i = Dicts.FindIndex(x => x == dict);
         if (i == -1) throw new OpEx("找不到要设为加词目标的词库");
         (Dicts[0], Dicts[i]) = (Dicts[i], Dicts[0]);
-        Log.Info($"设为加词目标：{dict.Path}");
+        Log.Info($"设为加词目标\t{dict.Path}");
         return Dicts[i];
     }
 
@@ -65,7 +65,6 @@ public static class DictManager {
     public enum SearchMode: byte { 编码前缀, 文本精确 }
 
     public static IReadOnlyList<DictEntry> Search(string s, SearchMode mode) {
-        if (s.Length == 0) return []; // 禁止匹配整个Trie或查空词
         List<DictEntry> result = new(64);
         if (mode == SearchMode.编码前缀)
             foreach (var dict in Dicts)
@@ -96,7 +95,7 @@ public static class DictManager {
         if (e.Code.Length > 0) dict.ForEachByCode(e.Code, related.Add);
         if (related.Count > 0)
             msg += "\n\n同词库内，已有以下相关词条：\n\n"
-                 + string.Join('\n', related.Select(x => x.Serialize(dict.Cols)));
+                 + string.Join('\n', related.Distinct().Select(x => x.Serialize(dict.Cols)));
         if (!await MsgBox.Ask<bool>(msg)) return null;
 
         dict.Insert(e);
@@ -125,31 +124,55 @@ public static class DictManager {
         var ol = e.Entry; // 旧长码词条
         if (!LineCodec.TryNewEntry(ol.Num, ol.Text, tgt, ol.Weight, ol.Stem, cols, out var ns))
             throw new OpEx("截短编码后词条无效");
-
         List<EntryLine> osList = []; // 旧短码词条
         dict.ForEachByCode(tgt, osList.Add);
-        if (osList.Count == 0) return await OnlyShortenAsync(dict, ol, ns);
-        if (osList.Count > 1) throw new OpEx("同词库内，目标短码被多个词条占用");
 
-        var os = osList[0]; // 唯一的旧短码词条
+        return osList.Count switch {
+            0 => await OnlyShortenAsync(dict, ol, ns),
+            1 => await ShortenAndLengthen(dict, ol, ns, osList[0]),
+            _ => throw new OpEx("同词库内，目标短码被多个词条占用")
+        };
+    }
+
+    private static async Task<bool> OnlyShortenAsync(Dict dict, EntryLine ol, EntryLine ns) {
+        var olStr = ol.Serialize(dict.Cols);
+        var nsStr = ns.Serialize(dict.Cols);
+
+        var msg = $"截短前：\t'{olStr}'\n截短后：\t'{nsStr}'";
+        if (dict.IsCodePrefix(ol.Code)) msg += $"\n\n截短后，编码'{ol.Code}'将空缺，有更长编码可被截短";
+        if (!await MsgBox.Ask<bool>($"确认截短编码？\n\n{msg}")) return false;
+
+        if (!dict.Remove(ol)) throw new OpEx("删除原词条失败");
+        Log.Crud("删除词条", olStr);
+        dict.Insert(ns);
+        Log.Crud("添加词条", nsStr);
+        return true;
+    }
+
+    private static async Task<bool> ShortenAndLengthen(
+        Dict dict,
+        EntryLine ol,
+        EntryLine ns,
+        EntryLine os) {
         var fullCodes = Encoder.Encode(os.Text)
             .AsValueEnumerable()
-            .Where(x => x.AsSpan().StartsWith(tgt))
+            .Where(x => x.AsSpan().StartsWith(os.Code))
             .ToArray();
-        if (fullCodes.Length == 0) throw new OpEx("占位词条没有匹配的更长编码");
-        var tgt1 = fullCodes.AsValueEnumerable().Any(x => x.AsSpan().StartsWith(ol.Code))
+        if (fullCodes.Length == 0) throw new OpEx("原短码词条没有匹配的更长编码");
+
+        var tgt = fullCodes.AsValueEnumerable().Any(x => x.AsSpan().StartsWith(ol.Code))
             ? ol.Code // 直接交换编码
             : Lengthen();
-        if (!LineCodec.TryNewEntry(os.Num, os.Text, tgt1, os.Weight, os.Stem, cols, out var nl))
+        if (!LineCodec.TryNewEntry(os.Num, os.Text, tgt, os.Weight, os.Stem, dict.Cols, out var nl))
             throw new OpEx("延长编码后词条无效");
 
-        var olStr = ol.Serialize(cols);
-        var nsStr = ns.Serialize(cols);
-        var osStr = os.Serialize(cols);
-        var nlStr = nl.Serialize(cols);
+        var olStr = ol.Serialize(dict.Cols);
+        var nsStr = ns.Serialize(dict.Cols);
+        var osStr = os.Serialize(dict.Cols);
+        var nlStr = nl.Serialize(dict.Cols);
 
         var msg = $"截短前：\t'{olStr}'\n"
-                + $"截短后：\t'{nsStr}'\n"
+                + $"截短后：\t'{nsStr}'\n\n"
                 + $"延长前：\t'{osStr}'\n"
                 + $"延长后：\t'{nlStr}'";
         if (ol.Code != nl.Code && dict.IsCodePrefix(ol.Code))
@@ -167,13 +190,13 @@ public static class DictManager {
         return true;
 
         string Lengthen() {
-            for (var len = tgt.Length + 1; len <= Encoder.Method.MaxLen; len++) {
-                var l = len; // Rider叫我这样写
+            for (var len = os.Code.Length + 1; len <= Encoder.Method.MaxLen; len++) {
+                var l = len; // 消除Rider警告
                 var codes = fullCodes.AsValueEnumerable().Select(x => x[..l]).Distinct().ToArray();
-                if (codes.Length > 1) throw new OpEx("占位词条的更长编码不唯一");
+                if (codes.Length > 1) throw new OpEx("原短码词条的更长编码不唯一");
                 if (!dict.ContainsCode(codes[0])) return codes[0];
             }
-            throw new OpEx("占位词条没有空闲的更长编码");
+            throw new OpEx("原短码词条没有空闲的更长编码");
         }
     }
 
@@ -209,21 +232,6 @@ public static class DictManager {
             dict.Insert(tgt);
             Log.Crud("添加词条", tgtStr);
         }
-        return true;
-    }
-
-    private static async Task<bool> OnlyShortenAsync(Dict dict, EntryLine src, EntryLine tgt) {
-        var srcStr = src.Serialize(dict.Cols);
-        var tgtStr = tgt.Serialize(dict.Cols);
-
-        var msg = $"截短前：\t'{srcStr}'\n截短后：\t'{tgtStr}'";
-        if (dict.IsCodePrefix(src.Code)) msg += $"\n\n截短后，编码'{src.Code}'将空缺，有更长编码可被截短";
-        if (!await MsgBox.Ask<bool>($"确认截短编码？\n\n{msg}")) return false;
-
-        if (!dict.Remove(src)) throw new OpEx("删除原词条失败");
-        Log.Crud("删除词条", srcStr);
-        dict.Insert(tgt);
-        Log.Crud("添加词条", tgtStr);
         return true;
     }
 
