@@ -18,8 +18,10 @@ public sealed partial class MsgWindow: Window {
             return;
         }
         BtnYes.Content = "是";
+        BtnYes.Classes.Add("Warning");
         BtnYes.Click += (_, _) => Close(true);
         BtnNo.Content = "否";
+        BtnNo.Classes.Add("Tertiary");
         BtnNo.Click += (_, _) => Close(false);
     }
 }

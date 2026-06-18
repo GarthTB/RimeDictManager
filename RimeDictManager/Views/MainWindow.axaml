@@ -5,8 +5,10 @@
     x:DataType="vm:MainWindowVM"
     Height="480"
     Width="720"
-    Title="RIME 词库管理器 - 版本 4.0.0"
-    Icon="/Assets/RDM4.ico">
+    Icon="/Assets/RDM4.ico"
+    Padding="0,25,0,0"
+    ExtendClientAreaToDecorationsHint="True"
+    TransparencyLevelHint="AcrylicBlur">
     <Design.DataContext>
         <vm:MainWindowVM/>
     </Design.DataContext>
@@ -42,8 +44,11 @@
             Text="{Binding PendingStem, UpdateSourceTrigger=PropertyChanged}"/>
         <CheckBox Grid.Row="4"
             Grid.Column="0"
-            HorizontalAlignment="Center"
-            Content="  自动编码"
+            Margin="6,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Center"
+            HorizontalContentAlignment="Center"
+            Content="自动编码"
             IsEnabled="{Binding CanToggleEncoder}"
             IsChecked="{Binding UseEncoder}"/>
         <ComboBox Grid.Row="4"
@@ -63,8 +68,6 @@
         </ComboBox>
         <Slider Grid.Row="4"
             Grid.Column="6"
-            Padding="0,-9"
-            VerticalAlignment="Center"
             TickFrequency="1"
             TickPlacement="Outside"
             IsSnapToTickEnabled="True"
@@ -93,14 +96,17 @@
         <Button Grid.Row="2"
             Grid.Column="8"
             Content="删除词条"
+            Classes="Danger"
             Command="{Binding RemoveCommand, Mode=OneTime}"/>
         <Button Grid.Row="4"
             Grid.Column="8"
             Content="截短编码"
+            Classes="Warning"
             Command="{Binding ShortenCommand, Mode=OneTime}"/>
         <Button Grid.Row="6"
             Grid.Column="8"
             Content="应用修改"
+            Theme="{DynamicResource SolidButton}"
             Command="{Binding ModifyCommand, Mode=OneTime}"/>
         <DataGrid Grid.Row="8"
             Grid.Column="0"

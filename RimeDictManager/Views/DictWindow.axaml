@@ -6,8 +6,10 @@
     x:DataType="vm:DictWindowVM"
     Height="480"
     Width="720"
-    Title="RIME 词库管理器 - 词库"
-    Icon="/Assets/RDM4.ico">
+    Icon="/Assets/RDM4.ico"
+    Padding="0,25,0,0"
+    ExtendClientAreaToDecorationsHint="True"
+    TransparencyLevelHint="AcrylicBlur">
     <Design.DataContext>
         <vm:DictWindowVM/>
     </Design.DataContext>
@@ -19,6 +21,7 @@
                     Click="AddDict"/>
                 <Button Grid.Column="2"
                     Content="移除词库"
+                    Classes="Danger"
                     Command="{Binding RemoveDictCommand, Mode=OneTime}"/>
                 <Button Grid.Column="4"
                     Content="保存词库"
@@ -62,11 +65,14 @@
                         Click="AddSingleDict"/>
                     <Button Grid.Column="2"
                         Content="移除单字码表"
+                        Classes="Danger"
                         Command="{Binding RemoveSingleDictCommand, Mode=OneTime}"/>
                 </Grid>
                 <Grid Grid.Column="2"
                     ColumnDefinitions="84,16,*">
-                    <Label Content="编码方案"/>
+                    <Label HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Content="编码方案"/>
                     <ComboBox Grid.Column="2"
                         IsEnabled="{Binding CanSelectMethod}"
                         ItemsSource="{x:Static m:InputMethod.All}"

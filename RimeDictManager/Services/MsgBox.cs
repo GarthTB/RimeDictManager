@@ -6,8 +6,8 @@ using Views;
 using Desktop = Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
 
 public static class MsgBox {
-    public static Task Info(string msg, Window? owner = null) =>
-        new MsgWindow("提示", msg, false).ShowDialog(owner ?? GetTopWindow());
+    public static Task Success(string msg, Window? owner = null) =>
+        new MsgWindow("成功", msg, false).ShowDialog(owner ?? GetTopWindow());
 
     public static Task<T> Ask<T>(string msg, Window? owner = null) =>
         new MsgWindow("确认", msg, true).ShowDialog<T>(owner ?? GetTopWindow());

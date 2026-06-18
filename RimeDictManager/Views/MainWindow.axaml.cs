@@ -2,6 +2,7 @@ namespace RimeDictManager.Views;
 
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Common;
 using Services;
 using ViewModels;
 using ZLinq;
@@ -13,6 +14,7 @@ public sealed partial class MainWindow: Window {
     public MainWindow() {
         InitializeComponent();
         DataContext = _vm;
+        Title = $"{AppInfo.DisplayName} - {AppInfo.DisplayVersion}";
     }
 
     private async void ShowDictWindow(object? _, RoutedEventArgs e) {

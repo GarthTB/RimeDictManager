@@ -3,13 +3,19 @@
     x:Class="RimeDictManager.Views.MsgWindow"
     SizeToContent="WidthAndHeight"
     WindowStartupLocation="CenterOwner"
-    Icon="/Assets/RDM4.ico">
+    Icon="/Assets/RDM4.ico"
+    Padding="0,25,0,0"
+    ExtendClientAreaToDecorationsHint="True"
+    TransparencyLevelHint="AcrylicBlur">
     <Grid Margin="16,14"
         RowDefinitions="*,14,Auto">
-        <ScrollViewer>
-            <TextBlock x:Name="Msg"
-                TextWrapping="Wrap"/>
-        </ScrollViewer>
+        <TextBox x:Name="Msg"
+            Padding="10,8"
+            VerticalAlignment="Stretch"
+            VerticalContentAlignment="Top"
+            Background="Transparent"
+            IsReadOnly="True"
+            TextWrapping="Wrap"/>
         <Grid Grid.Row="2"
             ColumnDefinitions="*,16,*"
             HorizontalAlignment="Right">

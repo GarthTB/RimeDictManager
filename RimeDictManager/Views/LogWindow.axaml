@@ -3,15 +3,19 @@
     x:Class="RimeDictManager.Views.LogWindow"
     Height="480"
     Width="720"
-    Title="RIME 词库管理器 - 日志"
-    Icon="/Assets/RDM4.ico">
+    Icon="/Assets/RDM4.ico"
+    Padding="0,25,0,0"
+    ExtendClientAreaToDecorationsHint="True"
+    TransparencyLevelHint="AcrylicBlur">
     <Grid Margin="16,14"
         RowDefinitions="*,14,Auto">
-        <ScrollViewer>
-            <TextBlock x:Name="Logs"
-                TextWrapping="Wrap"
-                Text="暂未记录任何操作"/>
-        </ScrollViewer>
+        <TextBox x:Name="Logs"
+            Padding="10,8"
+            VerticalAlignment="Stretch"
+            VerticalContentAlignment="Top"
+            Background="Transparent"
+            IsReadOnly="True"
+            TextWrapping="Wrap"/>
         <Button Grid.Row="2"
             x:Name="BtnSave"
             Width="108"

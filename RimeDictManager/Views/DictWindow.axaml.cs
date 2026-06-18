@@ -26,6 +26,7 @@ public sealed partial class DictWindow: Window {
     public DictWindow() {
         InitializeComponent();
         DataContext = _vm;
+        Title = $"{AppInfo.DisplayName} - 词库";
         Closed += (_, _) => Encoder.Prepare(_vm.SelInputMethod);
     }
 
@@ -55,9 +56,8 @@ public sealed partial class DictWindow: Window {
             }
             var reorder = await MsgBox.Ask<bool?>(ReorderPrompt, this);
             if (reorder is null) return;
-
             await _vm.SaveAsync(dict, path, reorder == true);
-            await MsgBox.Info($"保存成功，路径：{path ?? dict.Src.Path}", this);
+            await MsgBox.Success($"保存成功，路径：{path ?? dict.Src.Path}", this);
         } catch (Exception ex) { await ex.Alert("保存词库", this); }
     }
 
