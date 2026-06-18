@@ -7,14 +7,14 @@
     Height="480"
     Width="720"
     Icon="/Assets/RDM4.ico"
-    Padding="0,25,0,0"
+    Padding="0,32,0,0"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Design.DataContext>
         <vm:DictWindowVM/>
     </Design.DataContext>
     <Grid RowDefinitions="*,Auto,*">
-        <Grid Margin="16,14"
+        <Grid Margin="16,8,16,14"
             RowDefinitions="Auto,14,*">
             <Grid ColumnDefinitions="*,16,*,16,*,16,*">
                 <Button Content="添加词库"

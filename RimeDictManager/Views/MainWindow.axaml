@@ -6,13 +6,13 @@
     Height="480"
     Width="720"
     Icon="/Assets/RDM4.ico"
-    Padding="0,25,0,0"
+    Padding="0,32,0,0"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Design.DataContext>
         <vm:MainWindowVM/>
     </Design.DataContext>
-    <Grid Margin="16,14"
+    <Grid Margin="16,8,16,14"
         RowDefinitions="Auto,14,Auto,14,Auto,14,Auto,14,*"
         ColumnDefinitions="108,16,*,16,*,16,*,16,108">
         <Button Content="词库窗口"
@@ -44,7 +44,7 @@
             Text="{Binding PendingStem, UpdateSourceTrigger=PropertyChanged}"/>
         <CheckBox Grid.Row="4"
             Grid.Column="0"
-            Margin="6,0"
+            Margin="8,0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Center"
             HorizontalContentAlignment="Center"
