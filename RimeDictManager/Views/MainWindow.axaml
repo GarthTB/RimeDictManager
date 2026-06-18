@@ -44,11 +44,11 @@
             Text="{Binding PendingStem, UpdateSourceTrigger=PropertyChanged}"/>
         <CheckBox Grid.Row="4"
             Grid.Column="0"
-            Margin="8,0"
+            Margin="10,0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Center"
             HorizontalContentAlignment="Center"
-            Content="自动编码"
+            Content=" 自动编码"
             IsEnabled="{Binding CanToggleEncoder}"
             IsChecked="{Binding UseEncoder}"/>
         <ComboBox Grid.Row="4"
