@@ -4,7 +4,9 @@
 
 ## [开发中]
 
-Added: 检查词库空码、错码、冗余码等问题
+## [4.0.1] - 2026-06-19
+
+Changed: 提升词条搜索性能
 
 ## [4.0.0] - 2026-06-18
 
@@ -38,7 +40,7 @@ Added: 检查词库空码、错码、冗余码等问题
 
 ## [2.0.0] - 2026-01-10
 
-- 取消支持 `造词码` 字段
+- **Breaking:** 取消支持 `造词码` 字段
 - 支持省略 `编码` 字段
 - 不再强制无重复词条
 
@@ -70,7 +72,9 @@ Added: 检查词库空码、错码、冗余码等问题
 
 [语义化版本]: https://semver.org
 
-[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.0.0...HEAD
+[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.0.1...HEAD
+
+[4.0.1]: https://github.com/GarthTB/RimeDictManager/compare/v4.0.0...v4.0.1
 
 [4.0.0]: https://github.com/GarthTB/RimeDictManager/compare/v3.0.1...v4.0.0
 

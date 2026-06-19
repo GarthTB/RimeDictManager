@@ -7,7 +7,7 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets\RDM4.ico</ApplicationIcon>
-        <Version>4.0.0</Version>
+        <Version>4.0.1</Version>
         <Authors>Garth TB | 天卜 &lt;g-art-h@outlook.com&gt;</Authors>
         <Description>Lightweight cross-platform RIME dictionary manager with multi-file collaboration and auto-encoding.</Description>
         <Copyright>Copyright (c) 2026 Garth TB | 天卜</Copyright>
