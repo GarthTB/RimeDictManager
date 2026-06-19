@@ -36,19 +36,19 @@
                 ItemsSource="{Binding Dicts, Mode=OneTime}"
                 SelectedItem="{Binding SelDict}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn MinWidth="64"
+                    <DataGridTextColumn MinWidth="116"
                         Header="名称"
                         Binding="{Binding Src.Name, Mode=OneTime}"/>
                     <DataGridTextColumn Width="*"
                         Header="路径"
                         Binding="{Binding Src.Path, Mode=OneTime}"/>
-                    <DataGridTextColumn Width="108"
+                    <DataGridTextColumn Width="100"
                         Header="词数"
                         Binding="{Binding Src.Cnt, Mode=OneTime}"/>
-                    <DataGridTextColumn Width="84"
+                    <DataGridTextColumn Width="80"
                         Header="变更"
                         Binding="{Binding ModText, Mode=OneWay}"/>
-                    <DataGridTextColumn Width="84"
+                    <DataGridTextColumn Width="80"
                         Header="加词"
                         Binding="{Binding TgtText, Mode=OneWay}"/>
                 </DataGrid.Columns>
@@ -85,13 +85,13 @@
                 ItemsSource="{Binding SingleDicts, Mode=OneTime}"
                 SelectedItem="{Binding SelSingleDict}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn MinWidth="64"
+                    <DataGridTextColumn MinWidth="116"
                         Header="名称"
                         Binding="{Binding Name, Mode=OneTime}"/>
                     <DataGridTextColumn Width="*"
                         Header="路径"
                         Binding="{Binding Path, Mode=OneTime}"/>
-                    <DataGridTextColumn Width="108"
+                    <DataGridTextColumn Width="100"
                         Header="字数"
                         Binding="{Binding Entries.Count, Mode=OneTime}"/>
                 </DataGrid.Columns>

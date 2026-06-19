@@ -56,4 +56,4 @@
 - 作者：Garth TB | 天卜 <g-art-h@outlook.com>
 - 版权：Copyright (c) 2026 Garth TB | 天卜
 - 声明：本项目基于作者自用需求，不确保完备。使用前请备份词库文件。作者不对因使用本程序而造成的任何数据损失负责。
-- 历史：参见 [CHANGELOG](https://github.com/GarthTB/RimeDictManager/blob/master/CHANGELOG.md)
+- 历史：[CHANGELOG](https://github.com/GarthTB/RimeDictManager/blob/master/CHANGELOG.md)
