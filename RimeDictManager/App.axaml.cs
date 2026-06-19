@@ -9,14 +9,18 @@ public sealed class App: Application {
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
     public override void OnFrameworkInitializationCompleted() {
-        (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow
-            = new MainWindow();
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+            MainWindow mainWindow = new();
+            desktop.MainWindow = mainWindow;
 
-        // macOS专用
-        this.TryGetFeature<IActivatableLifetime>()?.Activated += static (_, e) => {
-            if (e is ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
+            // macOS专用
+            this.TryGetFeature<IActivatableLifetime>()?.Activated += (_, e) => {
+                if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
+                    return;
                 UrlActivation.ParseUrl(args.Uri.ToString());
-        };
+                mainWindow.ActivateDictFromUrl();
+            };
+        }
 
         base.OnFrameworkInitializationCompleted();
     }

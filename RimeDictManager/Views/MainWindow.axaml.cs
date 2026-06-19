@@ -15,7 +15,11 @@ public sealed partial class MainWindow: Window {
         InitializeComponent();
         DataContext = _vm;
         Title = $"{AppInfo.DisplayName} - {AppInfo.DisplayVersion}";
-        Loaded += (_, _) => ShowDictWindow(UrlActivation.ConsumeDir());
+        Loaded += (_, _) => ActivateDictFromUrl();
+    }
+
+    public void ActivateDictFromUrl() {
+        if (UrlActivation.ConsumeDir() is {} dir) ShowDictWindow(dir);
     }
 
     private void ShowDictWindow(object? _, RoutedEventArgs e) => ShowDictWindow(null);
