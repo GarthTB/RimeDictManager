@@ -45,9 +45,7 @@ public sealed partial class MainWindowVM: ObservableObject {
         OnPropertyChanged(nameof(CanToggleEncoder));
         OnPropertyChanged(nameof(MinCodeLen));
         OnPropertyChanged(nameof(MaxCodeLen));
-        _fullCodes.Clear();
-        AutoCodes.Clear();
-        OnPropertyChanged(nameof(MultiAutoCodes));
+        _ = UpdateAutoCodesAsync(true);
         _ = SearchAsync();
     }
 

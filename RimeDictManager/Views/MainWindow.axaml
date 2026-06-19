@@ -14,7 +14,7 @@
     </Design.DataContext>
     <Grid Margin="16,8,16,14"
         RowDefinitions="Auto,14,Auto,14,Auto,14,Auto,14,*"
-        ColumnDefinitions="108,16,*,16,*,16,*,16,108">
+        ColumnDefinitions="100,16,*,16,*,16,*,16,100">
         <Button Content="词库窗口"
             Click="ShowDictWindow"/>
         <Button Grid.Row="2"
@@ -44,11 +44,11 @@
             Text="{Binding PendingStem, UpdateSourceTrigger=PropertyChanged}"/>
         <CheckBox Grid.Row="4"
             Grid.Column="0"
-            Margin="10,0"
+            Margin="8,0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Center"
-            HorizontalContentAlignment="Center"
-            Content=" 自动编码"
+            HorizontalContentAlignment="Right"
+            Content="自动编码"
             IsEnabled="{Binding CanToggleEncoder}"
             IsChecked="{Binding UseEncoder}"/>
         <ComboBox Grid.Row="4"
@@ -114,24 +114,24 @@
             ItemsSource="{Binding SearchResults}"
             SelectedItem="{Binding SelSearchResult}">
             <DataGrid.Columns>
-                <DataGridTextColumn Width="108"
+                <DataGridTextColumn Width="116"
                     Header="词库"
                     Binding="{Binding Src.Dict.Name, Mode=OneTime}"/>
-                <DataGridTextColumn Width="108"
+                <DataGridTextColumn Width="100"
                     Header="行号"
                     Binding="{Binding Num, Mode=OneTime}"/>
                 <DataGridTextColumn Width="*"
                     Header="文本"
                     Binding="{Binding Text}"/>
-                <DataGridTextColumn Width="108"
+                <DataGridTextColumn Width="100"
                     Header="编码"
                     IsVisible="{Binding ShowCodeCol}"
                     Binding="{Binding Code}"/>
-                <DataGridTextColumn Width="108"
+                <DataGridTextColumn Width="100"
                     Header="权重"
                     IsVisible="{Binding ShowWeightCol}"
                     Binding="{Binding Weight}"/>
-                <DataGridTextColumn Width="108"
+                <DataGridTextColumn Width="100"
                     Header="造词码"
                     IsVisible="{Binding ShowStemCol}"
                     Binding="{Binding Stem}"/>
