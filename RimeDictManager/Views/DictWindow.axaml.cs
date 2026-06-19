@@ -23,14 +23,26 @@ public sealed partial class DictWindow: Window {
 
     private readonly DictWindowVM _vm = new();
 
-    public DictWindow() {
+    public DictWindow(string? dir) {
         InitializeComponent();
         DataContext = _vm;
         Title = $"{AppInfo.DisplayName} - 词库";
         Closed += (_, _) => Encoder.Prepare(_vm.SelInputMethod);
+        if (dir is {}) Loaded += (_, _) => OnLoadedAutoOpen(dir);
     }
 
-    private async void AddDict(object? _, RoutedEventArgs e) {
+    private async void OnLoadedAutoOpen(string dir) {
+        try {
+            if (Directory.Exists(dir))
+                _openOptions.SuggestedStartLocation
+                    = await StorageProvider.TryGetFolderFromPathAsync(dir);
+            AddDict();
+        } catch (Exception ex) { await ex.Alert("自动打开", this); }
+    }
+
+    private void AddDict(object? _, RoutedEventArgs e) => AddDict();
+
+    private async void AddDict() {
         try {
             _openOptions.Title = "打开 RIME 词库...";
             var files = await StorageProvider.OpenFilePickerAsync(_openOptions);

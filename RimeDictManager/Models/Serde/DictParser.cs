@@ -46,7 +46,7 @@ public static class DictParser {
     }
 
     private static string TrimExt(string name) =>
-        name.EndsWith(FileTypes.DictExt, StringComparison.OrdinalIgnoreCase)
+        name.AsSpan().EndsWith(FileTypes.DictExt, StringComparison.OrdinalIgnoreCase)
             ? name[..^FileTypes.DictExt.Length]
             : name;
 

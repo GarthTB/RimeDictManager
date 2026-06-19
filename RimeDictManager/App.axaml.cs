@@ -10,6 +10,12 @@ public sealed class App: Application {
 
     public override void OnFrameworkInitializationCompleted() {
         (ApplicationLifetime as Desktop)?.MainWindow = new MainWindow();
+#if MACOS
+        this.TryGetFeature<IActivatableLifetime>()?.Activated += static (_, e) => {
+            if (e is ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
+                UrlActivation.ParseUrl(args.Uri.ToString());
+        };
+#endif
         base.OnFrameworkInitializationCompleted();
     }
 }

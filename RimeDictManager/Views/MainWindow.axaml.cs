@@ -15,12 +15,16 @@ public sealed partial class MainWindow: Window {
         InitializeComponent();
         DataContext = _vm;
         Title = $"{AppInfo.DisplayName} - {AppInfo.DisplayVersion}";
+        Loaded += (_, _) => ShowDictWindow(UrlActivation.ConsumeDir());
     }
 
-    private async void ShowDictWindow(object? _, RoutedEventArgs e) {
-        try { await new DictWindow().ShowDialog(this); } catch (Exception ex) {
-            await ex.Alert("管理词库", this);
-        } finally { _vm.RefreshState(); }
+    private void ShowDictWindow(object? _, RoutedEventArgs e) => ShowDictWindow(null);
+
+    private async void ShowDictWindow(string? dir) {
+        try {
+            await new DictWindow(dir).ShowDialog(this);
+            _vm.RefreshState();
+        } catch (Exception ex) { await ex.Alert("管理词库并刷新状态", this); }
     }
 
     private async void ShowLogWindow(object? _, RoutedEventArgs e) {
