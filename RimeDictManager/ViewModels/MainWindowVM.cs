@@ -134,7 +134,8 @@ public sealed partial class MainWindowVM: ObservableObject {
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ShortenCommand))]
     public partial string SearchText { get; set; } = "";
 
-    public ObservableCollection<EntryVM> SearchResults { get; } = [];
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ModifyCommand))]
+    public partial ObservableCollection<EntryVM>? SearchResults { get; private set; }
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveCommand), nameof(ShortenCommand))]
     public partial EntryVM? SelSearchResult { get; set; }
@@ -151,16 +152,14 @@ public sealed partial class MainWindowVM: ObservableObject {
     private async Task SearchAsync() {
         try {
             if (SearchText.Length == 0) {
-                SearchResults.Clear();
+                SearchResults = null;
                 return;
             }
             if (!DictReady || SelSearchMode is null) return;
-
             var results = Search(SearchText, SelSearchMode.Value);
-            SearchResults.Clear();
-            foreach (var result in results) SearchResults.Add(new(result));
+            SearchResults = new(results.Select(static x => new EntryVM(x)));
         } catch (Exception ex) {
-            SearchResults.Clear();
+            SearchResults = null;
             await ex.Alert("搜索");
         } finally { ModifyCommand.NotifyCanExecuteChanged(); }
     }
@@ -176,10 +175,9 @@ public sealed partial class MainWindowVM: ObservableObject {
         try {
             var e = await InsertEntryAsync(PendingText, PendingCode, PendingWeight, PendingStem);
             if (e is null) return;
-            var tmp = SearchText;
+            var prev = SearchText;
             SyncSearchText();
-            if (tmp != SearchText) return;
-            SearchResults.Add(new(e.Value));
+            if (prev == SearchText) SearchResults?.Add(new(e.Value));
         } catch (Exception ex) { await ex.Alert("添加词条"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }
@@ -192,7 +190,7 @@ public sealed partial class MainWindowVM: ObservableObject {
         try {
             var e = SelSearchResult!;
             if (!await RemoveEntryAsync(e.Src)) return;
-            if (!SearchResults.Remove(e)) throw new InvalidOperationException("表格删除词条失败");
+            if (SearchResults?.Remove(e) == false) throw new InvalidOperationException("表格删除词条失败");
         } catch (Exception ex) { await ex.Alert("删除词条"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }
@@ -213,12 +211,12 @@ public sealed partial class MainWindowVM: ObservableObject {
         } catch (Exception ex) { await ex.Alert("截短编码"); }
     }
 
-    private bool CanModify => DictReady && SearchResults.Count > 0;
+    private bool CanModify => DictReady && SearchResults?.Count > 0;
 
     [RelayCommand(CanExecute = nameof(CanModify))]
     private async Task ModifyAsync() {
         try {
-            List<(DictEntry Src, EntryLine Tgt)> mods = new(SearchResults.Count);
+            List<(DictEntry Src, EntryLine Tgt)> mods = new(SearchResults!.Count);
             foreach (var e in SearchResults)
                 if (e.TryNewIfModified(out var tgt))
                     mods.Add((e.Src, tgt));

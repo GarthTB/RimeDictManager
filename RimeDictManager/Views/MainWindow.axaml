@@ -111,7 +111,7 @@
         <DataGrid Grid.Row="8"
             Grid.Column="0"
             Grid.ColumnSpan="9"
-            ItemsSource="{Binding SearchResults, Mode=OneTime}"
+            ItemsSource="{Binding SearchResults}"
             SelectedItem="{Binding SelSearchResult}">
             <DataGrid.Columns>
                 <DataGridTextColumn Width="108"
