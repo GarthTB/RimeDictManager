@@ -18,7 +18,7 @@ public sealed class App: Application {
                 if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
                     return;
                 UrlActivation.ParseUrl(args.Uri.ToString());
-                mainWindow.ActivateDictFromUrl();
+                if (mainWindow.IsVisible) mainWindow.ActivateDictFromUrl();
             };
         }
 
