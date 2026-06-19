@@ -40,8 +40,8 @@ jobs:
           find publish/ -name "*.pdb" -exec rm -f {} +
           find publish/ -name "*.dSYM" -exec rm -rf {} +
           DIR="RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}"
-          mv publish "$DIR"
-          7z a -t7z -m0=lzma2 -mx=9 "${DIR}.7z" "$DIR"
+          mv publish $DIR
+          7z a -t7z -m0=lzma2 -mx=9 $DIR.7z $DIR
 
       - name: 上传发布
         uses: softprops/action-gh-release@v3
