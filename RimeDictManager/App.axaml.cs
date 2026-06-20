@@ -12,14 +12,14 @@ public sealed class App: Application {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
             MainWindow mainWindow = new();
             desktop.MainWindow = mainWindow;
-
-            // macOS专用
+#if MACOS
             this.TryGetFeature<IActivatableLifetime>()?.Activated += (_, e) => {
                 if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
                     return;
                 UrlActivation.ParseUrl(args.Uri.ToString());
                 if (mainWindow.IsVisible) mainWindow.ActivateDictFromUrl();
             };
+#endif
         }
 
         base.OnFrameworkInitializationCompleted();
