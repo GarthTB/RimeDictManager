@@ -3,7 +3,7 @@
     x:Class="RimeDictManager.Views.MsgWindow"
     SizeToContent="WidthAndHeight"
     WindowStartupLocation="CenterOwner"
-    Icon="/Assets/RDM4.ico"
+    Icon="/Assets/icon_48.png"
     Padding="0,32,0,0"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
