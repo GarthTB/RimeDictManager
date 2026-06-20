@@ -15,14 +15,14 @@ public static class UrlActivation {
     public static void ParseUrl(string url) {
         try {
             Uri uri = new(url);
-            if (uri.Scheme != "rime-dict") return;
+            if (uri.Scheme != "rime-dict" || uri.Host != "open") return;
             var parts = uri.Query.TrimStart('?').Split('&');
             foreach (var part in parts) {
                 if (part.Split('=', 2) is not ["dir", var dir]) continue;
                 _dir = Uri.UnescapeDataString(dir);
                 break;
             }
-        } catch (UriFormatException) {}
+        } catch (Exception) { Log.Err("URL解析失败，无法直达词库目录"); }
     }
 
     public static string? ConsumeDir() {

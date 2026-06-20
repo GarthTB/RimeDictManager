@@ -1,4 +1,4 @@
-namespace RimeDictManager.Services;
+namespace RimeDictManager;
 
 public static class Log {
     private static readonly DateTime StartTime = DateTime.Now;
@@ -10,7 +10,7 @@ public static class Log {
     /// <summary> DictManager专用 </summary>
     public static void Crud(string op, string entry) => Logs.Add($"{op}\t{entry}");
 
-    /// <summary> MsgBox专用 </summary>
+    /// <summary> MsgBox和顶层专用 </summary>
     public static void Err(string exMsg) => Logs.Add(exMsg);
 
     public static async Task SaveAsync(Stream stream) {
