@@ -19,8 +19,10 @@ public sealed class App: Application {
                     if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
                         return;
                     UrlActivation.ParseUrl(args.Uri.ToString());
-                    if (mainWindow.IsVisible && UrlActivation.ConsumeDir() is {} dir)
-                        await mainWindow.ShowDictWindow(dir);
+                    if (!mainWindow.IsVisible || UrlActivation.ConsumeDir() is not {} dir) return;
+                    for (var i = mainWindow.OwnedWindows.Count - 1; i >= 0; i--)
+                        (mainWindow.OwnedWindows[i] as DictWindow)?.Close();
+                    await mainWindow.ShowDictWindow(dir);
                 };
 #endif
         }

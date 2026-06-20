@@ -20,11 +20,11 @@
 - 🚀 **高效**：编码前缀搜索、字词精确搜索，百万词条迅速响应
 - 🤖 **自动**：基于单字码表，按两笔、五笔等规则为词组编码
 - 📝 **日志**：记录所有 CRUD 操作及异常信息，支持导出
-- 🔗 **唤起**：支持 `rime-dict://` 冷启动，快速定位词库
+- 🔗 **唤起**：支持 `rime-dict://` 冷启动，直达词库目录
 
 ## 📥 使用
 
-[下载特定平台的最新版本发布包](https://github.com/GarthTB/RimeDictManager/releases/latest)，解压即用。
+[下载最新版本发布包](https://github.com/GarthTB/RimeDictManager/releases/latest)，解压即用。
 
 在 `词库窗口` 中添加词库和单字码表，方能解锁各项功能。
 
@@ -41,17 +41,19 @@
 ### 主窗口
 
 **添加词条**：输入 `文本` `权重` `造词码`，输入 `手动编码` 或选择 `自动编码`，点击按钮即可。
-新词条会出现在表格中，行号显示为 `0`。
 
 **删除词条**：搜索词条，选中一项，点击按钮即可。
 
 **截短编码**：搜索词条，选中码长过长的一项，点击按钮即可。
+
 含义：将选中词条的编码截短为搜索框中的编码；若有词条占用该短码，则试图延长其编码。
+
 条件：启用不定长编码方案的自动编码功能、按 `编码前缀` 搜索。
 
 **应用修改**：在表格中直接修改后，点击按钮即可生效。
 
-- `文本` `权重` `手动编码` `造词码` 框的可用性依赖于加词目标词库的定义
+- `文本` `权重` `手动编码` `造词码` 框的可用性依赖于加词目标词库的定义，若定义缺失则全可用
+- 新词条会自动出现在表格中，行号可能显示为 `0`
 - 有多项候选时，自动编码变红
 - 自动编码右边的手柄为不定长编码方案的码长
 - 不定长编码方案目前只有 `星空键道`
@@ -67,7 +69,7 @@
 - **Linux**：按以下步骤手动安装 `.desktop` 文件
 
 ```bash
-# 1. 可执行文件放入 PATH
+# 1. 把可执行文件放入 PATH
 mkdir -p ~/.local/bin
 cp RimeDictManager ~/.local/bin/
 
@@ -81,9 +83,8 @@ cp Assets/icon_256.png ~/.local/share/icons/hicolor/256x256/apps/rimedictmanager
 mkdir -p ~/.local/share/applications
 cp Assets/Linux/rimedictmanager.desktop ~/.local/share/applications/
 
-# 4. 更新桌面与 MIME 数据库
+# 4. 更新桌面数据库
 update-desktop-database ~/.local/share/applications
-update-mime-database ~/.local/share/mime
 ```
 
 ## 📜 关于

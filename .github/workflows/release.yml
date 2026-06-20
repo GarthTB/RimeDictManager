@@ -52,7 +52,7 @@ jobs:
             cp RimeDictManager/Assets/icon.icns "$APP/Contents/Resources/"
           fi
 
-      - name: 拷贝文档并打包
+      - name: 打包压缩
         shell: bash
         run: |
           DIR="RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}"
