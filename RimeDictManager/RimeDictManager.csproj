@@ -19,7 +19,7 @@
         <PublishAot>true</PublishAot>
     </PropertyGroup>
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Assets\icon_48.png"/>
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="12.0.4"/>
