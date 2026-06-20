@@ -15,16 +15,16 @@ public sealed partial class MainWindow: Window {
         InitializeComponent();
         DataContext = _vm;
         Title = $"{AppInfo.DisplayName} - {AppInfo.DisplayVersion}";
-        Loaded += (_, _) => ActivateDictFromUrl();
+        Loaded += async (_, _) => {
+            if (UrlActivation.ConsumeDir() is {} dir) await ShowDictWindow(dir);
+        };
     }
 
-    public void ActivateDictFromUrl() {
-        if (UrlActivation.ConsumeDir() is {} dir) ShowDictWindow(dir);
-    }
+    // ReSharper disable once AsyncVoidEventHandlerMethod
+    private async void ShowDictWindow(object? _, RoutedEventArgs e) => await ShowDictWindow(null);
 
-    private void ShowDictWindow(object? _, RoutedEventArgs e) => ShowDictWindow(null);
-
-    private async void ShowDictWindow(string? dir) {
+    // ReSharper disable once MemberCanBePrivate.Global
+    public async Task ShowDictWindow(string? dir) {
         try {
             await new DictWindow(dir).ShowDialog(this);
             _vm.RefreshState();

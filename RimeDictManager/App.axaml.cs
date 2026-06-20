@@ -14,12 +14,14 @@ public sealed class App: Application {
             desktop.MainWindow = mainWindow;
 #if MACOS
             // mac捕获参数
-            this.TryGetFeature<IActivatableLifetime>()?.Activated += (_, e) => {
-                if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
-                    return;
-                UrlActivation.ParseUrl(args.Uri.ToString());
-                if (mainWindow.IsVisible) mainWindow.ActivateDictFromUrl();
-            };
+            if (this.TryGetFeature<IActivatableLifetime>() is {} lifetime)
+                lifetime.Activated += async (_, e) => {
+                    if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
+                        return;
+                    UrlActivation.ParseUrl(args.Uri.ToString());
+                    if (mainWindow.IsVisible && UrlActivation.ConsumeDir() is {} dir)
+                        await mainWindow.ShowDictWindow(dir);
+                };
 #endif
         }
         base.OnFrameworkInitializationCompleted();
