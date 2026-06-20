@@ -7,10 +7,6 @@ public static class Program {
     public static void Main(string[] args) {
 #if WINDOWS
         // Windows写注册表
-        using var key
-            = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Classes\rime-dict");
-        if (key is {}) return;
-
         using var rimeDictKey
             = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Classes\rime-dict");
         rimeDictKey.SetValue("", "URL:RIME Dictionary Protocol");
