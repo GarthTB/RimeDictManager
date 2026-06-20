@@ -2,7 +2,7 @@
 Type=Application
 Name=RimeDictManager
 Exec=RimeDictManager %u
-Icon=icon
+Icon=rimedictmanager
 Comment=Lightweight cross-platform RIME dictionary manager with multi-file collaboration and auto-encoding.
 Terminal=false
 Categories=Utility;TextTools;
