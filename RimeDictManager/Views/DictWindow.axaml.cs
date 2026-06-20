@@ -23,6 +23,10 @@ public sealed partial class DictWindow: Window {
 
     private readonly DictWindowVM _vm = new();
 
+    // ReSharper disable once UnusedMember.Global
+    /// <summary> 设计器专用 </summary>
+    public DictWindow(): this(null) {}
+
     public DictWindow(string? dir) {
         InitializeComponent();
         DataContext = _vm;
