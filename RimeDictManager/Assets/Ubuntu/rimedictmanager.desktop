@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=RimeDictManager
+Exec=RimeDictManager %u
+Icon=rimedictmanager-icon
+Comment=Lightweight cross-platform RIME dictionary manager with multi-file collaboration and auto-encoding.
+Terminal=false
+Categories=Utility;TextTools;
+MimeType=x-scheme-handler/rime-dict;
+StartupWMClass=RimeDictManager
+Keywords=RIME;dictionary;input method;
