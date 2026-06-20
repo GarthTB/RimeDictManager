@@ -6,6 +6,8 @@
         <string>RimeDictManager</string>
         <key>CFBundleDisplayName</key>
         <string>RimeDictManager</string>
+        <key>CFBundleExecutable</key>
+        <string>RimeDictManager</string>
         <key>CFBundleIdentifier</key>
         <string>com.garthtb.rimedictmanager</string>
         <key>CFBundleVersion</key>
