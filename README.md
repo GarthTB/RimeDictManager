@@ -1,13 +1,14 @@
 # RIME 词库管理器
 
 [![Latest Release](https://img.shields.io/github/v/release/GarthTB/RimeDictManager?color=0FBF3E&label=Latest%20Release&logo=github)](https://github.com/GarthTB/RimeDictManager/releases/latest)
-[![Source GitHub](https://img.shields.io/badge/Source-GitHub-0FBF3E?logo=github)](https://github.com/GarthTB/RimeDictManager)
-[![Source Gitee](https://img.shields.io/badge/Source-Gitee-C71D23?logo=gitee)](https://gitee.com/tb0/RimeDictManager)
+![Downloads](https://img.shields.io/github/downloads/GarthTB/RimeDictManager/total?logo=github)
+[![License MIT](https://img.shields.io/badge/License-MIT-750014)](https://mit-license.org)
 
+[![Source on GitHub](https://img.shields.io/badge/Source%20on-GitHub-0FBF3E?logo=github)](https://github.com/GarthTB/RimeDictManager)
+[![Source on Gitee](https://img.shields.io/badge/Source%20on-Gitee-C71D23?logo=gitee)](https://gitee.com/tb0/RimeDictManager)
 [![.NET 10.0](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![AvaloniaUI 12.0](https://img.shields.io/badge/AvaloniaUI-12.0-3F8DF2?logo=avaloniaui)](https://avaloniaui.net)
 [![C# 14.0](https://img.shields.io/badge/C%23-14.0-682A7A)](https://github.com/dotnet/csharplang)
-[![License MIT](https://img.shields.io/badge/License-MIT-750014)](https://mit-license.org)
 
 一个轻量级 GUI 应用程序，用于维护 [RIME 输入法](https://rime.im) 的词库。
 旨在利用严格的格式约束和直观的表格界面，减少错误并提高效率。

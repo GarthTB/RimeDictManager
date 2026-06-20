@@ -45,8 +45,8 @@ jobs:
             cp RimeDictManager/Assets/icon_48.png RimeDictManager/Assets/icon_256.png publish/
           elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
             APP="RimeDictManager.app"
-            mkdir -p "$APP/Contents/macOS" "$APP/Contents/Resources"
-            mv publish/* "$APP/Contents/macOS/"
+            mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+            mv publish/* "$APP/Contents/MacOS/"
             rmdir publish
             cp RimeDictManager/Assets/macOS/Info.plist "$APP/Contents/"
             cp RimeDictManager/Assets/icon.icns "$APP/Contents/Resources/"
