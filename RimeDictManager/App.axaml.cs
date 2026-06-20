@@ -18,7 +18,7 @@ public sealed class App: Application {
                 lifetime.Activated += async (_, e) => {
                     if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
                         return;
-                    UrlActivation.ParseUrl(args.Uri.ToString());
+                    UrlActivation.ParseUrl(args.Uri.OriginalString);
                     if (!mainWindow.IsVisible || UrlActivation.ConsumeDir() is not {} dir) return;
                     for (var i = mainWindow.OwnedWindows.Count - 1; i >= 0; i--)
                         (mainWindow.OwnedWindows[i] as DictWindow)?.Close();

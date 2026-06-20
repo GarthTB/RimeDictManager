@@ -66,7 +66,7 @@
 
 - **Windows**：每次启动自动写入当前用户注册表，无需额外配置
 - **macOS**：应用包 `Info.plist` 已声明协议，开箱即用
-- **Linux**：按以下步骤手动安装 `.desktop` 文件
+- **Linux**：先 cd 到解压后的发布包目录，再按以下步骤手动安装 `.desktop` 文件
 
 ```bash
 # 1. 把可执行文件放入 PATH
@@ -75,13 +75,13 @@ cp RimeDictManager ~/.local/bin/
 
 # 2. 安装图标
 mkdir -p ~/.local/share/icons/hicolor/48x48/apps
-cp Assets/icon_48.png ~/.local/share/icons/hicolor/48x48/apps/rimedictmanager.png
+cp icon_48.png ~/.local/share/icons/hicolor/48x48/apps/rimedictmanager.png
 mkdir -p ~/.local/share/icons/hicolor/256x256/apps
-cp Assets/icon_256.png ~/.local/share/icons/hicolor/256x256/apps/rimedictmanager.png
+cp icon_256.png ~/.local/share/icons/hicolor/256x256/apps/rimedictmanager.png
 
 # 3. 安装 .desktop 文件
 mkdir -p ~/.local/share/applications
-cp Assets/Linux/rimedictmanager.desktop ~/.local/share/applications/
+cp rimedictmanager.desktop ~/.local/share/applications/
 
 # 4. 更新桌面数据库
 update-desktop-database ~/.local/share/applications
