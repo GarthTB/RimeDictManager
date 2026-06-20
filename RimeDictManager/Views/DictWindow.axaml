@@ -5,8 +5,8 @@
     x:Class="RimeDictManager.Views.DictWindow"
     x:DataType="vm:DictWindowVM"
     Height="480"
-    Width="720"
-    Icon="/Assets/RDM4.ico"
+    Width="680"
+    Icon="/Assets/icon_48.png"
     Padding="0,32,0,0"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">

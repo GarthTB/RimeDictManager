@@ -2,8 +2,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     x:Class="RimeDictManager.Views.LogWindow"
     Height="480"
-    Width="720"
-    Icon="/Assets/RDM4.ico"
+    Width="680"
+    Icon="/Assets/icon_48.png"
     Padding="0,32,0,0"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">

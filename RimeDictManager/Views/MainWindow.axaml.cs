@@ -15,12 +15,20 @@ public sealed partial class MainWindow: Window {
         InitializeComponent();
         DataContext = _vm;
         Title = $"{AppInfo.DisplayName} - {AppInfo.DisplayVersion}";
+        Loaded += async (_, _) => {
+            if (UrlActivation.ConsumeDir() is {} dir) await ShowDictWindow(dir);
+        };
     }
 
-    private async void ShowDictWindow(object? _, RoutedEventArgs e) {
-        try { await new DictWindow().ShowDialog(this); } catch (Exception ex) {
-            await ex.Alert("管理词库", this);
-        } finally { _vm.RefreshState(); }
+    // ReSharper disable once AsyncVoidEventHandlerMethod
+    private async void ShowDictWindow(object? _, RoutedEventArgs e) => await ShowDictWindow(null);
+
+    // ReSharper disable once MemberCanBePrivate.Global
+    public async Task ShowDictWindow(string? dir) {
+        try {
+            await new DictWindow(dir).ShowDialog(this);
+            _vm.RefreshState();
+        } catch (Exception ex) { await ex.Alert("管理词库并刷新状态", this); }
     }
 
     private async void ShowLogWindow(object? _, RoutedEventArgs e) {

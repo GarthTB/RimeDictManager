@@ -4,6 +4,10 @@
 
 ## [开发中]
 
+## [4.1.0] - 2026-06-21
+
+Added: 支持 `rime-dict://` 冷启动，直达指定词库目录
+
 ## [4.0.1] - 2026-06-19
 
 Changed: 提升词条搜索性能
@@ -72,7 +76,9 @@ Changed: 提升词条搜索性能
 
 [语义化版本]: https://semver.org
 
-[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.0.1...HEAD
+[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.0...HEAD
+
+[4.1.0]: https://github.com/GarthTB/RimeDictManager/compare/v4.0.1...v4.1.0
 
 [4.0.1]: https://github.com/GarthTB/RimeDictManager/compare/v4.0.0...v4.0.1
 

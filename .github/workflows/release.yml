@@ -31,16 +31,38 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: 编译发布
-        run: dotnet publish -c Release -r ${{ matrix.rid }} -o publish
+        shell: bash
+        run: |
+          dotnet publish -c Release -r ${{ matrix.rid }} -o publish
+          find publish/ -name "*.pdb" -delete
+          find publish/ -name "*.dSYM" -exec rm -rf {} +
+
+      - name: 平台相关处理
+        shell: bash
+        run: |
+          if [ "${{ matrix.rid }}" = "linux-x64" ]; then
+            cp RimeDictManager/Assets/Linux/rimedictmanager.desktop publish/
+            cp RimeDictManager/Assets/icon_48.png RimeDictManager/Assets/icon_256.png publish/
+          elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
+            APP="RimeDictManager.app"
+            mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+            mv publish/* "$APP/Contents/MacOS/"
+            rmdir publish
+            cp RimeDictManager/Assets/macOS/Info.plist "$APP/Contents/"
+            cp RimeDictManager/Assets/icon.icns "$APP/Contents/Resources/"
+          fi
 
       - name: 打包压缩
         shell: bash
         run: |
-          cp CHANGELOG.md LICENSE README.md publish/
-          find publish/ -name "*.pdb" -exec rm -f {} +
-          find publish/ -name "*.dSYM" -exec rm -rf {} +
           DIR="RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}"
-          mv publish $DIR
+          if [ "${{ matrix.rid }}" = "osx-arm64" ]; then
+            mkdir -p $DIR
+            mv "RimeDictManager.app" $DIR/
+          else
+            mv publish $DIR
+          fi
+          cp CHANGELOG.md LICENSE README.md $DIR/
           7z a -t7z -m0=lzma2 -mx=9 $DIR.7z $DIR
 
       - name: 上传发布
