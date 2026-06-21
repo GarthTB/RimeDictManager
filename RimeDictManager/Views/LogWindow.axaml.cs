@@ -13,8 +13,8 @@ public sealed partial class LogWindow: Window {
 
     public LogWindow() {
         InitializeComponent();
-        var log = Log.All;
         Title = $"{AppInfo.DisplayName} - 日志";
+        var log = Log.All;
         BtnSave.IsEnabled = log.Count > 0;
         Logs.Text = log.Count > 0
             ? string.Join('\n', log)

@@ -12,8 +12,8 @@ public static class Program {
                 = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Classes\rime-dict");
             rimeDictKey.SetValue("", "URL:RIME Dictionary Protocol");
             rimeDictKey.SetValue("URL Protocol", "");
-            using var cmdKey = rimeDictKey.CreateSubKey(@"shell\open\command");
-            cmdKey.SetValue("", $"\"{path}\" \"%1\"");
+            using (var cmdKey = rimeDictKey.CreateSubKey(@"shell\open\command"))
+                cmdKey.SetValue("", $"\"{path}\" \"%1\"");
             Log.Info("写注册表成功，后续可使用URL冷启动");
         } catch (Exception) { Log.Err("写注册表失败，后续无法使用URL冷启动"); }
 #endif
