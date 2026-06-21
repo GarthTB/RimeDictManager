@@ -153,8 +153,8 @@ public sealed partial class MainWindowVM: ObservableObject {
                 SearchResults = null;
                 return;
             }
-            if (!DictReady || SelSearchMode is null) return;
-            var results = Search(SearchText, SelSearchMode.Value);
+            if (!DictReady || SelSearchMode is not {} mode) return;
+            var results = Search(SearchText, mode);
             SearchResults = new(results.Select(static x => new EntryVM(x)));
         } catch (Exception ex) {
             SearchResults = null;
@@ -172,10 +172,10 @@ public sealed partial class MainWindowVM: ObservableObject {
     private async Task InsertAsync() {
         try {
             var e = await InsertEntryAsync(PendingText, PendingCode, PendingWeight, PendingStem);
-            if (e is null) return;
+            if (e is not {} v) return;
             var prev = SearchText;
             SyncSearchText();
-            if (prev == SearchText) SearchResults?.Add(new(e.Value));
+            if (prev == SearchText) SearchResults?.Add(new(v));
         } catch (Exception ex) { await ex.Alert("添加词条"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }

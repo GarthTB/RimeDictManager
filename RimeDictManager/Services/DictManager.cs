@@ -98,9 +98,9 @@ public static class DictManager {
                  + string.Join('\n', related.Distinct().Select(x => x.Serialize(dict.Cols)));
         if (!await MsgBox.Ask<bool>(msg)) return null;
 
-        dict.Insert(e);
+        var numbered = dict.Insert(e);
         Log.Crud("添加词条", eStr);
-        return new(dict, e);
+        return new(dict, numbered);
     }
 
     public static async Task<bool> RemoveEntryAsync(DictEntry e) {
