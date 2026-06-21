@@ -47,7 +47,9 @@ public sealed class Dict: IDictInfo {
     public bool Modified { get; private set; }
 
     public bool ContainsCode(string code) => _entriesByCode[code]?.Count > 0;
-    public bool IsCodePrefix(string code) => _entriesByCode.AnyDescendantValue(code);
+
+    public bool IsOnlyCodePrefix(string code) =>
+        _entriesByCode[code]?.Count == 1 && _entriesByCode.AnyDescendantValue(code);
 
     public EntryLine Insert(EntryLine e) {
         if (e.Num == 0) e = e with { Num = ++_num };
