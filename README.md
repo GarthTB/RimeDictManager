@@ -76,8 +76,6 @@ rm -rf ~/.local/share/RimeDictManager
 cp -r . ~/.local/share/RimeDictManager
 
 # 2. 安装图标
-mkdir -p ~/.local/share/icons/hicolor/48x48/apps
-cp icon_48.png ~/.local/share/icons/hicolor/48x48/apps/rimedictmanager.png
 mkdir -p ~/.local/share/icons/hicolor/256x256/apps
 cp icon_256.png ~/.local/share/icons/hicolor/256x256/apps/rimedictmanager.png
 

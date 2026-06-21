@@ -4,8 +4,6 @@
     <dict>
         <key>CFBundleName</key>
         <string>RimeDictManager</string>
-        <key>CFBundleDisplayName</key>
-        <string>RimeDictManager</string>
         <key>CFBundleExecutable</key>
         <string>RimeDictManager</string>
         <key>CFBundleIdentifier</key>
@@ -20,8 +18,6 @@
         <string>icon</string>
         <key>NSHumanReadableCopyright</key>
         <string>Copyright (c) 2026 Garth TB | 天卜</string>
-        <key>NSHighResolutionCapable</key>
-        <true/>
         <key>LSMinimumSystemVersion</key>
         <string>11.0</string>
         <key>CFBundleURLTypes</key>
