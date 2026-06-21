@@ -42,7 +42,7 @@ jobs:
         run: |
           if [ "${{ matrix.rid }}" = "linux-x64" ]; then
             cp RimeDictManager/Assets/Linux/rimedictmanager.desktop publish/
-            cp RimeDictManager/Assets/icon_48.png RimeDictManager/Assets/icon_256.png publish/
+            cp RimeDictManager/Assets/icon_256.png publish/
           elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
             APP="RimeDictManager.app"
             mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"

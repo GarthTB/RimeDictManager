@@ -47,9 +47,11 @@ public sealed class Dict: IDictInfo {
     public bool Modified { get; private set; }
 
     public bool ContainsCode(string code) => _entriesByCode[code]?.Count > 0;
-    public bool IsCodePrefix(string code) => _entriesByCode.AnyDescendantValue(code);
 
-    public void Insert(EntryLine e) {
+    public bool IsOnlyCodePrefix(string code) =>
+        _entriesByCode[code]?.Count == 1 && _entriesByCode.AnyDescendantValue(code);
+
+    public EntryLine Insert(EntryLine e) {
         if (e.Num == 0) e = e with { Num = ++_num };
         _entries.Add(e);
 
@@ -63,6 +65,7 @@ public sealed class Dict: IDictInfo {
 
         Cnt++;
         Modified = true;
+        return e;
     }
 
     public bool Remove(EntryLine e) {
@@ -88,8 +91,7 @@ public sealed class Dict: IDictInfo {
     }
 
     public void ForEachByCode(string code, Action<EntryLine> f) {
-        var indexes = _entriesByCode[code];
-        if (indexes is null) return;
+        if (_entriesByCode[code] is not {} indexes) return;
         foreach (var i in indexes) f(_entries[i]);
     }
 

@@ -54,7 +54,7 @@
 **应用修改**：在表格中直接修改后，点击按钮即可生效。
 
 - `文本` `权重` `手动编码` `造词码` 框的可用性依赖于加词目标词库的定义，若定义缺失则全可用
-- 新词条会自动出现在表格中，行号可能显示为 `0`
+- 新词条会自动出现在表格中，暂时按追加到词库末尾来计算行号
 - 有多项候选时，自动编码变红
 - 自动编码右边的手柄为不定长编码方案的码长
 - 不定长编码方案目前只有 `星空键道`
@@ -67,22 +67,22 @@
 
 - **Windows**：每次启动自动写入当前用户注册表，无需额外配置
 - **macOS**：应用包 `Info.plist` 已声明协议，开箱即用
-- **Linux**：先 cd 到解压后的发布包目录，再按以下步骤手动安装 `.desktop` 文件
+- **Linux**：先 cd 到解压后的发布包目录，再按以下步骤手动安装
 
 ```bash
-# 1. 把可执行文件放入 PATH
-mkdir -p ~/.local/bin
-cp RimeDictManager ~/.local/bin/
+# 1. 安装应用本体
+mkdir -p ~/.local/share
+rm -rf ~/.local/share/RimeDictManager
+cp -r . ~/.local/share/RimeDictManager
 
 # 2. 安装图标
-mkdir -p ~/.local/share/icons/hicolor/48x48/apps
-cp icon_48.png ~/.local/share/icons/hicolor/48x48/apps/rimedictmanager.png
 mkdir -p ~/.local/share/icons/hicolor/256x256/apps
 cp icon_256.png ~/.local/share/icons/hicolor/256x256/apps/rimedictmanager.png
 
-# 3. 安装 .desktop 文件
+# 3. 安装 .desktop 文件并修正路径
 mkdir -p ~/.local/share/applications
 cp rimedictmanager.desktop ~/.local/share/applications/
+sed -i "s|Exec=RimeDictManager|Exec=$HOME/.local/share/RimeDictManager/RimeDictManager|" ~/.local/share/applications/rimedictmanager.desktop
 
 # 4. 更新桌面数据库
 update-desktop-database ~/.local/share/applications

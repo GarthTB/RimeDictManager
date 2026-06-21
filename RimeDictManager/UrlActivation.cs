@@ -12,12 +12,12 @@ public static class UrlActivation {
         if (arg is {}) ParseUrl(arg);
     }
 
+    // ReSharper disable once MemberCanBePrivate.Global
     public static void ParseUrl(string url) {
         try {
             Uri uri = new(url);
             if (uri.Scheme != "rime-dict" || uri.Host != "open") return;
-            var parts = uri.Query.TrimStart('?').Split('&');
-            foreach (var part in parts) {
+            foreach (var part in uri.Query.TrimStart('?').Split('&')) {
                 if (part.Split('=', 2) is not ["dir", var dir]) continue;
                 _dir = Uri.UnescapeDataString(dir);
                 break;
