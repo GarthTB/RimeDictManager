@@ -18,6 +18,12 @@
         <DebugType>none</DebugType>
         <PublishAot>true</PublishAot>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(RuntimeIdentifier)'=='win-x64'">
+        <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(RuntimeIdentifier)'=='osx-arm64'">
+        <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
+    </PropertyGroup>
     <ItemGroup>
         <AvaloniaResource Include="Assets\icon_48.png"/>
     </ItemGroup>
