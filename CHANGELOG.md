@@ -4,18 +4,26 @@
 
 ## [开发中]
 
-## [4.1.0] - 2026-06-21
+## [4.1.1] - 2026-06-21
 
-Added: 支持 `rime-dict://` 冷启动，直达指定词库目录
+- **Fixed**: 未定义 `WINDOWS` `MACOS` 常量，导致条件编译永不触发
+- **Fixed**: Linux 安装指南仅拷贝可执行文件
+- **Fixed**: 空码判断条件遗漏当前编码词条的唯一性
+- **Changed**: 新词条编号不再显示为 `0`
+
+## [4.1.0] - 2026-06-21 [YANKED]
+
+**Added**: 支持 `rime-dict://` 冷启动，直达指定词库目录
 
 ## [4.0.1] - 2026-06-19
 
-Changed: 提升词条搜索性能
+**Changed**: 提升词条搜索性能
 
 ## [4.0.0] - 2026-06-18
 
-- 全面重构，改用 AvaloniaUI 框架与 Semi.Avalonia 主题，支持多种桌面平台
-- 支持多词库协同维护
+- **Breaking**: 使用 AvaloniaUI 框架与 Semi.Avalonia 主题重构
+- Added: `linux-x64` `win-x64` `osx-arm64` 跨平台支持
+- Added: 多词库协同维护
 
 ## [3.0.1] - 2026-05-19
 
@@ -44,7 +52,7 @@ Changed: 提升词条搜索性能
 
 ## [2.0.0] - 2026-01-10
 
-- **Breaking:** 取消支持 `造词码` 字段
+- **Breaking**: 取消支持 `造词码` 字段
 - 支持省略 `编码` 字段
 - 不再强制无重复词条
 
@@ -76,7 +84,9 @@ Changed: 提升词条搜索性能
 
 [语义化版本]: https://semver.org
 
-[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.0...HEAD
+[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.1...HEAD
+
+[4.1.1]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.0...v4.1.1
 
 [4.1.0]: https://github.com/GarthTB/RimeDictManager/compare/v4.0.1...v4.1.0
 
