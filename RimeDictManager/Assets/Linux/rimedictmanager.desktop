@@ -1,10 +1,12 @@
 [Desktop Entry]
 Type=Application
 Name=RimeDictManager
+Name[zh_CN]=RIME 词库管理器
 Exec=RimeDictManager %u
 Icon=rimedictmanager
 Comment=Lightweight cross-platform RIME dictionary manager with multi-file collaboration and auto-encoding.
 Terminal=false
+GenericName=RIME Dictionary Manager
 Categories=Utility;TextTools;
 MimeType=x-scheme-handler/rime-dict;
 StartupWMClass=RimeDictManager

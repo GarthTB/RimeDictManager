@@ -30,7 +30,14 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: 编译发布
+      - name: 缓存 NuGet 包
+        uses: actions/cache@v5
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: 发布并清理
         shell: bash
         run: |
           dotnet publish -c Release -r ${{ matrix.rid }} -o publish

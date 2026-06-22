@@ -30,7 +30,7 @@ public sealed partial class DictWindow: Window {
     public DictWindow(string? dir) {
         InitializeComponent();
         DataContext = _vm;
-        Title = $"{AppInfo.DisplayName} - 词库";
+        Title = $"{Meta.Name} - 词库";
         Closed += (_, _) => Encoder.Prepare(_vm.SelInputMethod);
         if (dir is {}) Loaded += (_, _) => OnLoadedAutoOpen(dir);
     }
