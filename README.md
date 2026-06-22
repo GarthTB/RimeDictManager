@@ -14,9 +14,9 @@
 [![C# 14](https://img.shields.io/badge/C%23-14-682A7A)](https://github.com/dotnet/csharplang)
 [![AvaloniaUI 12.0](https://img.shields.io/badge/AvaloniaUI-12.0-3F8DF2?logo=avaloniaui)](https://avaloniaui.net)
 
-一个轻量级 GUI 应用程序，用于维护 [RIME 输入法](https://rime.im) 的词库。
-旨在利用严格的格式约束和直观的表格界面，减少错误并提高效率。
-提供基于单字码表的词组自动编码功能，提供可导出的操作日志。
+一个轻量级 GUI 应用，用于维护 [RIME 输入法](https://rime.im) 的词库。
+利用严格的格式约束和直观的表格界面，减少错误并提高效率。
+可利用单字码表为新增词组自动编码。可导出 CRUD 操作日志。
 
 ## ✨ 特性
 
@@ -24,7 +24,7 @@
 - 🔄 **协同**：多文件协同 CRUD，全局搜索词条
 - 🚀 **高效**：编码前缀搜索、字词精确搜索，百万词条迅速响应
 - 🤖 **自动**：基于单字码表，按两笔、五笔等规则为词组编码
-- 📝 **日志**：记录所有 CRUD 操作及异常信息，支持导出
+- 📝 **日志**：记录并导出所有 CRUD 操作及异常信息
 - 🔗 **唤起**：支持 `rime-dict://` 协议冷启动，直达词库目录
 
 ## 📥 安装
@@ -33,40 +33,25 @@
 
 ### Windows
 
-解压即用。`rime-dict://` 协议每次启动自动写入当前用户注册表，无需额外配置。
+下载 .7z 后解压即用。
 
 ### macOS
 
-解压后首次打开需绕过系统限制：
+下载 .dmg 后双击挂载，将 `RimeDictManager.app` 拖拽到 `Applications` 文件夹即可。
+首次打开需绕过系统限制（未签名应用）：
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/RimeDictManager.app
 ```
 
-`/Applications/RimeDictManager.app` 需替换为实际路径。
-`rime-dict://` 协议已在 `Info.plist` 中声明，无需额外配置。
-
 ### Linux
 
-先 cd 到解压后的发布包目录，再按以下步骤手动安装：
+下载 .tar.xz 后解压，进入目录执行安装脚本即可：
 
 ```bash
-# 1. 安装应用本体
-mkdir -p ~/.local/share
-rm -rf ~/.local/share/RimeDictManager
-cp -r . ~/.local/share/RimeDictManager
-
-# 2. 安装图标
-mkdir -p ~/.local/share/icons/hicolor/256x256/apps
-cp icon_256.png ~/.local/share/icons/hicolor/256x256/apps/rimedictmanager.png
-
-# 3. 安装 .desktop 文件并修正路径（含 rime-dict:// 协议注册）
-mkdir -p ~/.local/share/applications
-cp rimedictmanager.desktop ~/.local/share/applications/
-sed -i "s|Exec=RimeDictManager|Exec=$HOME/.local/share/RimeDictManager/RimeDictManager|" ~/.local/share/applications/rimedictmanager.desktop
-
-# 4. 更新桌面数据库
-update-desktop-database ~/.local/share/applications
+tar xJf RimeDictManager-*.tar.xz
+cd RimeDictManager-*
+./install.sh
 ```
 
 ## 💻 使用
@@ -75,12 +60,12 @@ update-desktop-database ~/.local/share/applications
 
 ### 词库窗口
 
-上部为待维护的词库。
-在表格中选中词库，可以移除/保存/设为加词目标，只能为一个词库加词。
-有变更的词库显示 `●`，无变更则显示 `○`。无变更不允许保存。
+上部为待维护的词库。只能为一个词库加词。
+选中表格中的词库，可以移除/保存/设为加词目标。
+有变更的词库显示 `●`，无变更则显示 `○`。无变更则不允许保存。
 
 下部为单字码表。
-单字码表仅供自动编码使用，一次性加载，不同步变更。
+仅供自动编码使用，一次性读取，不同步变更。
 `编码方案` 仅影响自动编码，不干涉词库维护。
 
 ### 主窗口
@@ -97,6 +82,9 @@ update-desktop-database ~/.local/share/applications
 
 支持通过 `rime-dict://open?dir=<词库目录>` 协议冷启动，自动打开词库窗口并直达指定目录。
 
+Windows 在每次启动时自动写入当前用户注册表。
+macOS 和 Linux 在安装时自动注册。
+
 ### 补充说明
 
 - 词库必须存在以 `---` 起始、以 `...` 结束的 YAML 文件头
@@ -111,5 +99,5 @@ update-desktop-database ~/.local/share/applications
 - 地址：https://github.com/GarthTB/RimeDictManager
 - 作者：Garth TB | 天卜 <g-art-h@outlook.com>
 - 版权：Copyright (c) 2026 Garth TB | 天卜
-- 声明：本项目基于作者自用需求，不确保完备。使用前请备份词库文件。作者不对因使用本程序而造成的任何数据损失负责。
+- 声明：使用前请备份词库文件。作者不对因使用本程序而造成的任何数据损失负责。
 - 历史：[CHANGELOG](https://github.com/GarthTB/RimeDictManager/blob/master/CHANGELOG.md)

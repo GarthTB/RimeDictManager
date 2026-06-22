@@ -42,7 +42,10 @@ jobs:
         run: |
           if [ "${{ matrix.rid }}" = "linux-x64" ]; then
             cp RimeDictManager/Assets/Linux/rimedictmanager.desktop publish/
+            cp RimeDictManager/Assets/Linux/install.sh publish/
+            chmod +x publish/install.sh
             cp RimeDictManager/Assets/icon_256.png publish/
+            cp RimeDictManager/Assets/icon_48.png publish/
           elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
             APP="RimeDictManager.app"
             mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -56,16 +59,27 @@ jobs:
         shell: bash
         run: |
           DIR="RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}"
-          if [ "${{ matrix.rid }}" = "osx-arm64" ]; then
-            mkdir -p $DIR
-            mv "RimeDictManager.app" $DIR/
+          if [ "${{ matrix.rid }}" = "linux-x64" ]; then
+            mv publish $DIR
+            cp CHANGELOG.md LICENSE README.md $DIR/
+            tar -cJf $DIR.tar.xz $DIR
+          elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
+            DMG_ROOT="dmg-root"
+            mkdir -p "$DMG_ROOT"
+            cp -R "RimeDictManager.app" "$DMG_ROOT/"
+            ln -s /Applications "$DMG_ROOT/Applications"
+            cp CHANGELOG.md LICENSE README.md "$DMG_ROOT/"
+            hdiutil create -volname "RimeDictManager" -srcfolder "$DMG_ROOT" -ov -format UDZO "$DIR.dmg"
           else
             mv publish $DIR
+            cp CHANGELOG.md LICENSE README.md $DIR/
+            7z a -t7z -m0=lzma2 -mx=9 $DIR.7z $DIR
           fi
-          cp CHANGELOG.md LICENSE README.md $DIR/
-          7z a -t7z -m0=lzma2 -mx=9 $DIR.7z $DIR
 
       - name: 上传发布
         uses: softprops/action-gh-release@v3
         with:
-          files: '*.7z'
+          files: |
+            *.7z
+            *.tar.xz
+            *.dmg
