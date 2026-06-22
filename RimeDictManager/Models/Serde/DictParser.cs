@@ -58,7 +58,7 @@ public static class DictParser {
         var vals = (stackalloc Column[cols.Length]);
         var mask = 0;
         for (var i = 0; i < cols.Length; i++) {
-            var s = cols[i]; // Yaml解析器会Trim
+            var s = cols[i]; // Yaml 解析器会 Trim
             if (!Enum.TryParse(s, true, out Column col)) throw new FmtEx($"列名无效：'{s}'");
             vals[i] = col;
             var bit = 1 << (int)col;
