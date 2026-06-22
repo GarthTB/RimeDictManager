@@ -54,6 +54,9 @@ jobs:
             cp RimeDictManager/Assets/icon_256.png publish/
             cp RimeDictManager/Assets/icon_48.png publish/
           elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
+            VER=$(grep -oP '<Version>\K[^<]+' RimeDictManager/RimeDictManager.csproj)
+            plutil -replace CFBundleVersion -string "$VER" RimeDictManager/Assets/macOS/Info.plist
+            plutil -replace CFBundleShortVersionString -string "$VER" RimeDictManager/Assets/macOS/Info.plist
             APP="RimeDictManager.app"
             mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
             mv publish/* "$APP/Contents/MacOS/"
