@@ -20,7 +20,7 @@
 
 ## ✨ 特性
 
-- 🔒 **安全**：严格遵循 [RIME 官方词库格式规范](https://github.com/rime/home/wiki/RimeWithSchemata)
+- 🔒 **安全**：严格遵循 [RIME 词库格式指南]，保证词库可用
 - 🔄 **协同**：多文件协同 CRUD，全局搜索词条
 - 🚀 **高效**：编码前缀搜索、字词精确搜索，百万词条迅速响应
 - 🤖 **自动**：基于单字码表，按两笔、五笔等规则为词组编码
@@ -87,9 +87,7 @@ macOS 和 Linux 在安装时自动注册。
 
 ### 补充说明
 
-- 词库必须存在以 `---` 起始、以 `...` 结束的 YAML 文件头
-- `文本` `权重` `手动编码` `造词码` 框的可用性依赖于加词目标词库的文件头中的 `columns` 数组定义
-- 若 `columns` 定义缺失，则视为 `[text, code, weight, stem]`
+- `文本` `权重` `手动编码` `造词码` 框的可用性依照加词目标词库的列定义
 - 有多项候选时，自动编码变红
 - 自动编码右边的手柄为不定长编码方案的码长
 - 不定长编码方案目前只有 `星空键道`
@@ -101,3 +99,5 @@ macOS 和 Linux 在安装时自动注册。
 - 版权：Copyright (c) 2026 Garth TB | 天卜
 - 声明：使用前请备份词库文件。作者不对因使用本程序而造成的任何数据损失负责。
 - 历史：[CHANGELOG](https://github.com/GarthTB/RimeDictManager/blob/master/CHANGELOG.md)
+
+[RIME 词库格式指南]: https://github.com/GarthTB/RimeDictManager/blob/master/RimeDictFormatGuide.md

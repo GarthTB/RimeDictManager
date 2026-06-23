@@ -64,18 +64,18 @@ jobs:
           DIR="RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}"
           if [ "${{ matrix.rid }}" = "win-x64" ]; then
             mv publish "$DIR"
-            cp CHANGELOG.md LICENSE README.md "$DIR/"
+            cp CHANGELOG.md LICENSE README.md RimeDictFormatGuide.md "$DIR/"
             7z a -t7z -m0=lzma2 -mx=9 "$DIR.7z" "$DIR"
           elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
             DMG_ROOT="dmg-root"
             mkdir -p "$DMG_ROOT"
             cp -R "RimeDictManager.app" "$DMG_ROOT/"
             ln -s /Applications "$DMG_ROOT/Applications"
-            cp CHANGELOG.md LICENSE README.md "$DMG_ROOT/"
+            cp CHANGELOG.md LICENSE README.md RimeDictFormatGuide.md "$DMG_ROOT/"
             hdiutil create -volname "RimeDictManager" -srcfolder "$DMG_ROOT" -ov -format UDZO "$DIR.dmg"
           elif [ "${{ matrix.rid }}" = "linux-x64" ]; then
             mv publish "$DIR"
-            cp CHANGELOG.md LICENSE README.md "$DIR/"
+            cp CHANGELOG.md LICENSE README.md RimeDictFormatGuide.md "$DIR/"
             tar -cJf "$DIR.tar.xz" "$DIR"
           fi
 
