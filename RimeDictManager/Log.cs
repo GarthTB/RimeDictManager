@@ -7,10 +7,10 @@ public static class Log {
 
     public static void Info(string msg) => Logs.Add(msg);
 
-    /// <summary> DictManager专用 </summary>
+    /// <summary> DictManager 专用 </summary>
     public static void Crud(string op, string entry) => Logs.Add($"{op}\t{entry}");
 
-    /// <summary> MsgBox和顶层专用 </summary>
+    /// <summary> MsgBox 和顶层专用 </summary>
     public static void Err(string exMsg) => Logs.Add(exMsg);
 
     public static async Task SaveAsync(Stream stream) {

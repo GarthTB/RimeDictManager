@@ -7,19 +7,20 @@ on:
 
 jobs:
   release:
-    name: 构建并发布到 ${{ matrix.rid }}
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            rid: linux-x64
           - os: windows-latest
             rid: win-x64
           - os: macos-latest
             rid: osx-arm64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    name: 构建并发布到 ${{ matrix.rid }}
+
+    permissions:
+      contents: write
 
     steps:
       - name: 检出代码
@@ -30,7 +31,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: 编译发布
+      - name: 编译并清理
         shell: bash
         run: |
           dotnet publish -c Release -r ${{ matrix.rid }} -o publish
@@ -40,32 +41,65 @@ jobs:
       - name: 平台相关处理
         shell: bash
         run: |
-          if [ "${{ matrix.rid }}" = "linux-x64" ]; then
-            cp RimeDictManager/Assets/Linux/rimedictmanager.desktop publish/
-            cp RimeDictManager/Assets/icon_256.png publish/
-          elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
+          if [ "${{ matrix.rid }}" = "osx-arm64" ]; then
+            VER=$(grep -oP '<Version>\K[^<]+' RimeDictManager/RimeDictManager.csproj)
+            plutil -replace CFBundleVersion -string "$VER" RimeDictManager/Assets/macOS/Info.plist
+            plutil -replace CFBundleShortVersionString -string "$VER" RimeDictManager/Assets/macOS/Info.plist
             APP="RimeDictManager.app"
             mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
             mv publish/* "$APP/Contents/MacOS/"
-            rmdir publish
             cp RimeDictManager/Assets/macOS/Info.plist "$APP/Contents/"
             cp RimeDictManager/Assets/icon.icns "$APP/Contents/Resources/"
+          elif [ "${{ matrix.rid }}" = "linux-x64" ]; then
+            cp RimeDictManager/Assets/Linux/rimedictmanager.desktop publish/
+            cp RimeDictManager/Assets/Linux/install.sh publish/
+            chmod +x publish/install.sh
+            cp RimeDictManager/Assets/icon_256.png publish/
+            cp RimeDictManager/Assets/icon_48.png publish/
           fi
 
       - name: 打包压缩
         shell: bash
         run: |
           DIR="RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}"
-          if [ "${{ matrix.rid }}" = "osx-arm64" ]; then
-            mkdir -p $DIR
-            mv "RimeDictManager.app" $DIR/
-          else
-            mv publish $DIR
+          if [ "${{ matrix.rid }}" = "win-x64" ]; then
+            mv publish "$DIR"
+            cp CHANGELOG.md LICENSE README.md "$DIR/"
+            7z a -t7z -m0=lzma2 -mx=9 "$DIR.7z" "$DIR"
+          elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
+            DMG_ROOT="dmg-root"
+            mkdir -p "$DMG_ROOT"
+            cp -R "RimeDictManager.app" "$DMG_ROOT/"
+            ln -s /Applications "$DMG_ROOT/Applications"
+            cp CHANGELOG.md LICENSE README.md "$DMG_ROOT/"
+            hdiutil create -volname "RimeDictManager" -srcfolder "$DMG_ROOT" -ov -format UDZO "$DIR.dmg"
+          elif [ "${{ matrix.rid }}" = "linux-x64" ]; then
+            mv publish "$DIR"
+            cp CHANGELOG.md LICENSE README.md "$DIR/"
+            tar -cJf "$DIR.tar.xz" "$DIR"
           fi
-          cp CHANGELOG.md LICENSE README.md $DIR/
-          7z a -t7z -m0=lzma2 -mx=9 $DIR.7z $DIR
+
+      - name: 生成校验和
+        shell: bash
+        run: |
+          BASE="RimeDictManager-${{ github.ref_name }}-${{ matrix.rid }}"
+          if [ "${{ matrix.rid }}" = "win-x64" ]; then
+            ARCHIVE="$BASE.7z"
+            HASHER="sha256sum"
+          elif [ "${{ matrix.rid }}" = "osx-arm64" ]; then
+            ARCHIVE="$BASE.dmg"
+            HASHER="shasum -a 256"
+          elif [ "${{ matrix.rid }}" = "linux-x64" ]; then
+            ARCHIVE="$BASE.tar.xz"
+            HASHER="sha256sum"
+          fi
+          $HASHER "$ARCHIVE" > "$ARCHIVE.sha256"
 
       - name: 上传发布
         uses: softprops/action-gh-release@v3
         with:
-          files: '*.7z'
+          files: |
+            *.7z
+            *.tar.xz
+            *.dmg
+            *.sha256

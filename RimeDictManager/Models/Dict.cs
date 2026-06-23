@@ -99,8 +99,8 @@ public sealed class Dict: IDictInfo {
         _entriesByCode.ForEachSubtreeValue(code, i => f(_entries[i]));
 
     /// <summary> 保存词库（不迁移路径） </summary>
-    /// <param name="path"> null则覆写 </param>
-    /// <param name="reorder"> true：词条先按Code升序再按Num升序重排，非词条行按原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
+    /// <param name="path"> null 则覆写 </param>
+    /// <param name="reorder"> true：词条先按 Code 升序再按 Num 升序重排，非词条行按原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
     public async Task SaveAsync(string? path, bool reorder) {
         await using StreamWriter writer = new(path ?? Path);
         writer.NewLine = "\n";

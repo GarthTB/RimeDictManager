@@ -13,7 +13,7 @@ public sealed class App: Application {
             MainWindow mainWindow = new();
             desktop.MainWindow = mainWindow;
 #if MACOS
-            // mac捕获参数
+            // macOS 捕获参数
             if (this.TryGetFeature<IActivatableLifetime>() is {} lifetime)
                 lifetime.Activated += async (_, e) => {
                     if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)

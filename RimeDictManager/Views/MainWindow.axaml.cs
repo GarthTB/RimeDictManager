@@ -14,7 +14,7 @@ public sealed partial class MainWindow: Window {
     public MainWindow() {
         InitializeComponent();
         DataContext = _vm;
-        Title = $"{AppInfo.DisplayName} - {AppInfo.DisplayVersion}";
+        Title = $"{Meta.Name} - {Meta.Version}";
         Loaded += async (_, _) => {
             if (UrlActivation.ConsumeDir() is {} dir) await ShowDictWindow(dir);
         };

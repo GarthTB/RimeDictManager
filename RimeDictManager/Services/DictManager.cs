@@ -191,7 +191,7 @@ public static class DictManager {
 
         string Lengthen() {
             for (var len = os.Code.Length + 1; len <= Encoder.Method.MaxLen; len++) {
-                var l = len; // 消除Rider警告
+                var l = len; // 消除 Rider 警告
                 var codes = fullCodes.AsValueEnumerable().Select(x => x[..l]).Distinct().ToArray();
                 if (codes.Length > 1) throw new OpEx("原短码词条的更长编码不唯一");
                 if (!dict.ContainsCode(codes[0])) return codes[0];
