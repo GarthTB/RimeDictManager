@@ -11,7 +11,7 @@ public static class UrlActivation {
             .FirstOrDefault(static x =>
                 x.AsSpan().StartsWith($"{Meta.UrlScheme}://", StringComparison.OrdinalIgnoreCase));
         if (arg is {}) ParseUrl(arg);
-        return arg is {};
+        return _dir is {};
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
