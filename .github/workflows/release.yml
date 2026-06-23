@@ -34,7 +34,7 @@ jobs:
       - name: 编译并清理
         shell: bash
         run: |
-          dotnet publish -c Release -r ${{ matrix.rid }} -o publish
+          dotnet publish RimeDictManager/RimeDictManager.csproj -c Release -r ${{ matrix.rid }} -o publish
           find publish/ -name "*.pdb" -delete
           find publish/ -name "*.dSYM" -exec rm -rf {} +
 
