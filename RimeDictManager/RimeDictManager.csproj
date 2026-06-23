@@ -32,10 +32,8 @@
         <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.0.0"/>
         <PackageReference Include="Avalonia.Desktop" Version="12.0.4"/>
         <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.4"/>
-        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.2">
-            <IncludeAssets Condition="'$(Configuration)'!='Debug'">None</IncludeAssets>
-            <PrivateAssets Condition="'$(Configuration)'!='Debug'">All</PrivateAssets>
-        </PackageReference>
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.2"
+                          Condition="'$(Configuration)'=='Debug'"/>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2"/>
         <PackageReference Include="Semi.Avalonia" Version="12.0.3"/>
         <PackageReference Include="Semi.Avalonia.DataGrid" Version="12.0.0"/>

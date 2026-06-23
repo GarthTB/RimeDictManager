@@ -10,8 +10,7 @@ public static class LineCodec {
         IReadOnlyList<Column> cols,
         out EntryLine e,
         out RawLine r) {
-        var span = line.AsSpan().TrimStart(' ');
-        if (span.Length == 0 || span[0] == '#') {
+        if (line.AsSpan().TrimStart(' ') is [] or ['#', ..]) {
             e = default;
             r = new(num, line);
             return false;
@@ -55,10 +54,7 @@ public static class LineCodec {
         out EntryLine e) {
         if (string.IsNullOrWhiteSpace(text)) goto Fail;
 
-        // ReSharper disable LoopCanBeConvertedToQuery
-        var mask = 0;
-        foreach (var c in cols) mask |= 1 << (int)c;
-
+        var mask = cols.Aggregate(0, static (x, c) => x | (1 << (int)c));
         if ((string.IsNullOrWhiteSpace(code) || (mask & (1 << (int)Code)) != 0)
          && (string.IsNullOrWhiteSpace(weight) || (mask & (1 << (int)Weight)) != 0)
          && (string.IsNullOrWhiteSpace(stem) || (mask & (1 << (int)Stem)) != 0)) {
