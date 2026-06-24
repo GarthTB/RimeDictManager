@@ -5,12 +5,12 @@ using Str = string;
 
 /// <summary> 解析的词条行 </summary>
 /// <param name="Num"> 行号：1开始，0无效 </param>
-/// <param name="Text"> 文本（字词）：非空 </param>
-/// <param name="Code"> 编码：空即省略 </param>
-/// <param name="Weight"> 权重：空即省略 </param>
-/// <param name="Stem"> 造词码：空即省略 </param>
+/// <param name="Text"> 文本：非空 </param>
+/// <param name="Code"> 编码：条件可空 </param>
+/// <param name="Weight"> 权重：无条件可空 </param>
+/// <param name="Stem"> 造词码：无条件可空 </param>
 public readonly record struct EntryLine(uint Num, Str Text, Str Code, Str Weight, Str Stem) {
-    public Str this[DictCol col] =>
+    private Str this[DictCol col] =>
         col switch {
             DictCol.Text => Text,
             DictCol.Code => Code,
@@ -18,6 +18,35 @@ public readonly record struct EntryLine(uint Num, Str Text, Str Code, Str Weight
             DictCol.Stem => Stem,
             _ => throw new UnreachableException()
         };
+
+    public Str Format(IReadOnlyList<DictCol> cols) {
+        var cnt = cols.Count;
+        for (var i = cnt - 1; this[cols[i]].Length == 0; i--) cnt--;
+        var vals = new Str[cnt];
+        for (var i = 0; i < cnt; i++) vals[i] = this[cols[i]];
+        return Str.Join('\t', vals);
+    }
+
+    public static bool TryNew(
+        uint num,
+        Str text,
+        Str code,
+        Str weight,
+        Str stem,
+        IReadOnlyList<DictCol> cols,
+        out EntryLine e) {
+        if (!Str.IsNullOrWhiteSpace(text)) {
+            var mask = cols.Aggregate(0, static (x, c) => x | (1 << (int)c));
+            if ((Str.IsNullOrWhiteSpace(code) || (mask & (1 << (int)DictCol.Code)) != 0)
+             && (Str.IsNullOrWhiteSpace(weight) || (mask & (1 << (int)DictCol.Weight)) != 0)
+             && (Str.IsNullOrWhiteSpace(stem) || (mask & (1 << (int)DictCol.Stem)) != 0)) {
+                e = new(num, text.Trim(), code.Trim(), weight.Trim(), stem.Trim());
+                return true;
+            }
+        }
+        e = default;
+        return false;
+    }
 }
 
 /// <summary> 除词条外的行 </summary>
@@ -25,7 +54,5 @@ public readonly record struct EntryLine(uint Num, Str Text, Str Code, Str Weight
 /// <param name="Content"> 原始内容 </param>
 public readonly record struct RawLine(uint Num, Str Content);
 
-/// <summary> 完整词条信息 </summary>
-/// <param name="Dict"> 词库 </param>
-/// <param name="Entry"> 词条行 </param>
+/// <summary> 带有词库归属的完整词条信息 </summary>
 public readonly record struct DictEntry(IDictInfo Dict, EntryLine Entry);
