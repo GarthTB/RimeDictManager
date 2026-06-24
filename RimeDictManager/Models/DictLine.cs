@@ -36,15 +36,21 @@ public readonly record struct EntryLine(uint Num, Str Text, Str Code, Str Weight
         Str stem,
         IReadOnlyList<DictCol> cols,
         out EntryLine e) {
-        if (!Str.IsNullOrWhiteSpace(text)) {
-            var mask = cols.Aggregate(0, static (x, c) => x | (1 << (int)c));
-            if ((Str.IsNullOrWhiteSpace(code) || (mask & (1 << (int)DictCol.Code)) != 0)
-             && (Str.IsNullOrWhiteSpace(weight) || (mask & (1 << (int)DictCol.Weight)) != 0)
-             && (Str.IsNullOrWhiteSpace(stem) || (mask & (1 << (int)DictCol.Stem)) != 0)) {
-                e = new(num, text.Trim(), code.Trim(), weight.Trim(), stem.Trim());
+        if (Str.IsNullOrWhiteSpace(text)) goto Fail;
+
+        var mask = cols.Aggregate(0, static (x, c) => x | (1 << (int)c));
+        if ((Str.IsNullOrWhiteSpace(code) || (mask & (1 << (int)DictCol.Code)) != 0)
+         && (Str.IsNullOrWhiteSpace(weight) || (mask & (1 << (int)DictCol.Weight)) != 0)
+         && (Str.IsNullOrWhiteSpace(stem) || (mask & (1 << (int)DictCol.Stem)) != 0)) {
+            text = text.Trim();
+            code = code.Trim();
+            if (text.Length != 1 || code.Length != 0) {
+                e = new(num, text, code, weight.Trim(), stem.Trim());
                 return true;
             }
         }
+
+    Fail:
         e = default;
         return false;
     }
