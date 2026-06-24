@@ -11,14 +11,6 @@ public sealed class CodeTrie(int cap) {
             ? _values[i]
             : null;
 
-    private int IndexOf(string code) {
-        var i = 0;
-        foreach (var c in code)
-            if (_children[i] is not {} ch || !ch.TryGetValue(c, out i))
-                return -1;
-        return i;
-    }
-
     public void Insert(string code, int v) {
         var i = 0;
         foreach (var c in code) {
@@ -44,6 +36,14 @@ public sealed class CodeTrie(int cap) {
         vals[j] = vals[^1];
         vals.RemoveAt(vals.Count - 1);
         return true;
+    }
+
+    private int IndexOf(string code) {
+        var i = 0;
+        foreach (var c in code)
+            if (_children[i] is not {} ch || !ch.TryGetValue(c, out i))
+                return -1;
+        return i;
     }
 
     public bool AnyDescendantValue(string code) =>

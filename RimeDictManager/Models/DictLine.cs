@@ -21,7 +21,8 @@ public readonly record struct EntryLine(uint Num, Str Text, Str Code, Str Weight
 
     public Str Format(IReadOnlyList<DictCol> cols) {
         var cnt = cols.Count;
-        for (var i = cnt - 1; this[cols[i]].Length == 0; i--) cnt--;
+        while (this[cols[cnt - 1]].Length == 0) cnt--;
+
         var vals = new Str[cnt];
         for (var i = 0; i < cnt; i++) vals[i] = this[cols[i]];
         return Str.Join('\t', vals);
