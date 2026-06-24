@@ -1,8 +1,42 @@
 namespace RimeDictManager.Services;
 
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
+using System.Text.Json.Serialization;
+using Common;
 using Models;
+using SharpYaml;
+using SharpYaml.Serialization;
+using static System.Runtime.InteropServices.CollectionsMarshal;
+using FmtEx = FormatException;
 
 public static class DictIo {
+    public static Dict LoadDict(string path) {
+        using DictReader reader = new(path);
+        var header = reader.ReadHeader(out var name);
+        List<EntryLine> entries = new(4096);
+        List<RawLine> rawLines = new(64);
+        var num = reader.ReadLines(rawLines.Add, entries.Add);
+        return new(path, header, name, reader.Cols, rawLines, entries, num);
+    }
+
+    public static SingleDict LoadSingleDict(string path) {
+        using DictReader reader = new(path);
+        reader.ReadHeader(out var name);
+        Dictionary<char, List<string>> entries = new(4096);
+        reader.ReadLines(
+            null,
+            e => {
+                if (e.Text is not [var c]) return;
+                ref var codes = ref GetValueRefOrAddDefault(entries, c, out var exists);
+                if (exists)
+                    codes!.Add(e.Code);
+                else
+                    codes = [e.Code];
+            });
+        return new(path, name, entries);
+    }
+
     /// <summary> 保存词库（不迁移路径） </summary>
     /// <param name="dict"> 词库 </param>
     /// <param name="path"> 目标路径：null 则覆写 </param>
@@ -10,7 +44,7 @@ public static class DictIo {
     public static async Task SaveAsync(Dict dict, string? path, bool reorder) {
         await using StreamWriter writer = new(path ?? dict.Path);
         writer.NewLine = "\n";
-        await writer.WriteLineAsync(dict.Yaml);
+        await writer.WriteLineAsync(dict.Header);
 
         if (reorder) {
             foreach (var e in dict.Entries.OrderBy(static e => (e.Code, e.Num)))
@@ -32,5 +66,96 @@ public static class DictIo {
         }
 
         dict.NotifySaved();
+    }
+}
+
+public sealed class Header {
+    public string? Name { get; init; }
+    public string[]? Columns { get; init; }
+}
+
+[YamlSerializable(typeof(Header)),
+ YamlSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+public sealed partial class HeaderContext: YamlSerializerContext;
+
+file sealed class DictReader(string path): IDisposable {
+    private readonly StreamReader _reader = new(path);
+    private uint _num = 1;
+    public IReadOnlyList<DictCol>? Cols { get; private set; }
+
+    public void Dispose() => _reader.Dispose();
+
+    [MemberNotNull(nameof(Cols))]
+    public string ReadHeader(out string name) {
+        StringBuilder s = new(1024);
+        var start = 0;
+        for (string? l; (l = _reader.ReadLine()) is {}; _num++) {
+            if (s.Length > 16384) throw new FmtEx($"文件头过长，疑似缺失或未闭合\n文件：{path}");
+            if (string.IsNullOrWhiteSpace(l))
+                s.Append('\n');
+            else if (l == "---")
+                start = s.Append(l).Append('\n').Length;
+            else if (l == "...") {
+                s.Append(l);
+                _num++;
+                break;
+            } else
+                s.Append(l).Append('\n');
+        }
+        var raw = s.ToString();
+        if (raw.Length < 3 || raw.AsSpan(^3..) is not "...")
+            throw new FmtEx($"文件头缺失或未闭合\n文件：{path}");
+
+        try {
+            var yaml = raw.AsSpan(start..^3);
+            var header = YamlSerializer.Deserialize(yaml, HeaderContext.Default.Header)
+                      ?? throw new FmtEx("YAML解析器返回NULL");
+            name = header.Name ?? TrimExt(Path.GetFileName(path));
+            Cols = ParseCols(header.Columns);
+        } catch (Exception ex) { throw new FmtEx($"文件头解析失败\n文件：{path}", ex); }
+
+        return raw;
+    }
+
+    public uint ReadLines(Action<RawLine>? fr, Action<EntryLine> fe) {
+        for (string? l; (l = _reader.ReadLine()) is {}; _num++) {
+            if (string.IsNullOrWhiteSpace(l)) {
+                fr?.Invoke(new(_num, ""));
+                continue;
+            }
+            if (l[0] == '#') {
+                fr?.Invoke(new(_num, l.TrimEnd()));
+                continue;
+            }
+            throw new NotImplementedException("分割字段并使用EntryLine.TryNew构造词条，调用fe");
+        }
+
+        return _num;
+    }
+
+    private static string TrimExt(string name) =>
+        name.AsSpan().EndsWith(FileTypes.DictExt, StringComparison.OrdinalIgnoreCase)
+            ? name[..^FileTypes.DictExt.Length]
+            : name;
+
+    private static DictCol[] ParseCols(string[]? cols) {
+        if (cols is null) return DictCols.Default;
+        if (cols.Length == 0) throw new FmtEx("列定义为空");
+        if (cols.Length > DictCols.EnumCnt) throw new FmtEx($"词库超过{DictCols.EnumCnt}列");
+
+        var vals = (stackalloc DictCol[cols.Length]);
+        var mask = 0;
+        for (var i = 0; i < cols.Length; i++) {
+            var s = cols[i]; // Yaml 解析器会 Trim
+            if (!Enum.TryParse(s, true, out DictCol col)) throw new FmtEx($"列名无效：'{s}'");
+            vals[i] = col;
+
+            var bit = 1 << (int)col;
+            if ((mask & bit) != 0) throw new FmtEx($"列名重复：'{s}'");
+            mask |= bit;
+        }
+        if ((mask & (1 << (int)DictCol.Text)) == 0) throw new FmtEx("未定义文本列");
+
+        return vals.ToArray();
     }
 }
