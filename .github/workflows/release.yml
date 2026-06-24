@@ -16,8 +16,10 @@ jobs:
             rid: osx-arm64
           - os: ubuntu-latest
             rid: linux-x64
-    runs-on: ${{ matrix.os }}
+
     name: 构建并发布到 ${{ matrix.rid }}
+
+    runs-on: ${{ matrix.os }}
 
     permissions:
       contents: write
