@@ -4,8 +4,10 @@ using ZLinq;
 using Str = string;
 
 public abstract record InputMethod(Str Name, byte MinLen, byte MaxLen, byte StemLen) {
-    public static IReadOnlyList<InputMethod> All { get; }
-        = [new Erbi(), new FlyPyTigerWubi(), new KeyTao()];
+    public static InputMethod Erbi { get; } = new Erbi();
+    public static InputMethod FlyPyTigerWubi { get; } = new FlyPyTigerWubi();
+    public static InputMethod KeyTao { get; } = new KeyTao();
+    public static IReadOnlyList<InputMethod> All { get; } = [Erbi, FlyPyTigerWubi, KeyTao];
 
     protected abstract Str Encode2(Str a, Str b);
     protected abstract Str Encode3(Str a, Str b, Str c);

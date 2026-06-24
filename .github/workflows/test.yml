@@ -21,7 +21,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: 运行测试
-        run: dotnet test -c Release --collect "XPlat Code Coverage"
+        run: dotnet test --collect "XPlat Code Coverage"
 
       - name: 上传报告
         if: success()
