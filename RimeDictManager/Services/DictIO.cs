@@ -112,8 +112,7 @@ file sealed class DictReader(string path): IDisposable {
             throw new FmtEx($"文件头缺失或未闭合\n文件：{path}");
 
         try {
-            var yaml = raw.AsSpan(start..^3);
-            var header = YamlSerializer.Deserialize(yaml, HeaderContext.Default.Header)
+            var header = YamlSerializer.Deserialize(raw[start..^3], HeaderContext.Default.Header)
                       ?? throw new FmtEx("YAML 解析器返回 NULL");
             var name = header.Name ?? TrimExt(Path.GetFileName(path));
             Cols = ParseCols(header.Columns);
@@ -134,7 +133,6 @@ file sealed class DictReader(string path): IDisposable {
                 fr?.Invoke(new(_num, l));
                 continue;
             }
-
             string text = "", code = "", weight = "", stem = "";
             for (int i = 0, col = 0, start = 0; i <= l.Length; i++) {
                 if (i < l.Length && l[i] != '\t') continue;
