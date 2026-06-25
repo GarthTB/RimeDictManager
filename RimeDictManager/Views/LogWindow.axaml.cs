@@ -26,8 +26,10 @@ public sealed partial class LogWindow: Window {
             _saveOptions.SuggestedFileName = $"RDM_{DateTime.Now:yyMMdd_HHmmss}";
             using var file = await StorageProvider.SaveFilePickerAsync(_saveOptions);
             if (file is null) return;
+
             await using (var stream = await file.OpenWriteAsync()) await Log.SaveAsync(stream);
-            await MsgBox.Success($"保存成功，路径：{file.TryGetLocalPath() ?? file.Path.LocalPath}", this);
-        } catch (Exception ex) { await ex.Alert("保存日志", this); }
+            var path = file.TryGetLocalPath() ?? file.Path.LocalPath;
+            await MsgBox.SuccessAsync($"保存成功，路径：{path}", this);
+        } catch (Exception ex) { await ex.AlertAsync("保存日志", this); }
     }
 }

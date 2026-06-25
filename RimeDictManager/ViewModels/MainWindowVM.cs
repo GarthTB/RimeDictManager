@@ -9,6 +9,7 @@ using Models;
 using Services;
 using ZLinq;
 using static Services.DictManager;
+using OpEx = InvalidOperationException;
 
 public sealed partial class MainWindowVM: ObservableObject {
     #region 可用性
@@ -34,13 +35,13 @@ public sealed partial class MainWindowVM: ObservableObject {
     public void RefreshState() {
         DictReady = Ready;
         var tgtCols = TgtCols;
-        UseCodeBox = DictReady && tgtCols?.Contains(Column.Code) == true;
-        UseWeightBox = DictReady && tgtCols?.Contains(Column.Weight) == true;
-        UseStemBox = DictReady && tgtCols?.Contains(Column.Stem) == true;
+        UseCodeBox = DictReady && tgtCols?.Contains(DictCol.Code) == true;
+        UseWeightBox = DictReady && tgtCols?.Contains(DictCol.Weight) == true;
+        UseStemBox = DictReady && tgtCols?.Contains(DictCol.Stem) == true;
         var unionCols = UnionCols;
-        ShowCodeCol = DictReady && unionCols.Contains(Column.Code);
-        ShowWeightCol = DictReady && unionCols.Contains(Column.Weight);
-        ShowStemCol = DictReady && unionCols.Contains(Column.Stem);
+        ShowCodeCol = DictReady && unionCols.Contains(DictCol.Code);
+        ShowWeightCol = DictReady && unionCols.Contains(DictCol.Weight);
+        ShowStemCol = DictReady && unionCols.Contains(DictCol.Stem);
         UseEncoder = Encoder.Ready;
         OnPropertyChanged(nameof(CanToggleEncoder));
         OnPropertyChanged(nameof(MinCodeLen));
@@ -115,7 +116,7 @@ public sealed partial class MainWindowVM: ObservableObject {
         } catch (Exception ex) {
             _fullCodes.Clear();
             AutoCodes.Clear();
-            await ex.Alert("自动编码");
+            await ex.AlertAsync("自动编码");
         } finally { OnPropertyChanged(nameof(MultiAutoCodes)); }
     }
 
@@ -149,16 +150,13 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     private async Task SearchAsync() {
         try {
-            if (SearchText.Length == 0) {
+            if (string.IsNullOrWhiteSpace(SearchText))
                 SearchResults = null;
-                return;
-            }
-            if (!DictReady || SelSearchMode is not {} mode) return;
-            var results = Search(SearchText, mode);
-            SearchResults = new(results.Select(static x => new EntryVM(x)));
+            else if (DictReady && SelSearchMode is {} mode)
+                SearchResults = new(Search(SearchText, mode).Select(static x => new EntryVM(x)));
         } catch (Exception ex) {
             SearchResults = null;
-            await ex.Alert("搜索");
+            await ex.AlertAsync("搜索");
         } finally { ModifyCommand.NotifyCanExecuteChanged(); }
     }
 
@@ -166,7 +164,7 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     #region 操作
 
-    private bool CanInsert => DictReady && PendingText.Length > 0;
+    private bool CanInsert => DictReady && !string.IsNullOrWhiteSpace(PendingText);
 
     [RelayCommand(CanExecute = nameof(CanInsert))]
     private async Task InsertAsync() {
@@ -176,7 +174,7 @@ public sealed partial class MainWindowVM: ObservableObject {
             var prev = SearchText;
             SyncSearchText();
             if (prev == SearchText) SearchResults?.Add(new(v));
-        } catch (Exception ex) { await ex.Alert("添加词条"); } finally {
+        } catch (Exception ex) { await ex.AlertAsync("添加词条"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }
     }
@@ -186,10 +184,10 @@ public sealed partial class MainWindowVM: ObservableObject {
     [RelayCommand(CanExecute = nameof(CanRemove))]
     private async Task RemoveAsync() {
         try {
-            var e = SelSearchResult!;
-            if (!await RemoveEntryAsync(e.Src)) return;
-            if (SearchResults?.Remove(e) == false) throw new InvalidOperationException("表格删除词条失败");
-        } catch (Exception ex) { await ex.Alert("删除词条"); } finally {
+            var e = SelSearchResult ?? throw new OpEx("UI 错误");
+            var done = await RemoveEntryAsync(e.Src);
+            if (done && SearchResults?.Remove(e) == false) throw new OpEx("UI 删除词条失败");
+        } catch (Exception ex) { await ex.AlertAsync("删除词条"); } finally {
             ModifyCommand.NotifyCanExecuteChanged();
         }
     }
@@ -205,8 +203,9 @@ public sealed partial class MainWindowVM: ObservableObject {
     [RelayCommand(CanExecute = nameof(CanShorten))]
     private async Task ShortenAsync() {
         try {
-            if (await ShortenEntryAsync(SelSearchResult!.Src, SearchText)) _ = SearchAsync();
-        } catch (Exception ex) { await ex.Alert("截短编码"); }
+            var e = SelSearchResult ?? throw new OpEx("UI 错误");
+            if (await ShortenEntryAsync(e.Src, SearchText)) _ = SearchAsync();
+        } catch (Exception ex) { await ex.AlertAsync("截短编码"); }
     }
 
     private bool CanModify => DictReady && SearchResults?.Count > 0;
@@ -214,13 +213,14 @@ public sealed partial class MainWindowVM: ObservableObject {
     [RelayCommand(CanExecute = nameof(CanModify))]
     private async Task ModifyAsync() {
         try {
-            List<(DictEntry Src, EntryLine Tgt)> mods = new(SearchResults!.Count);
-            foreach (var e in SearchResults)
+            var entries = SearchResults ?? throw new OpEx("UI 错误");
+            List<(DictEntry Src, EntryLine Tgt)> mods = new(entries.Count);
+            foreach (var e in entries)
                 if (e.TryNewIfModified(out var tgt))
                     mods.Add((e.Src, tgt));
-            if (mods.Count == 0) throw new InvalidOperationException("没有改动，什么都没做");
+            if (mods.Count == 0) throw new OpEx("没有改动，什么都没做");
             if (await ModifyEntriesAsync(mods)) _ = SearchAsync();
-        } catch (Exception ex) { await ex.Alert("应用修改"); }
+        } catch (Exception ex) { await ex.AlertAsync("应用修改"); }
     }
 
     #endregion 操作
