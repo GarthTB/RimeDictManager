@@ -137,7 +137,7 @@ file sealed class DictReader(string path): IDisposable {
             string text = "", code = "", weight = "", stem = "";
             int col = 0, start = 0;
             for (var i = 0; i <= l.Length; i++) {
-                if (l[i] != '\t' && i < l.Length) continue;
+                if (i < l.Length && l[i] != '\t') continue;
                 if (col >= cols.Count) throw new FmtEx($"第{_num}行词条列数超出定义");
                 switch (cols[col++]) {
                 case DictCol.Text: text = l[start..i]; break;
@@ -151,7 +151,7 @@ file sealed class DictReader(string path): IDisposable {
             if (EntryLine.TryNew(_num, text, code, weight, stem, cols, out var e))
                 fe(e);
             else
-                fr?.Invoke(new(_num, l.TrimEnd()));
+                fr?.Invoke(new(_num, l));
         }
 
         return _num;
