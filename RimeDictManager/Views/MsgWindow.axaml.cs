@@ -11,12 +11,14 @@ public sealed partial class MsgWindow: Window {
         InitializeComponent();
         Title = title;
         Msg.Text = msg;
+
         if (!isAsk) {
             BtnYes.Content = "知道了";
             BtnYes.Click += (_, _) => Close();
             BtnNo.IsVisible = false;
             return;
         }
+
         BtnYes.Content = "是";
         BtnYes.Classes.Add("Warning");
         BtnYes.Click += (_, _) => Close(true);

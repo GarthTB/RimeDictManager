@@ -41,7 +41,7 @@ public sealed partial class DictWindow: Window {
                 _openOptions.SuggestedStartLocation
                     = await StorageProvider.TryGetFolderFromPathAsync(dir);
             AddDict();
-        } catch (Exception ex) { await ex.Alert("自动打开", this); }
+        } catch (Exception ex) { await ex.AlertAsync("自动打开目录", this); }
     }
 
     private void AddDict(object? _, RoutedEventArgs e) => AddDict();
@@ -51,30 +51,36 @@ public sealed partial class DictWindow: Window {
             _openOptions.Title = "打开 RIME 词库...";
             var files = await StorageProvider.OpenFilePickerAsync(_openOptions);
             if (files.Count == 0) return;
+
             foreach (var file in files) {
-                _vm.AddDict(file.TryGetLocalPath() ?? file.Path.LocalPath);
+                var path = file.TryGetLocalPath() ?? file.Path.LocalPath;
                 file.Dispose();
+                await _vm.AddDict(path);
             }
-        } catch (Exception ex) { await ex.Alert("添加词库", this); }
+        } catch (Exception ex) { await ex.AlertAsync("添加词库", this); }
     }
 
     private async void SaveDict(object? _, RoutedEventArgs e) {
         try {
-            var overwrite = await MsgBox.Ask<bool?>(OverwritePrompt, this);
+            var overwrite = await MsgBox.AskAsync<bool?>(OverwritePrompt, this);
             if (overwrite is null) return;
-            var dict = _vm.SelDict!;
+
+            var dict = _vm.SelDict ?? throw new InvalidOperationException("UI 错误");
             string? path = null;
             if (overwrite == false) {
                 _saveOptions.SuggestedFileName = dict.Src.Name;
                 using var file = await StorageProvider.SaveFilePickerAsync(_saveOptions);
                 if (file is null) return;
+
                 path = file.TryGetLocalPath() ?? file.Path.LocalPath;
             }
-            var reorder = await MsgBox.Ask<bool?>(ReorderPrompt, this);
+
+            var reorder = await MsgBox.AskAsync<bool?>(ReorderPrompt, this);
             if (reorder is null) return;
+
             await _vm.SaveAsync(dict, path, reorder == true);
-            await MsgBox.Success($"保存成功，路径：{path ?? dict.Src.Path}", this);
-        } catch (Exception ex) { await ex.Alert("保存词库", this); }
+            await MsgBox.SuccessAsync($"保存成功，路径：{path ?? dict.Src.Path}", this);
+        } catch (Exception ex) { await ex.AlertAsync("保存词库", this); }
     }
 
     private async void AddSingleDict(object? _, RoutedEventArgs e) {
@@ -82,10 +88,12 @@ public sealed partial class DictWindow: Window {
             _openOptions.Title = "打开 RIME 单字码表...";
             var files = await StorageProvider.OpenFilePickerAsync(_openOptions);
             if (files.Count == 0) return;
+
             foreach (var file in files) {
-                _vm.AddSingleDict(file.TryGetLocalPath() ?? file.Path.LocalPath);
+                var path = file.TryGetLocalPath() ?? file.Path.LocalPath;
                 file.Dispose();
+                await _vm.AddSingleDict(path);
             }
-        } catch (Exception ex) { await ex.Alert("添加单字码表", this); }
+        } catch (Exception ex) { await ex.AlertAsync("添加单字码表", this); }
     }
 }

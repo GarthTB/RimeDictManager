@@ -6,10 +6,10 @@ using Models;
 public sealed partial class DictVM(IDictInfo src): ObservableObject {
     public IDictInfo Src { get; } = src;
 
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(ModifiedText))]
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(ModText))]
     public partial bool Modified { get; private set; } = src.Modified;
 
-    public string ModifiedText =>
+    public string ModText =>
         Modified
             ? "●"
             : "○";
