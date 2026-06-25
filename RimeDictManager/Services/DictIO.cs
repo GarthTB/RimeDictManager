@@ -24,6 +24,7 @@ public static class DictIo {
     public static async Task<SingleDict> LoadSingleDictAsync(string path) {
         using DictReader reader = new(path);
         var (_, name) = await reader.ReadHeaderAsync();
+        if (!reader.Cols.Contains(DictCol.Code)) throw new FmtEx("单字码表未定义编码列");
         Dictionary<char, List<string>> entries = new(4096);
         await reader.ReadLinesAsync(
             null,
@@ -52,7 +53,7 @@ public static class DictIo {
                 await writer.WriteLineAsync(e.Format(dict.Cols));
             foreach (var r in dict.RawLines) await writer.WriteLineAsync(r.Content);
         } else {
-            using var entries = dict.Entries.GetEnumerator();
+            using var entries = dict.Entries.OrderBy(static e => e.Num).GetEnumerator();
             using var rawLines = dict.RawLines.GetEnumerator();
             var anyE = entries.MoveNext();
             var anyR = rawLines.MoveNext();
@@ -133,9 +134,9 @@ file sealed class DictReader(string path): IDisposable {
                 fr?.Invoke(new(_num, l));
                 continue;
             }
+
             string text = "", code = "", weight = "", stem = "";
-            int col = 0, start = 0;
-            for (var i = 0; i <= l.Length; i++) {
+            for (int i = 0, col = 0, start = 0; i <= l.Length; col++, start = ++i) {
                 if (i < l.Length && l[i] != '\t') continue;
                 if (col >= cols.Count) throw new FmtEx($"第{_num}行词条列数超出定义");
                 var v = l[start..i];
@@ -146,7 +147,6 @@ file sealed class DictReader(string path): IDisposable {
                 case DictCol.Stem: stem = v; break;
                 default: throw new UnreachableException();
                 }
-                start = i + 1;
             }
             if (EntryLine.TryNew(_num, text, code, weight, stem, cols, out var e))
                 fe(e);
