@@ -56,7 +56,7 @@ public sealed class Dict: IDictInfo {
     public bool Modified { get; private set; }
 
     public EntryLine Insert(EntryLine e) {
-        if (e.Num == 0) e = e with { Num = ++_num };
+        if (e.Num == 0) e = e with { Num = _num++ };
         _entries.Add(e);
 
         var i = _entries.Count - 1;

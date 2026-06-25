@@ -12,20 +12,20 @@ using static System.Runtime.InteropServices.CollectionsMarshal;
 using FmtEx = FormatException;
 
 public static class DictIo {
-    public static Dict LoadDict(string path) {
+    public static async Task<Dict> LoadDictAsync(string path) {
         using DictReader reader = new(path);
-        var header = reader.ReadHeader(out var name);
+        var (header, name) = await reader.ReadHeaderAsync();
         List<EntryLine> entries = new(4096);
         List<RawLine> rawLines = new(64);
-        var num = reader.ReadLines(rawLines.Add, entries.Add);
+        var num = await reader.ReadLinesAsync(rawLines.Add, entries.Add);
         return new(path, header, name, reader.Cols, rawLines, entries, num);
     }
 
-    public static SingleDict LoadSingleDict(string path) {
+    public static async Task<SingleDict> LoadSingleDictAsync(string path) {
         using DictReader reader = new(path);
-        reader.ReadHeader(out var name);
+        var (_, name) = await reader.ReadHeaderAsync();
         Dictionary<char, List<string>> entries = new(4096);
-        reader.ReadLines(
+        await reader.ReadLinesAsync(
             null,
             e => {
                 if (e.Text is not [var c]) return;
@@ -87,10 +87,10 @@ file sealed class DictReader(string path): IDisposable {
     public void Dispose() => _reader.Dispose();
 
     [MemberNotNull(nameof(Cols))]
-    public string ReadHeader(out string name) {
+    public async Task<(string, string)> ReadHeaderAsync() {
         StringBuilder s = new(1024);
         var start = 0;
-        for (; _reader.ReadLine() is {} l; _num++) {
+        for (; await _reader.ReadLineAsync() is {} l; _num++) {
             if (s.Length > 16384) throw new FmtEx($"文件头过长，疑似缺失或未闭合\n文件：{path}");
             if (string.IsNullOrWhiteSpace(l)) {
                 s.Append('\n');
@@ -114,16 +114,15 @@ file sealed class DictReader(string path): IDisposable {
             var yaml = raw.AsSpan(start..^3);
             var header = YamlSerializer.Deserialize(yaml, HeaderContext.Default.Header)
                       ?? throw new FmtEx("YAML 解析器返回 NULL");
-            name = header.Name ?? TrimExt(Path.GetFileName(path));
+            var name = header.Name ?? TrimExt(Path.GetFileName(path));
             Cols = ParseCols(header.Columns);
+            return (raw, name);
         } catch (Exception ex) { throw new FmtEx($"文件头解析失败\n文件：{path}", ex); }
-
-        return raw;
     }
 
-    public uint ReadLines(Action<RawLine>? fr, Action<EntryLine> fe) {
+    public async Task<uint> ReadLinesAsync(Action<RawLine>? fr, Action<EntryLine> fe) {
         var cols = Cols ?? throw new InvalidOperationException("未读取文件头，列定义为空");
-        for (var canComment = true; _reader.ReadLine() is {} l; _num++) {
+        for (var canComment = true; await _reader.ReadLineAsync() is {} l; _num++) {
             if (string.IsNullOrWhiteSpace(l)) {
                 fr?.Invoke(new(_num, ""));
                 continue;
@@ -139,11 +138,12 @@ file sealed class DictReader(string path): IDisposable {
             for (var i = 0; i <= l.Length; i++) {
                 if (i < l.Length && l[i] != '\t') continue;
                 if (col >= cols.Count) throw new FmtEx($"第{_num}行词条列数超出定义");
+                var v = l[start..i];
                 switch (cols[col++]) {
-                case DictCol.Text: text = l[start..i]; break;
-                case DictCol.Code: code = l[start..i]; break;
-                case DictCol.Weight: weight = l[start..i]; break;
-                case DictCol.Stem: stem = l[start..i]; break;
+                case DictCol.Text: text = v; break;
+                case DictCol.Code: code = v; break;
+                case DictCol.Weight: weight = v; break;
+                case DictCol.Stem: stem = v; break;
                 default: throw new UnreachableException();
                 }
                 start = i + 1;
