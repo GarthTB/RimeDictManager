@@ -24,7 +24,7 @@ public static class UrlActivation {
                 _dir = Uri.UnescapeDataString(dir);
                 break;
             }
-        } catch (Exception) { Log.Err("URL解析失败，无法直达词库目录"); }
+        } catch (Exception) { Log.Err("URL 解析失败，无法直达词库目录"); }
     }
 
     public static string? ConsumeDir() {
