@@ -1,5 +1,6 @@
 namespace RimeDictManager.Services;
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -89,11 +90,14 @@ file sealed class DictReader(string path): IDisposable {
     public string ReadHeader(out string name) {
         StringBuilder s = new(1024);
         var start = 0;
-        for (string? l; (l = _reader.ReadLine()) is {}; _num++) {
+        for (; _reader.ReadLine() is {} l; _num++) {
             if (s.Length > 16384) throw new FmtEx($"文件头过长，疑似缺失或未闭合\n文件：{path}");
-            if (string.IsNullOrWhiteSpace(l))
+            if (string.IsNullOrWhiteSpace(l)) {
                 s.Append('\n');
-            else if (l == "---")
+                continue;
+            }
+            l = l.TrimEnd();
+            if (l == "---")
                 start = s.Append(l).Append('\n').Length;
             else if (l == "...") {
                 s.Append(l);
@@ -109,7 +113,7 @@ file sealed class DictReader(string path): IDisposable {
         try {
             var yaml = raw.AsSpan(start..^3);
             var header = YamlSerializer.Deserialize(yaml, HeaderContext.Default.Header)
-                      ?? throw new FmtEx("YAML解析器返回NULL");
+                      ?? throw new FmtEx("YAML 解析器返回 NULL");
             name = header.Name ?? TrimExt(Path.GetFileName(path));
             Cols = ParseCols(header.Columns);
         } catch (Exception ex) { throw new FmtEx($"文件头解析失败\n文件：{path}", ex); }
@@ -118,16 +122,36 @@ file sealed class DictReader(string path): IDisposable {
     }
 
     public uint ReadLines(Action<RawLine>? fr, Action<EntryLine> fe) {
-        for (string? l; (l = _reader.ReadLine()) is {}; _num++) {
+        var cols = Cols ?? throw new InvalidOperationException("未读取文件头，列定义为空");
+        for (var canComment = true; _reader.ReadLine() is {} l; _num++) {
             if (string.IsNullOrWhiteSpace(l)) {
                 fr?.Invoke(new(_num, ""));
                 continue;
             }
-            if (l[0] == '#') {
-                fr?.Invoke(new(_num, l.TrimEnd()));
+            l = l.TrimEnd();
+            if (l[0] == '#' && canComment) {
+                if (l == "# no comment") canComment = false;
+                fr?.Invoke(new(_num, l));
                 continue;
             }
-            throw new NotImplementedException("分割字段并使用EntryLine.TryNew构造词条，调用fe");
+            string text = "", code = "", weight = "", stem = "";
+            int col = 0, start = 0;
+            for (var i = 0; i <= l.Length; i++) {
+                if (l[i] != '\t' && i < l.Length) continue;
+                if (col >= cols.Count) throw new FmtEx($"第{_num}行词条列数超出定义");
+                switch (cols[col++]) {
+                case DictCol.Text: text = l[start..i]; break;
+                case DictCol.Code: code = l[start..i]; break;
+                case DictCol.Weight: weight = l[start..i]; break;
+                case DictCol.Stem: stem = l[start..i]; break;
+                default: throw new UnreachableException();
+                }
+                start = i + 1;
+            }
+            if (EntryLine.TryNew(_num, text, code, weight, stem, cols, out var e))
+                fe(e);
+            else
+                fr?.Invoke(new(_num, l.TrimEnd()));
         }
 
         return _num;
@@ -141,7 +165,7 @@ file sealed class DictReader(string path): IDisposable {
     private static DictCol[] ParseCols(string[]? cols) {
         if (cols is null) return DictCols.Default;
         if (cols.Length == 0) throw new FmtEx("列定义为空");
-        if (cols.Length > DictCols.EnumCnt) throw new FmtEx($"词库超过{DictCols.EnumCnt}列");
+        if (cols.Length > DictCols.EnumCnt) throw new FmtEx($"定义超过{DictCols.EnumCnt}列");
 
         var vals = (stackalloc DictCol[cols.Length]);
         var mask = 0;
