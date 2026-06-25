@@ -107,7 +107,7 @@ file sealed class DictReader(string path): IDisposable {
                 s.Append(l).Append('\n');
         }
         var raw = s.ToString();
-        if (raw.Length < 3 || raw.AsSpan(^3..) is not "...")
+        if (raw.Length < 3 || !raw.AsSpan().EndsWith("..."))
             throw new FmtEx($"文件头缺失或未闭合\n文件：{path}");
 
         try {
@@ -151,7 +151,7 @@ file sealed class DictReader(string path): IDisposable {
             if (EntryLine.TryNew(_num, text, code, weight, stem, cols, out var e))
                 fe(e);
             else
-                fr?.Invoke(new(_num, l));
+                throw new FmtEx($"第{_num}行词条无效");
         }
 
         return _num;
