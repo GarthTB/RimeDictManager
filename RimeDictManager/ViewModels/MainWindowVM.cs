@@ -164,7 +164,7 @@ public sealed partial class MainWindowVM: ObservableObject {
 
     #region 操作
 
-    private bool CanInsert => DictReady && PendingText.Length > 0;
+    private bool CanInsert => DictReady && !string.IsNullOrWhiteSpace(PendingText);
 
     [RelayCommand(CanExecute = nameof(CanInsert))]
     private async Task InsertAsync() {

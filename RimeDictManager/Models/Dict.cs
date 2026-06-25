@@ -91,10 +91,8 @@ public sealed class Dict: IDictInfo {
 
     public void NotifySaved() => Modified = false;
 
-    public bool ContainsCode(string code) => _entriesByCode[code]?.Count > 0;
-
-    public bool IsOnlyCodePrefix(string code) =>
-        _entriesByCode[code]?.Count == 1 && _entriesByCode.AnyDescendantValue(code);
+    public int EntriesAtCode(string code) => _entriesByCode[code]?.Count ?? 0;
+    public bool IsCodePrefix(string code) => _entriesByCode.AnyDescendantValue(code);
 
     public void ForEachByCode(string code, Action<EntryLine> f) {
         if (_entriesByCode[code] is not {} indexes) return;

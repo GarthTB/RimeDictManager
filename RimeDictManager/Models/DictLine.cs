@@ -44,7 +44,7 @@ public readonly record struct EntryLine(uint Num, Str Text, Str Code, Str Weight
          && (Str.IsNullOrWhiteSpace(stem) || (mask & (1 << (int)DictCol.Stem)) != 0)) {
             text = text.Trim();
             code = code.Trim();
-            if (text.Length != 1 || code.Length != 0) {
+            if (text.Length != 1 || code.Length > 0) {
                 e = new(num, text, code, weight.Trim(), stem.Trim());
                 return true;
             }
