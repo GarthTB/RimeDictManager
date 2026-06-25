@@ -22,7 +22,7 @@ public static class DictManager {
 
     public static async Task<IDictInfo> AddDictAsync(string path) {
         if (Dicts.AsValueEnumerable().Any(x => x.Path == path)) throw new OpEx("词库重复");
-        var dict = await DictIo.LoadDictAsync(path);
+        var dict = await DictIO.LoadDictAsync(path);
         Dicts.Add(dict);
         Log.Info($"添加词库\t{path}");
         return dict;
@@ -39,7 +39,7 @@ public static class DictManager {
     }
 
     public static async Task SaveAsync(IDictInfo dict, string? path, bool reorder) {
-        await DictIo.SaveAsync((Dict)dict, path, reorder);
+        await DictIO.SaveAsync((Dict)dict, path, reorder);
         var msg0 = reorder
             ? "重新排序"
             : "不重新排序";

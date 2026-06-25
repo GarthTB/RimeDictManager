@@ -11,7 +11,7 @@ using SharpYaml.Serialization;
 using static System.Runtime.InteropServices.CollectionsMarshal;
 using FmtEx = FormatException;
 
-public static class DictIo {
+public static class DictIO {
     public static async Task<Dict> LoadDictAsync(string path) {
         using DictReader reader = new(path);
         var (header, name) = await reader.ReadHeaderAsync();

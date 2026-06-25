@@ -16,7 +16,7 @@ public static class Encoder {
 
     public static async Task<SingleDict> AddDictAsync(string path) {
         if (Dicts.AsValueEnumerable().Any(x => x.Path == path)) throw new OpEx("单字码表重复");
-        var dict = await DictIo.LoadSingleDictAsync(path);
+        var dict = await DictIO.LoadSingleDictAsync(path);
         Dicts.Add(dict);
         _merged = null;
         Log.Info($"添加单字码表\t{path}");
