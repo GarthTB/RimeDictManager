@@ -122,7 +122,7 @@ file sealed class DictReader(string path): IDisposable {
     }
 
     public async Task<uint> ReadLinesAsync(Action<RawLine>? fr, Action<EntryLine> fe) {
-        var cols = Cols ?? throw new InvalidOperationException("未读取文件头，列定义为空");
+        var cols = Cols ?? throw new InvalidOperationException("未读取文件头");
         for (var canComment = true; await _reader.ReadLineAsync() is {} l; _num++) {
             if (string.IsNullOrWhiteSpace(l)) {
                 fr?.Invoke(new(_num, ""));
@@ -136,17 +136,19 @@ file sealed class DictReader(string path): IDisposable {
             }
 
             string text = "", code = "", weight = "", stem = "";
-            for (int i = 0, col = 0, start = 0; i <= l.Length; col++, start = ++i) {
+            for (int i = 0, col = 0, start = 0; i <= l.Length; i++) {
                 if (i < l.Length && l[i] != '\t') continue;
                 if (col >= cols.Count) throw new FmtEx($"第{_num}行词条列数超出定义");
                 var v = l[start..i];
-                switch (cols[col++]) {
+                switch (cols[col]) {
                 case DictCol.Text: text = v; break;
                 case DictCol.Code: code = v; break;
                 case DictCol.Weight: weight = v; break;
                 case DictCol.Stem: stem = v; break;
                 default: throw new UnreachableException();
                 }
+                col++;
+                start = i + 1;
             }
             if (EntryLine.TryNew(_num, text, code, weight, stem, cols, out var e))
                 fe(e);
