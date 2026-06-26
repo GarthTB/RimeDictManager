@@ -133,6 +133,7 @@ file sealed class DictReader(string path): IDisposable {
                 fr?.Invoke(new(_num, l));
                 continue;
             }
+
             string text = "", code = "", weight = "", stem = "";
             for (int i = 0, col = 0, start = 0; i <= l.Length; i++) {
                 if (i < l.Length && l[i] != '\t') continue;
@@ -165,7 +166,6 @@ file sealed class DictReader(string path): IDisposable {
     private static DictCol[] ParseCols(string[]? cols) {
         if (cols is null) return DictCols.Default;
         if (cols.Length == 0) throw new FmtEx("列定义为空");
-        if (cols.Length > DictCols.EnumCnt) throw new FmtEx($"定义超过{DictCols.EnumCnt}列");
 
         var vals = (stackalloc DictCol[cols.Length]);
         var mask = 0;
