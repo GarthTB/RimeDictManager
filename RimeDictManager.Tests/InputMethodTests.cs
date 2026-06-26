@@ -11,27 +11,27 @@ public sealed class InputMethodTests {
         ['二'] = ["def"],
         ['三'] = ["ghi"],
         ['四'] = ["jkl"],
-        ['五'] = ["mno"],
-        ['多'] = ["pq", "rs"],
-        ['码'] = ["tu", "vw"]
+        ['五'] = ["mno"]
     };
 
     #region Shared
 
     [Fact]
     public void Encode_MultiCodesPerChar_CartesianAndDistinct() {
-        var v = Erbi.Encode("多码", Dict);
-        True(new HashSet<string> { "pqtu", "pqvw", "rstu", "rsvw" }.SetEquals(v));
+        Dictionary<char, string[]> dict = new() { ['多'] = ["pqr", "pqs"], ['码'] = ["tu", "vw"] };
+        var v = Erbi.Encode("多码", dict);
+        True(new HashSet<string> { "pqtu", "pqvw" }.SetEquals(v));
     }
 
     [Fact]
     public void Encode_WithInvalidChars_SkipsAndUsesValid() {
-        var v = Erbi.Encode("A一B二C三D四E五F", Dict);
+        var v = Erbi.Encode("a一b二c三d四e五f", Dict);
         Single(v);
         Equal("adgm", v[0]);
     }
 
-    [Fact] public void Encode_LessThan2ValidChars_Empty() => Empty(Erbi.Encode("一XXX", Dict));
+    [Theory, InlineData("一abc"), InlineData("abc"), InlineData(""), InlineData("  ")]
+    public void Encode_LessThan2ValidChars_Empty(string text) => Empty(Erbi.Encode(text, Dict));
 
     #endregion Shared
 
