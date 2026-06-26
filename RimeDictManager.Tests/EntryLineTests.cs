@@ -60,6 +60,18 @@ public sealed class EntryLineTests {
         Equal(default, e);
     }
 
+    [Theory, InlineData(""), InlineData("  ")]
+    public void TryNew_SameFieldsAsCols_TrueAndTrim(string omitted) {
+        True(TryNew(1, Text, omitted, Weight, omitted, _briefCols, out var e));
+        Equal(new(1, Text, "", Weight, ""), e);
+    }
+
+    [Fact]
+    public void TryNew_MoreFieldsThanCols_FalseAndDefault() {
+        False(TryNew(1, Text, Code, Weight, Stem, _briefCols, out var e));
+        Equal(default, e);
+    }
+
     [Theory, InlineData(Single), InlineData($" {Single} ")]
     public void TryNew_SingleTextWithCode_TrueAndTrim(string single) {
         True(TryNew(1, single, Code, Weight, Stem, _fullCols, out var e));
@@ -69,18 +81,6 @@ public sealed class EntryLineTests {
     [Theory, InlineData(""), InlineData("  ")]
     public void TryNew_SingleTextNoCode_FalseAndDefault(string code) {
         False(TryNew(1, Single, code, Weight, Stem, _fullCols, out var e));
-        Equal(default, e);
-    }
-
-    [Theory, InlineData(""), InlineData("  ")]
-    public void TryNew_BriefFieldsBriefCols_TrueAndTrim(string omitted) {
-        True(TryNew(1, Text, omitted, Weight, omitted, _briefCols, out var e));
-        Equal(new(1, Text, "", Weight, ""), e);
-    }
-
-    [Fact]
-    public void TryNew_FullFieldsBriefCols_FalseAndDefault() {
-        False(TryNew(1, Text, Code, Weight, Stem, _briefCols, out var e));
         Equal(default, e);
     }
 
