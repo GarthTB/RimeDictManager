@@ -8,32 +8,14 @@ on:
 
 jobs:
   test:
-    name: 单元测试
-
+    name: 测试
     runs-on: ubuntu-latest
-
     steps:
       - name: 检出代码
         uses: actions/checkout@v6
-
       - name: 安装 .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
-
-      - name: 测试并获取覆盖率
-        run: |
-          dotnet test --collect "XPlat Code Coverage"
-          dotnet tool install -g dotnet-reportgenerator-globaltool
-          export PATH="$HOME/.dotnet/tools:$PATH"
-          reportgenerator \
-            -reports:TestResults/**/coverage.cobertura.xml \
-            -targetdir:coverage-report \
-            -reporttypes:Html \
-            -assemblyfilters:"+RimeDictManager;-*.Tests"
-
-      - name: 上传报告
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage-html
-          path: coverage-report
+      - name: 运行测试
+        run: dotnet test
