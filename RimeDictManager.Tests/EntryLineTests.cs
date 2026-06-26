@@ -51,15 +51,27 @@ public sealed class EntryLineTests {
         Equal(default, e);
     }
 
-    [Fact]
-    public void TryNew_SingleTextNoCode_FalseAndDefault() {
-        False(TryNew(1, "单", "", Weight, Stem, _fullCols, out var e));
+    [Theory, InlineData("单"), InlineData(" 单 ")]
+    public void TryNew_SingleTextWithCode_TrueAndTrims(string single) {
+        True(TryNew(1, single, Code, Weight, Stem, _fullCols, out var e));
+        Equal(new(1, "单", Code, Weight, Stem), e);
+    }
+
+    [Theory, InlineData(""), InlineData("  ")]
+    public void TryNew_SingleTextNoCode_FalseAndDefault(string code) {
+        False(TryNew(1, "单", code, Weight, Stem, _fullCols, out var e));
         Equal(default, e);
     }
 
+    [Theory, InlineData(""), InlineData("  ")]
+    public void TryNew_BriefFieldsBriefCols_TrueAndTrims(string omitted) {
+        True(TryNew(1, Text, omitted, Weight, omitted, [DictCol.Text, DictCol.Weight], out var e));
+        Equal(new(1, Text, "", Weight, ""), e);
+    }
+
     [Fact]
-    public void TryNew_UndefinedCols_FalseAndDefault() {
-        False(TryNew(1, Text, Code, Weight, Stem, [DictCol.Text, DictCol.Code], out var e));
+    public void TryNew_FullFieldsBriefCols_FalseAndDefault() {
+        False(TryNew(1, Text, Code, Weight, Stem, [DictCol.Text, DictCol.Weight], out var e));
         Equal(default, e);
     }
 
