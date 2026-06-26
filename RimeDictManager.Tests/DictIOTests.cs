@@ -14,13 +14,13 @@ public sealed class DictIOTests {
     #region LoadDictAsync
 
     [Fact]
-    public async Task LoadDictAsync_BasicContent_Correct() {
+    public async Task LoadDictAsync_BasicContent_Trim() {
         const string text = // 缺省列定义
             "---\n"
           + "name: test  \n" // 行尾有空格
           + "...\n"
           + "你好\tni hao\t100\n"
-          + "世界\tshi jie\t50\n";
+          + " 世界 \t shi jie \t 50 \n"; // 有空格
         const string expectedHeader = "---\nname: test\n..."; // 没有换行符
         var path = CreateTestFile(text);
 
@@ -117,6 +117,7 @@ public sealed class DictIOTests {
     public async Task LoadDictAsync_WeirdCols_Throws(string cols) {
         var text = $"---\nname: test\ncolumns: {cols}\n...\n你好\tni hao\t100\n";
         var path = CreateTestFile(text);
+
         await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(path));
     }
 
@@ -124,13 +125,27 @@ public sealed class DictIOTests {
     public async Task LoadDictAsync_NoHeader_Throws() {
         const string text = "你好\tni hao\t100\n";
         var path = CreateTestFile(text);
+
         await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(path));
     }
 
-    [Theory, InlineData("你好\tni hao\t100\textra"), InlineData("单\t\t100")]
+    [Fact]
+    public async Task LoadDictAsync_NoEntries_Works() {
+        const string text = "---\nname: test\n...\n";
+        var path = CreateTestFile(text);
+
+        var dict = await DictIO.LoadDictAsync(path);
+
+        Equal(0u, dict.Cnt);
+        Empty(dict.Entries);
+    }
+
+    [Theory, InlineData("\tni hao\t100"), InlineData("你好\tni hao\t100\textra"),
+     InlineData("单\t\t100")]
     public async Task LoadDictAsync_WeirdEntry_Throws(string entry) {
         var text = $"---\nname: test\n...\n{entry}\n";
         var path = CreateTestFile(text);
+
         await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(path));
     }
 

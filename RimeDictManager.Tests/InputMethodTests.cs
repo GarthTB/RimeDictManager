@@ -26,6 +26,7 @@ public sealed class InputMethodTests {
     [Fact]
     public void Encode_WithInvalidChars_SkipAndUseValid() {
         var v = Erbi.Encode("a一b二c三d四e五f", Dict);
+
         Single(v);
         Equal("adgm", v[0]);
     }
@@ -41,6 +42,7 @@ public sealed class InputMethodTests {
      InlineData("一二三四五", "adgm")]
     public void Encode_Erbi_VarLen_Correct(string word, string expected) {
         var v = Erbi.Encode(word, Dict);
+
         Single(v);
         Equal(expected, v[0]);
     }
@@ -49,6 +51,7 @@ public sealed class InputMethodTests {
      InlineData("一二三四五", "adgm")]
     public void Encode_FlyPyTigerWubi_VarLen_Correct(string word, string expected) {
         var v = FlyPyTigerWubi.Encode(word, Dict);
+
         Single(v);
         Equal(expected, v[0]);
     }
@@ -57,6 +60,7 @@ public sealed class InputMethodTests {
      InlineData("一二三四五", "adgmcf")]
     public void Encode_KeyTao_VarLen_Correct(string word, string expected) {
         var v = KeyTao.Encode(word, Dict);
+
         Single(v);
         Equal(expected, v[0]);
     }

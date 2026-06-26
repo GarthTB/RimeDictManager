@@ -49,21 +49,30 @@ public sealed class EntryLineTests {
     }
 
     [Theory, InlineData(""), InlineData("  ")]
-    public void TryNew_OmittedField_TrueAndSetEmpty(string code) {
-        True(TryNew(1, Text, code, Weight, Stem, _fullCols, out var e));
-        Equal(new(1, Text, "", Weight, Stem), e);
-    }
+    public void TryNew_OmittedFields_TrueAndSetEmpty(string omitted) {
+        True(TryNew(1, Text, Code, Weight, omitted, _fullCols, out var e1));
+        Equal(new(1, Text, Code, Weight, ""), e1);
 
-    [Theory, InlineData(""), InlineData("  ")]
-    public void TryNew_EmptyOrSpaceText_FalseAndDefault(string text) {
-        False(TryNew(1, text, Code, Weight, Stem, _fullCols, out var e));
-        Equal(default, e);
+        True(TryNew(1, Text, omitted, Weight, omitted, _fullCols, out var e2));
+        Equal(new(1, Text, "", Weight, ""), e2);
+
+        True(TryNew(1, Text, omitted, omitted, Stem, _fullCols, out var e3));
+        Equal(new(1, Text, "", "", Stem), e3);
+
+        True(TryNew(1, Text, omitted, omitted, omitted, _fullCols, out var e4));
+        Equal(new(1, Text, "", "", ""), e4);
     }
 
     [Theory, InlineData(""), InlineData("  ")]
     public void TryNew_SameFieldsAsCols_TrueAndTrim(string omitted) {
         True(TryNew(1, Text, omitted, Weight, omitted, _briefCols, out var e));
         Equal(new(1, Text, "", Weight, ""), e);
+    }
+
+    [Theory, InlineData(""), InlineData("  ")]
+    public void TryNew_EmptyOrSpaceText_FalseAndDefault(string text) {
+        False(TryNew(1, text, Code, Weight, Stem, _fullCols, out var e));
+        Equal(default, e);
     }
 
     [Fact]
