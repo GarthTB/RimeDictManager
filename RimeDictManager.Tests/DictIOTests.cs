@@ -5,10 +5,10 @@ using Services;
 using static Assert;
 
 public sealed class DictIOTests {
-    private static string CreateTestFile(string text) {
-        var path = Path.GetTempFileName();
-        File.WriteAllText(path, text);
-        return path;
+    private sealed class TestFile: IDisposable {
+        public TestFile(string text) => File.WriteAllText(Name, text);
+        public string Name { get; } = Path.GetTempFileName();
+        public void Dispose() => File.Delete(Name);
     }
 
     #region LoadDictAsync
@@ -19,12 +19,13 @@ public sealed class DictIOTests {
             "---\n"
           + "name: test  \n" // 行尾有空格
           + "...\n"
-          + "你好\tni hao\t100\n"
-          + " 世界 \t shi jie \t 50 \n"; // 有空格
+          + "滚滚\tgun gun\t100\n"
+          + " 长江 \t chang jiang \t 50 \n" // 有空格
+          + "东逝水\tdong shi shui\n"; // 有省略
         const string expectedHeader = "---\nname: test\n..."; // 没有换行符
-        var path = CreateTestFile(text);
+        using TestFile file = new(text);
 
-        var dict = await DictIO.LoadDictAsync(path);
+        var dict = await DictIO.LoadDictAsync(file.Name);
 
         Equal(expectedHeader, dict.Header);
         Equal("test", dict.Name);
@@ -34,13 +35,16 @@ public sealed class DictIOTests {
         Equal(DictCol.Weight, dict.Cols[2]);
 
         var entries = dict.Entries.ToArray();
-        Equal(2, entries.Length);
-        Equal("你好", entries[0].Text);
-        Equal("ni hao", entries[0].Code);
+        Equal(3, entries.Length);
+        Equal("滚滚", entries[0].Text);
+        Equal("gun gun", entries[0].Code);
         Equal("100", entries[0].Weight);
-        Equal("世界", entries[1].Text);
-        Equal("shi jie", entries[1].Code);
+        Equal("长江", entries[1].Text);
+        Equal("chang jiang", entries[1].Code);
         Equal("50", entries[1].Weight);
+        Equal("东逝水", entries[2].Text);
+        Equal("dong shi shui", entries[2].Code);
+        Equal("", entries[2].Weight);
     }
 
     [Fact]
@@ -52,14 +56,14 @@ public sealed class DictIOTests {
           + "\n" // 纯空行
           + "  \n" // 仅空格
           + "\t\n" // 仅 Tab
-          + "你好\tni hao\t100\n"
           + "# 注释\n"
-          + "你好 # 行尾注释\n"
+          + "  # 空格注释\n"
+          + "文本 # 行尾注释\n"
           + "# no comment\n"
           + "# 这是词条\n";
-        var path = CreateTestFile(text);
+        using TestFile file = new(text);
 
-        var dict = await DictIO.LoadDictAsync(path);
+        var dict = await DictIO.LoadDictAsync(file.Name);
 
         Equal(5, dict.RawLines.Count);
         Equal("", dict.RawLines[0].Content); // 纯空行
@@ -70,33 +74,46 @@ public sealed class DictIOTests {
 
         var entries = dict.Entries.ToArray();
         Equal(3, entries.Length);
-        Equal("你好", entries[0].Text);
-        Equal("你好 # 行尾注释", entries[1].Text);
+        Equal("# 空格注释", entries[0].Text); // 被 Trim 了
+        Equal("文本 # 行尾注释", entries[1].Text);
         Equal("# 这是词条", entries[2].Text);
     }
 
-    [Theory, InlineData("[text, code, weight]"), InlineData("[  text  ,   code  ,   weight  ]"),
-     InlineData("\n  - text\n  - code\n  - weight"),
-     InlineData("\n  -   text  \n  -   code  \n  -   weight  ")]
+    [Fact]
+    public async Task LoadDictAsync_NoEntries_Works() {
+        const string text = "---\nname: test\n...\n";
+        using TestFile file = new(text);
+
+        var dict = await DictIO.LoadDictAsync(file.Name);
+
+        Equal(0u, dict.Cnt);
+        Empty(dict.Entries);
+    }
+
+    [Theory, InlineData("[text, code, weight, stem]"),
+     InlineData("[  text  ,   code  ,   weight  ,   stem    ]"),
+     InlineData("\n  - text\n  - code\n  - weight\n  - stem"),
+     InlineData("\n  -   text  \n  -   code  \n  -   weight  \n  -   stem  ")]
     public async Task LoadDictAsync_VarCols_ParseAndTrim(string cols) {
-        var text = $"---\nname: test\ncolumns: {cols}\n...\n你好\tni hao\t100\n";
-        var path = CreateTestFile(text);
+        var text = $"---\nname: test\ncolumns: {cols}\n...\n";
+        using TestFile file = new(text);
 
-        var dict = await DictIO.LoadDictAsync(path);
+        var dict = await DictIO.LoadDictAsync(file.Name);
 
-        Equal(3, dict.Cols.Count);
+        Equal(4, dict.Cols.Count);
         Equal(DictCol.Text, dict.Cols[0]);
         Equal(DictCol.Code, dict.Cols[1]);
         Equal(DictCol.Weight, dict.Cols[2]);
+        Equal(DictCol.Stem, dict.Cols[3]);
     }
 
     [Fact]
     public async Task LoadDictAsync_MessCols_Works() {
         const string text
-            = "---\nname: test\ncolumns: [weight, text, stem, code]\n...\n100\t你好\tabc\tni hao\n";
-        var path = CreateTestFile(text);
+            = "---\nname: test\ncolumns: [weight, text, stem, code]\n...\n100\t文本\tabc\tcode\n";
+        using TestFile file = new(text);
 
-        var dict = await DictIO.LoadDictAsync(path);
+        var dict = await DictIO.LoadDictAsync(file.Name);
 
         Equal(4, dict.Cols.Count);
         Equal(DictCol.Weight, dict.Cols[0]);
@@ -106,8 +123,8 @@ public sealed class DictIOTests {
 
         var entries = dict.Entries.ToArray();
         Single(entries);
-        Equal("你好", entries[0].Text);
-        Equal("ni hao", entries[0].Code);
+        Equal("文本", entries[0].Text);
+        Equal("code", entries[0].Code);
         Equal("100", entries[0].Weight);
         Equal("abc", entries[0].Stem);
     }
@@ -115,38 +132,25 @@ public sealed class DictIOTests {
     [Theory, InlineData("[]"), InlineData("[text, abc]"), InlineData("[text, text]"),
      InlineData("[code, weight]")]
     public async Task LoadDictAsync_WeirdCols_Throws(string cols) {
-        var text = $"---\nname: test\ncolumns: {cols}\n...\n你好\tni hao\t100\n";
-        var path = CreateTestFile(text);
+        var text = $"---\nname: test\ncolumns: {cols}\n...\n文本\tcode\t100\n";
+        using TestFile file = new(text);
 
-        await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(path));
+        await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(file.Name));
     }
 
-    [Fact]
-    public async Task LoadDictAsync_NoHeader_Throws() {
-        const string text = "你好\tni hao\t100\n";
-        var path = CreateTestFile(text);
+    [Theory, InlineData("文本\tcode\t100\n"), InlineData("---\nname: test\n文本\tcode\t100\n")]
+    public async Task LoadDictAsync_NoHeader_Throws(string text) {
+        using TestFile file = new(text);
 
-        await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(path));
+        await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(file.Name));
     }
 
-    [Fact]
-    public async Task LoadDictAsync_NoEntries_Works() {
-        const string text = "---\nname: test\n...\n";
-        var path = CreateTestFile(text);
-
-        var dict = await DictIO.LoadDictAsync(path);
-
-        Equal(0u, dict.Cnt);
-        Empty(dict.Entries);
-    }
-
-    [Theory, InlineData("\tni hao\t100"), InlineData("你好\tni hao\t100\textra"),
-     InlineData("单\t\t100")]
+    [Theory, InlineData("\tcode\t100"), InlineData("文本\tcode\t100\tabc"), InlineData("单\t\t100")]
     public async Task LoadDictAsync_WeirdEntry_Throws(string entry) {
         var text = $"---\nname: test\n...\n{entry}\n";
-        var path = CreateTestFile(text);
+        using TestFile file = new(text);
 
-        await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(path));
+        await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(file.Name));
     }
 
     #endregion LoadDictAsync
