@@ -31,12 +31,12 @@ public sealed class InputMethodTests {
         Equal("pqtu", v[0]);
     }
 
-    [Fact]
-    public void Encode_WithInvalidChars_SkipAndUseValid() {
-        var v = Erbi.Encode("a一b二c三d四e五f", Dict);
+    [Theory, InlineData("a一b二c三d四e", "adgj"), InlineData("a一b二c三d四e五f", "adgm")]
+    public void Encode_WithInvalidChars_SkipAndUseValid(string text, string expected) {
+        var v = Erbi.Encode(text, Dict);
 
         Single(v);
-        Equal("adgm", v[0]);
+        Equal(expected, v[0]);
     }
 
     [Theory, InlineData("一abc"), InlineData("abc"), InlineData(""), InlineData("  ")]
@@ -48,8 +48,8 @@ public sealed class InputMethodTests {
 
     [Theory, InlineData("一二", "abde"), InlineData("一二三", "abdg"), InlineData("一二三四", "adgj"),
      InlineData("一二三四五", "adgm")]
-    public void Encode_Erbi_VarLen_Correct(string word, string expected) {
-        var v = Erbi.Encode(word, Dict);
+    public void Encode_Erbi_VarLen_Correct(string text, string expected) {
+        var v = Erbi.Encode(text, Dict);
 
         Single(v);
         Equal(expected, v[0]);
@@ -57,8 +57,8 @@ public sealed class InputMethodTests {
 
     [Theory, InlineData("一二", "abde"), InlineData("一二三", "adgh"), InlineData("一二三四", "adgj"),
      InlineData("一二三四五", "adgm")]
-    public void Encode_FlyPyTigerWubi_VarLen_Correct(string word, string expected) {
-        var v = FlyPyTigerWubi.Encode(word, Dict);
+    public void Encode_FlyPyTigerWubi_VarLen_Correct(string text, string expected) {
+        var v = FlyPyTigerWubi.Encode(text, Dict);
 
         Single(v);
         Equal(expected, v[0]);
@@ -66,8 +66,8 @@ public sealed class InputMethodTests {
 
     [Theory, InlineData("一二", "abdecf"), InlineData("一二三", "adgcfi"), InlineData("一二三四", "adgjcf"),
      InlineData("一二三四五", "adgmcf")]
-    public void Encode_KeyTao_VarLen_Correct(string word, string expected) {
-        var v = KeyTao.Encode(word, Dict);
+    public void Encode_KeyTao_VarLen_Correct(string text, string expected) {
+        var v = KeyTao.Encode(text, Dict);
 
         Single(v);
         Equal(expected, v[0]);

@@ -64,7 +64,7 @@ public sealed class EntryLineTests {
     }
 
     [Theory, InlineData(""), InlineData("  ")]
-    public void TryNew_SameFieldsAsCols_TrueAndTrim(string omitted) {
+    public void TryNew_OmittedFieldsAsDefined_TrueAndSetEmpty(string omitted) {
         True(TryNew(1, Text, omitted, Weight, omitted, _briefCols, out var e));
         Equal(new(1, Text, "", Weight, ""), e);
     }
@@ -76,7 +76,7 @@ public sealed class EntryLineTests {
     }
 
     [Fact]
-    public void TryNew_UndefinedCols_FalseAndDefault() {
+    public void TryNew_UndefinedFields_FalseAndDefault() {
         False(TryNew(1, Text, Code, Weight, Stem, _briefCols, out var e));
         Equal(default, e);
     }

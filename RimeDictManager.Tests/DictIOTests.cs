@@ -69,7 +69,7 @@ public sealed class DictIOTests {
           + "  \n" // 仅空格
           + "\t\n" // 仅 Tab
           + "# 注释\n"
-          + "  # 注释\n"
+          + "  # 注释\n" // 有前导空格
           + "文本 # 注释\n"
           + "  # no comment\n" // 有前导空格
           + "#no comment\n" // 无中间空格
@@ -79,20 +79,20 @@ public sealed class DictIOTests {
 
         var dict = await DictIO.LoadDictAsync(file.Name);
 
-        Equal(5, dict.RawLines.Count);
+        Equal(6, dict.RawLines.Count);
         Equal("", dict.RawLines[0].Content); // 纯空行
         Equal("", dict.RawLines[1].Content); // 仅空格
         Equal("", dict.RawLines[2].Content); // 仅 Tab
         Equal("# 注释", dict.RawLines[3].Content);
-        Equal("# no comment", dict.RawLines[4].Content); // 尾随空格被 Trim
+        Equal("#no comment", dict.RawLines[4].Content);
+        Equal("# no comment", dict.RawLines[5].Content); // 尾随空格被 Trim
 
         var entries = dict.Entries.ToArray();
-        Equal(5, entries.Length);
+        Equal(4, entries.Length);
         Equal("# 注释", entries[0].Text); // 前导空格被 Trim
         Equal("文本 # 注释", entries[1].Text);
         Equal("# no comment", entries[2].Text); // 前导空格被 Trim
-        Equal("#no comment", entries[3].Text);
-        Equal("# 词条", entries[4].Text);
+        Equal("# 词条", entries[3].Text);
     }
 
     [Fact]
