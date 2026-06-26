@@ -57,10 +57,11 @@ public sealed class DictIOTests {
           + "  \n" // 仅空格
           + "\t\n" // 仅 Tab
           + "# 注释\n"
-          + "  # 空格注释\n"
-          + "文本 # 行尾注释\n"
-          + "# no comment\n"
-          + "# 这是词条\n";
+          + "  # 注释\n"
+          + "文本 # 注释\n"
+          + "  # no comment\n" // 有前导空格
+          + "# no comment  \n" // 有尾随空格
+          + "# 词条\n";
         using TestFile file = new(text);
 
         var dict = await DictIO.LoadDictAsync(file.Name);
@@ -70,13 +71,14 @@ public sealed class DictIOTests {
         Equal("", dict.RawLines[1].Content); // 仅空格
         Equal("", dict.RawLines[2].Content); // 仅 Tab
         Equal("# 注释", dict.RawLines[3].Content);
-        Equal("# no comment", dict.RawLines[4].Content);
+        Equal("# no comment", dict.RawLines[4].Content); // 尾随空格被 Trim
 
         var entries = dict.Entries.ToArray();
-        Equal(3, entries.Length);
-        Equal("# 空格注释", entries[0].Text); // 被 Trim 了
-        Equal("文本 # 行尾注释", entries[1].Text);
-        Equal("# 这是词条", entries[2].Text);
+        Equal(4, entries.Length);
+        Equal("# 注释", entries[0].Text); // 前导空格被 Trim
+        Equal("文本 # 注释", entries[1].Text);
+        Equal("# no comment", entries[2].Text); // 前导空格被 Trim
+        Equal("# 词条", entries[3].Text);
     }
 
     [Fact]
@@ -131,7 +133,7 @@ public sealed class DictIOTests {
 
     [Theory, InlineData("[]"), InlineData("[text, abc]"), InlineData("[text, text]"),
      InlineData("[code, weight]")]
-    public async Task LoadDictAsync_WeirdCols_Throws(string cols) {
+    public async Task LoadDictAsync_WeirdCols_Throw(string cols) {
         var text = $"---\nname: test\ncolumns: {cols}\n...\n文本\tcode\t100\n";
         using TestFile file = new(text);
 
@@ -139,14 +141,14 @@ public sealed class DictIOTests {
     }
 
     [Theory, InlineData("文本\tcode\t100\n"), InlineData("---\nname: test\n文本\tcode\t100\n")]
-    public async Task LoadDictAsync_NoHeader_Throws(string text) {
+    public async Task LoadDictAsync_NoHeader_Throw(string text) {
         using TestFile file = new(text);
 
         await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(file.Name));
     }
 
     [Theory, InlineData("\tcode\t100"), InlineData("文本\tcode\t100\tabc"), InlineData("单\t\t100")]
-    public async Task LoadDictAsync_WeirdEntry_Throws(string entry) {
+    public async Task LoadDictAsync_WeirdEntry_Throw(string entry) {
         var text = $"---\nname: test\n...\n{entry}\n";
         using TestFile file = new(text);
 
@@ -154,4 +156,82 @@ public sealed class DictIOTests {
     }
 
     #endregion LoadDictAsync
+
+    #region SaveAsync
+
+    [Fact]
+    public async Task SaveAsync_Reorder_SortEntries_RawLinesAtEnd() {
+        const string header = "---\nname: test\n...";
+        RawLine[] rawLines = [new(4, ""), new(6, "# comment")];
+        EntryLine[] entries = [
+            new(5, "词3", "b", "300", ""), new(7, "词1", "a", "200", ""), new(8, "词2", "a", "100", "")
+        ];
+        Dict dict = new("test.dict.yaml", header, "test", DictCols.Default, rawLines, entries, 9);
+        using TestFile file = new("");
+
+        await DictIO.SaveAsync(dict, file.Name, true);
+
+        var lines = await File.ReadAllLinesAsync(file.Name, TestContext.Current.CancellationToken);
+        Equal(8, lines.Length);
+        Equal("---", lines[0]);
+        Equal("name: test", lines[1]);
+        Equal("...", lines[2]);
+        Equal("词1\ta\t200", lines[3]);
+        Equal("词2\ta\t100", lines[4]);
+        Equal("词3\tb\t300", lines[5]);
+        Equal("", lines[6]);
+        Equal("# comment", lines[7]);
+    }
+
+    [Fact]
+    public async Task SaveAsync_NoReorder_MergeByNum() {
+        const string header = "---\nname: test\n...";
+        RawLine[] rawLines = [new(4, "# line 1"), new(6, "# line 3"), new(8, "# line 5")];
+        EntryLine[] entries = [new(5, "词2", "b", "200", ""), new(7, "词4", "d", "400", "")];
+        Dict dict = new("test.dict.yaml", header, "test", DictCols.Default, rawLines, entries, 9);
+        using TestFile file = new("");
+
+        await DictIO.SaveAsync(dict, file.Name, false);
+
+        var lines = await File.ReadAllLinesAsync(file.Name, TestContext.Current.CancellationToken);
+        Equal(8, lines.Length);
+        Equal("---", lines[0]);
+        Equal("name: test", lines[1]);
+        Equal("...", lines[2]);
+        Equal("# line 1", lines[3]);
+        Equal("词2\tb\t200", lines[4]);
+        Equal("# line 3", lines[5]);
+        Equal("词4\td\t400", lines[6]);
+        Equal("# line 5", lines[7]);
+    }
+
+    [Fact]
+    public async Task SaveAsync_AfterSave_ModifiedFalse() {
+        const string header = "---\nname: test\n...";
+        Dict dict = new("test.dict.yaml", header, "test", DictCols.Default, [], [], 4);
+        dict.Insert(new(0, "文本", "code", "100", ""));
+        True(dict.Modified);
+        using TestFile file = new("");
+
+        await DictIO.SaveAsync(dict, file.Name, false);
+
+        False(dict.Modified);
+    }
+
+    [Theory, InlineData(true), InlineData(false)]
+    public async Task SaveAsync_NoEntries_OnlyHeader(bool reorder) {
+        const string header = "---\nname: test\n...";
+        Dict dict = new("test.dict.yaml", header, "test", DictCols.Default, [], [], 4);
+        using TestFile file = new("");
+
+        await DictIO.SaveAsync(dict, file.Name, reorder);
+
+        var lines = await File.ReadAllLinesAsync(file.Name, TestContext.Current.CancellationToken);
+        Equal(3, lines.Length);
+        Equal("---", lines[0]);
+        Equal("name: test", lines[1]);
+        Equal("...", lines[2]);
+    }
+
+    #endregion SaveAsync
 }
