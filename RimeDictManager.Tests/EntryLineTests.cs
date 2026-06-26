@@ -76,7 +76,7 @@ public sealed class EntryLineTests {
     }
 
     [Fact]
-    public void TryNew_MoreFieldsThanCols_FalseAndDefault() {
+    public void TryNew_UndefinedCols_FalseAndDefault() {
         False(TryNew(1, Text, Code, Weight, Stem, _briefCols, out var e));
         Equal(default, e);
     }

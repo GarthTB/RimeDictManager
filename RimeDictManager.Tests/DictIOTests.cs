@@ -5,6 +5,18 @@ using Services;
 using static Assert;
 
 public sealed class DictIOTests {
+    #region LoadSingleDictAsync
+
+    [Fact]
+    public async Task LoadSingleDictAsync_NoCodeCol_Throw() {
+        const string text = "---\nname: test\ncolumns: [text, weight, stem]\n...\n单\tcode\t100\n";
+        using TestFile file = new(text);
+
+        await ThrowsAsync<FormatException>(() => DictIO.LoadSingleDictAsync(file.Name));
+    }
+
+    #endregion LoadSingleDictAsync
+
     private sealed class TestFile: IDisposable {
         public TestFile(string text) => File.WriteAllText(Name, text);
         public string Name { get; } = Path.GetTempFileName();
@@ -60,6 +72,7 @@ public sealed class DictIOTests {
           + "  # 注释\n"
           + "文本 # 注释\n"
           + "  # no comment\n" // 有前导空格
+          + "#no comment\n" // 无中间空格
           + "# no comment  \n" // 有尾随空格
           + "# 词条\n";
         using TestFile file = new(text);
@@ -74,11 +87,12 @@ public sealed class DictIOTests {
         Equal("# no comment", dict.RawLines[4].Content); // 尾随空格被 Trim
 
         var entries = dict.Entries.ToArray();
-        Equal(4, entries.Length);
+        Equal(5, entries.Length);
         Equal("# 注释", entries[0].Text); // 前导空格被 Trim
         Equal("文本 # 注释", entries[1].Text);
         Equal("# no comment", entries[2].Text); // 前导空格被 Trim
-        Equal("# 词条", entries[3].Text);
+        Equal("#no comment", entries[3].Text);
+        Equal("# 词条", entries[4].Text);
     }
 
     [Fact]

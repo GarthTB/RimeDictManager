@@ -17,10 +17,18 @@ public sealed class InputMethodTests {
     #region Shared
 
     [Fact]
-    public void Encode_MultiCodesPerChar_CartesianAndDistinct() {
-        Dictionary<char, string[]> dict = new() { ['多'] = ["pqr", "pqs"], ['码'] = ["tu", "vw"] };
+    public void Encode_MultiCodesPerChar_Cartesian() {
+        Dictionary<char, string[]> dict = new() { ['多'] = ["pq", "pr"], ['码'] = ["st", "su"] };
         var v = Erbi.Encode("多码", dict);
-        True(new HashSet<string> { "pqtu", "pqvw" }.SetEquals(v));
+        True(new HashSet<string> { "pqst", "pqsu", "prst", "prsu" }.SetEquals(v));
+    }
+
+    [Fact]
+    public void Encode_MultiCodesPerChar_Distinct() {
+        Dictionary<char, string[]> dict = new() { ['多'] = ["pqr", "pqs"], ['码'] = ["tuv", "tuw"] };
+        var v = Erbi.Encode("多码", dict);
+        Single(v);
+        Equal("pqtu", v[0]);
     }
 
     [Fact]
