@@ -18,7 +18,7 @@ public sealed class CodeTrieTests {
     }
 
     [Fact]
-    public void Insert_ValuesAt1Code_IndexerReturnsAll() {
+    public void Insert_ValuesAt1Code_IndexerReturnAll() {
         CodeTrie trie = new(16);
 
         trie.Insert("abc", 1);
@@ -79,7 +79,7 @@ public sealed class CodeTrieTests {
     }
 
     [Fact]
-    public void Remove_InsertedCodeNonexistentValue_FalseAndRemains() {
+    public void Remove_InsertedCodeNonexistentValue_FalseAndRemain() {
         CodeTrie trie = new(16);
         trie.Insert("abc", 1);
 
@@ -124,7 +124,7 @@ public sealed class CodeTrieTests {
         new CodeTrie(16).ForEachSubtreeValue("abc", static _ => Fail());
 
     [Fact]
-    public void ForEachSubtreeValue_CommonTrie_VisitsSelfAndDescendant() {
+    public void ForEachSubtreeValue_CommonTrie_VisitSelfAndDescendant() {
         CodeTrie trie = new(16);
         trie.Insert("", 1);
         trie.Insert("a", 2);

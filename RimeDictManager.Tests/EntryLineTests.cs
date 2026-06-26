@@ -5,24 +5,31 @@ using static Assert;
 using static Models.EntryLine;
 
 public sealed class EntryLineTests {
-    private const string Text = "文本", Code = "code", Weight = "100", Stem = "abc";
+    private const string Text = "文本", Code = "code", Weight = "100", Stem = "abc", Single = "单";
 
-    private readonly DictCol[] _fullCols = [
-        DictCol.Text, DictCol.Code, DictCol.Weight, DictCol.Stem
-    ];
+    private readonly DictCol[] _briefCols = [DictCol.Text, DictCol.Weight],
+        _fullCols = [DictCol.Text, DictCol.Code, DictCol.Weight, DictCol.Stem],
+        _messCols = [DictCol.Weight, DictCol.Text, DictCol.Stem, DictCol.Code];
 
     #region Format
 
     [Theory, InlineData(Code, Weight, Stem, $"{Text}\t{Code}\t{Weight}\t{Stem}"),
      InlineData(Code, Weight, "", $"{Text}\t{Code}\t{Weight}"),
      InlineData(Code, "", Stem, $"{Text}\t{Code}\t\t{Stem}"),
-     InlineData("", Weight, "", $"{Text}\t\t{Weight}")]
-    public void Format_VarEntries_JoinsWithTabAndTrimsEnd(
+     InlineData("", Weight, "", $"{Text}\t\t{Weight}"), InlineData("", "", "", Text)]
+    public void Format_VarEntries_JoinWithTabAndTrimEnd(
         string code,
         string weight,
         string stem,
         string expected) =>
         Equal(expected, new EntryLine(1, Text, code, weight, stem).Format(_fullCols));
+
+    [Theory, InlineData(Code, Weight, Stem, $"{Weight}\t{Text}\t{Stem}\t{Code}"),
+     InlineData(Code, Weight, "", $"{Weight}\t{Text}\t\t{Code}"),
+     InlineData(Code, "", Stem, $"\t{Text}\t{Stem}\t{Code}"),
+     InlineData("", Weight, "", $"{Weight}\t{Text}"), InlineData("", "", "", $"\t{Text}")]
+    public void Format_MessCols_Works(string code, string weight, string stem, string expected) =>
+        Equal(expected, new EntryLine(1, Text, code, weight, stem).Format(_messCols));
 
     #endregion Format
 
@@ -30,12 +37,14 @@ public sealed class EntryLineTests {
 
     [Theory, InlineData(Text, Code, Weight, Stem),
      InlineData($" {Text} ", $" {Code} ", $" {Weight} ", $" {Stem} ")]
-    public void TryNew_VarFields_TrueAndTrims(
-        string text,
-        string code,
-        string weight,
-        string stem) {
+    public void TryNew_VarFields_TrueAndTrim(string text, string code, string weight, string stem) {
         True(TryNew(1, text, code, weight, stem, _fullCols, out var e));
+        Equal(new(1, Text, Code, Weight, Stem), e);
+    }
+
+    [Fact]
+    public void TryNew_MessCols_Works() {
+        True(TryNew(1, Text, Code, Weight, Stem, _messCols, out var e));
         Equal(new(1, Text, Code, Weight, Stem), e);
     }
 
@@ -51,27 +60,27 @@ public sealed class EntryLineTests {
         Equal(default, e);
     }
 
-    [Theory, InlineData("单"), InlineData(" 单 ")]
-    public void TryNew_SingleTextWithCode_TrueAndTrims(string single) {
+    [Theory, InlineData(Single), InlineData($" {Single} ")]
+    public void TryNew_SingleTextWithCode_TrueAndTrim(string single) {
         True(TryNew(1, single, Code, Weight, Stem, _fullCols, out var e));
-        Equal(new(1, "单", Code, Weight, Stem), e);
+        Equal(new(1, Single, Code, Weight, Stem), e);
     }
 
     [Theory, InlineData(""), InlineData("  ")]
     public void TryNew_SingleTextNoCode_FalseAndDefault(string code) {
-        False(TryNew(1, "单", code, Weight, Stem, _fullCols, out var e));
+        False(TryNew(1, Single, code, Weight, Stem, _fullCols, out var e));
         Equal(default, e);
     }
 
     [Theory, InlineData(""), InlineData("  ")]
-    public void TryNew_BriefFieldsBriefCols_TrueAndTrims(string omitted) {
-        True(TryNew(1, Text, omitted, Weight, omitted, [DictCol.Text, DictCol.Weight], out var e));
+    public void TryNew_BriefFieldsBriefCols_TrueAndTrim(string omitted) {
+        True(TryNew(1, Text, omitted, Weight, omitted, _briefCols, out var e));
         Equal(new(1, Text, "", Weight, ""), e);
     }
 
     [Fact]
     public void TryNew_FullFieldsBriefCols_FalseAndDefault() {
-        False(TryNew(1, Text, Code, Weight, Stem, [DictCol.Text, DictCol.Weight], out var e));
+        False(TryNew(1, Text, Code, Weight, Stem, _briefCols, out var e));
         Equal(default, e);
     }
 

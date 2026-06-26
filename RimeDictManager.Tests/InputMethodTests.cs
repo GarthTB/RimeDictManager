@@ -24,7 +24,7 @@ public sealed class InputMethodTests {
     }
 
     [Fact]
-    public void Encode_WithInvalidChars_SkipsAndUsesValid() {
+    public void Encode_WithInvalidChars_SkipAndUseValid() {
         var v = Erbi.Encode("a一b二c三d四e五f", Dict);
         Single(v);
         Equal("adgm", v[0]);
