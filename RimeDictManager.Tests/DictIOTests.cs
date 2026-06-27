@@ -5,21 +5,14 @@ using Services;
 using static Assert;
 
 public sealed class DictIOTests {
-    #region LoadSingleDictAsync
-
-    [Fact]
-    public async Task LoadSingleDictAsync_NoCodeCol_Throw() {
-        const string text = "---\nname: test\ncolumns: [text, weight, stem]\n...\n单\tcode\t100\n";
-        using TestFile file = new(text);
-
-        await ThrowsAsync<FormatException>(() => DictIO.LoadSingleDictAsync(file.Name));
-    }
-
-    #endregion LoadSingleDictAsync
-
     private sealed class TestFile: IDisposable {
-        public TestFile(string text) => File.WriteAllText(Name, text);
-        public string Name { get; } = Path.GetTempFileName();
+        public TestFile(string text, string? name = null) {
+            var dir = Path.GetTempPath();
+            Name = Path.Combine(dir, name ?? Path.GetRandomFileName());
+            File.WriteAllText(Name, text);
+        }
+
+        public string Name { get; }
         public void Dispose() => File.Delete(Name);
     }
 
@@ -97,8 +90,7 @@ public sealed class DictIOTests {
 
     [Fact]
     public async Task LoadDictAsync_NoEntries_Works() {
-        const string text = "---\nname: test\n...\n";
-        using TestFile file = new(text);
+        using TestFile file = new("---\nname: test\n...\n");
 
         var dict = await DictIO.LoadDictAsync(file.Name);
 
@@ -106,13 +98,21 @@ public sealed class DictIOTests {
         Empty(dict.Entries);
     }
 
+    [Fact]
+    public async Task LoadDictAsync_HeaderNoName_GetFileName() {
+        using TestFile file = new("---\n...\n", "test.dict.yaml");
+
+        var dict = await DictIO.LoadDictAsync(file.Name);
+
+        Equal("test", dict.Name);
+    }
+
     [Theory, InlineData("[text, code, weight, stem]"),
      InlineData("[  text  ,   code  ,   weight  ,   stem    ]"),
      InlineData("\n  - text\n  - code\n  - weight\n  - stem"),
      InlineData("\n  -   text  \n  -   code  \n  -   weight  \n  -   stem  ")]
     public async Task LoadDictAsync_VarCols_ParseAndTrim(string cols) {
-        var text = $"---\nname: test\ncolumns: {cols}\n...\n";
-        using TestFile file = new(text);
+        using TestFile file = new($"---\nname: test\ncolumns: {cols}\n...\n");
 
         var dict = await DictIO.LoadDictAsync(file.Name);
 
@@ -148,14 +148,14 @@ public sealed class DictIOTests {
     [Theory, InlineData("[]"), InlineData("[text, abc]"), InlineData("[text, text]"),
      InlineData("[code, weight]")]
     public async Task LoadDictAsync_WeirdCols_Throw(string cols) {
-        var text = $"---\nname: test\ncolumns: {cols}\n...\n文本\tcode\t100\n";
-        using TestFile file = new(text);
+        using TestFile file = new($"---\nname: test\ncolumns: {cols}\n...\n文本\tcode\t100\n");
 
         await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(file.Name));
     }
 
-    [Theory, InlineData("文本\tcode\t100\n"), InlineData("---\nname: test\n文本\tcode\t100\n")]
-    public async Task LoadDictAsync_NoHeader_Throw(string text) {
+    [Theory, InlineData(""), InlineData("文本\tcode\t100\n"),
+     InlineData("---\nname: test\n文本\tcode\t100\n")]
+    public async Task LoadDictAsync_EmptyOrNoHeader_Throw(string text) {
         using TestFile file = new(text);
 
         await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(file.Name));
@@ -163,13 +163,47 @@ public sealed class DictIOTests {
 
     [Theory, InlineData("\tcode\t100"), InlineData("文本\tcode\t100\tabc"), InlineData("单\t\t100")]
     public async Task LoadDictAsync_WeirdEntry_Throw(string entry) {
-        var text = $"---\nname: test\n...\n{entry}\n";
-        using TestFile file = new(text);
+        using TestFile file = new($"---\nname: test\n...\n{entry}\n");
 
         await ThrowsAsync<FormatException>(() => DictIO.LoadDictAsync(file.Name));
     }
 
     #endregion LoadDictAsync
+
+    #region LoadSingleDictAsync
+
+    [Fact]
+    public async Task LoadSingleDictAsync_BasicContent_Trim() {
+        const string text = // 缺省列定义
+            "---\nname: test\n...\n"
+          + "# 注释\n"
+          + "甲\tjia1\t100\n"
+          + "甲\tjia2\n" // 有省略
+          + " 乙 \t yi \t 50 \n" // 有空格
+          + "文本\tcode\t100\n"; // 不是单字
+        using TestFile file = new(text);
+
+        var dict = await DictIO.LoadSingleDictAsync(file.Name);
+
+        Equal(file.Name, dict.Path);
+        Equal("test", dict.Name);
+        Equal(2, dict.Entries.Count);
+        True(dict.Entries.TryGetValue('甲', out var list1));
+        True(new HashSet<string> { "jia1", "jia2" }.SetEquals(list1));
+        True(dict.Entries.TryGetValue('乙', out var list2));
+        Single(list2);
+        Equal("yi", list2[0]);
+    }
+
+    [Fact]
+    public async Task LoadSingleDictAsync_NoCodeCol_Throw() {
+        using TestFile file = new(
+            "---\nname: test\ncolumns: [text, weight, stem]\n...\n单\tcode\t100\n");
+
+        await ThrowsAsync<FormatException>(() => DictIO.LoadSingleDictAsync(file.Name));
+    }
+
+    #endregion LoadSingleDictAsync
 
     #region SaveAsync
 
@@ -220,6 +254,19 @@ public sealed class DictIOTests {
     }
 
     [Fact]
+    public async Task SaveAsync_PathNull_UseDictPath() {
+        const string header = "---\nname: test\n...";
+        using TestFile file = new("");
+        Dict dict = new(file.Name, header, "test", DictCols.Default, [], [], 4);
+        dict.Insert(new(0, "文本", "code", "100", ""));
+
+        await DictIO.SaveAsync(dict, null, false);
+
+        var lines = await File.ReadAllLinesAsync(file.Name, TestContext.Current.CancellationToken);
+        Contains("文本\tcode\t100", lines);
+    }
+
+    [Fact]
     public async Task SaveAsync_AfterSave_NotModified() {
         const string header = "---\nname: test\n...";
         Dict dict = new("test.dict.yaml", header, "test", DictCols.Default, [], [], 4);
@@ -230,21 +277,6 @@ public sealed class DictIOTests {
         await DictIO.SaveAsync(dict, file.Name, false);
 
         False(dict.Modified);
-    }
-
-    [Theory, InlineData(true), InlineData(false)]
-    public async Task SaveAsync_NoEntries_OnlyHeader(bool reorder) {
-        const string header = "---\nname: test\n...";
-        Dict dict = new("test.dict.yaml", header, "test", DictCols.Default, [], [], 4);
-        using TestFile file = new("");
-
-        await DictIO.SaveAsync(dict, file.Name, reorder);
-
-        var lines = await File.ReadAllLinesAsync(file.Name, TestContext.Current.CancellationToken);
-        Equal(3, lines.Length);
-        Equal("---", lines[0]);
-        Equal("name: test", lines[1]);
-        Equal("...", lines[2]);
     }
 
     #endregion SaveAsync

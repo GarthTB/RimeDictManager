@@ -17,6 +17,18 @@ public sealed class CodeTrieTests {
         Null(trie["ab"]);
     }
 
+    [Theory, InlineData(""), InlineData("abc")]
+    public void Insert_CommonCode_Works(string code) {
+        CodeTrie trie = new(16);
+
+        trie.Insert(code, 1);
+
+        var v = trie[code];
+        NotNull(v);
+        Single(v);
+        Equal(1, v[0]);
+    }
+
     [Fact]
     public void Insert_ValuesAt1Code_IndexerReturnAll() {
         CodeTrie trie = new(16);
@@ -46,23 +58,23 @@ public sealed class CodeTrieTests {
         Equal(2, v2[0]);
     }
 
-    [Fact]
-    public void Insert_EmptyCode_Works() {
-        CodeTrie trie = new(16);
-
-        trie.Insert("", 1);
-
-        var v = trie[""];
-        NotNull(v);
-        Single(v);
-        Equal(1, v[0]);
-    }
-
     #endregion Indexer And Insert
 
     #region Remove
 
     [Fact] public void Remove_NonexistentCode_False() => False(new CodeTrie(16).Remove("abc", 1));
+
+    [Theory, InlineData(""), InlineData("abc")]
+    public void Remove_CommonCode_Works(string code) {
+        CodeTrie trie = new(16);
+        trie.Insert(code, 1);
+
+        True(trie.Remove(code, 1));
+
+        var v = trie[code];
+        NotNull(v);
+        Empty(v);
+    }
 
     [Fact]
     public void Remove_1OfMultiValues_TrueAndOthersRemain() {
@@ -107,10 +119,10 @@ public sealed class CodeTrieTests {
         False(trie.AnyDescendantValue("abd"));
     }
 
-    [Theory, InlineData("abc", false), InlineData("ab", true), InlineData("a", true)]
+    [Theory, InlineData("ab", false), InlineData("a", true), InlineData("", true)]
     public void AnyDescendantValue_VarDepths_SelfFalseAndDeeperTrue(string code, bool expected) {
         CodeTrie trie = new(16);
-        trie.Insert("abc", 1);
+        trie.Insert("ab", 1);
 
         Equal(expected, trie.AnyDescendantValue(code));
     }
@@ -135,6 +147,20 @@ public sealed class CodeTrieTests {
         trie.ForEachSubtreeValue("a", v.Add);
 
         True(new HashSet<int> { 2, 3, 4 }.SetEquals(v));
+    }
+
+    [Fact]
+    public void ForEachSubtreeValue_ByEmptyCode_VisitWholeTree() {
+        CodeTrie trie = new(16);
+        trie.Insert("", 1);
+        trie.Insert("a", 2);
+        trie.Insert("ab", 3);
+        trie.Insert("acd", 4);
+        List<int> v = new(4);
+
+        trie.ForEachSubtreeValue("", v.Add);
+
+        True(new HashSet<int> { 1, 2, 3, 4 }.SetEquals(v));
     }
 
     #endregion ForEachSubtreeValue
