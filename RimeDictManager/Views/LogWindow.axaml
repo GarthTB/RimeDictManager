@@ -8,17 +8,15 @@
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Grid RowDefinitions="*,Auto">
-        <TextBox x:Name="Logs"
-            Padding="14,8"
-            VerticalAlignment="Stretch"
-            VerticalContentAlignment="Top"
-            Background="Transparent"
-            IsReadOnly="True"
-            TextWrapping="Wrap"/>
+        <ScrollViewer Padding="16,4">
+            <SelectableTextBlock x:Name="Logs"
+                VerticalAlignment="Stretch"
+                TextWrapping="Wrap"/>
+        </ScrollViewer>
         <Button Grid.Row="1"
             Margin="16,8,16,14"
             x:Name="BtnSave"
-            Width="100"
+            Width="108"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"
             Content="保存日志"

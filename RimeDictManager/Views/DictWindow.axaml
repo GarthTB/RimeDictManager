@@ -42,7 +42,7 @@
                     <DataGridTextColumn Width="*"
                         Header="路径"
                         Binding="{Binding Src.Path, Mode=OneTime}"/>
-                    <DataGridTextColumn Width="100"
+                    <DataGridTextColumn Width="108"
                         Header="词数"
                         Binding="{Binding Src.Cnt, Mode=OneTime}"/>
                     <DataGridTextColumn Width="80"
@@ -91,7 +91,7 @@
                     <DataGridTextColumn Width="*"
                         Header="路径"
                         Binding="{Binding Path, Mode=OneTime}"/>
-                    <DataGridTextColumn Width="100"
+                    <DataGridTextColumn Width="108"
                         Header="字数"
                         Binding="{Binding Entries.Count, Mode=OneTime}"/>
                 </DataGrid.Columns>

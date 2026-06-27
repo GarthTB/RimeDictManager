@@ -8,13 +8,11 @@
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Grid RowDefinitions="*,Auto">
-        <TextBox x:Name="Msg"
-            Padding="14,8"
-            VerticalAlignment="Stretch"
-            VerticalContentAlignment="Top"
-            Background="Transparent"
-            IsReadOnly="True"
-            TextWrapping="Wrap"/>
+        <ScrollViewer Padding="16,4">
+            <SelectableTextBlock x:Name="Msg"
+                VerticalAlignment="Stretch"
+                TextWrapping="Wrap"/>
+        </ScrollViewer>
         <Grid Grid.Row="1"
             Margin="16,8,16,14"
             ColumnDefinitions="*,16,*"
