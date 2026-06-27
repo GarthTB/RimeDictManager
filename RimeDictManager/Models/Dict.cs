@@ -1,71 +1,69 @@
 namespace RimeDictManager.Models;
 
-using Serde;
 using static System.Runtime.InteropServices.CollectionsMarshal;
+
+public interface IDictInfo {
+    string Path { get; }
+    string Name { get; }
+    IReadOnlyList<DictCol> Cols { get; }
+    uint Cnt { get; }
+    bool Modified { get; }
+}
 
 public sealed class Dict: IDictInfo {
     private readonly List<EntryLine> _entries;
     private readonly CodeTrie _entriesByCode;
     private readonly Dictionary<string, List<int>> _entriesByText;
-    private readonly string _header;
-    private readonly List<RawLine> _rawLines;
     private uint _num;
 
-    public Dict(string path) {
-        using StreamReader reader = new(path);
-        _header = DictParser.ReadHeader(reader, path, out var name, out var cols, out _num);
-        Name = name;
+    public Dict(
+        string path,
+        string header,
+        string name,
+        IReadOnlyList<DictCol> cols,
+        IReadOnlyList<RawLine> rawLines,
+        IReadOnlyList<EntryLine> entries,
+        uint num) {
+        _entries = new(entries);
+        _num = num;
+        Header = header;
+        RawLines = rawLines;
         Path = path;
+        Name = name;
         Cols = cols;
-
-        _entries = new(4096);
-        _rawLines = new(64);
-        for (string? l; (l = reader.ReadLine()) is {}; _num++)
-            if (LineCodec.Deserialize(l, _num, Cols, out var e, out var r))
-                _entries.Add(e);
-            else
-                _rawLines.Add(r);
-        Cnt = (uint)_entries.Count;
-
-        _entriesByText = new(_entries.Count);
         _entriesByCode = new(4 * _entries.Count);
-        for (var i = 0; i < _entries.Count; i++) {
-            var e = _entries[i];
-            ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
-            if (exists)
-                indexes!.Add(i);
-            else
-                indexes = [i];
-            _entriesByCode.Insert(e.Code, i);
-        }
+        _entriesByText = new(_entries.Count);
+        for (var i = 0; i < _entries.Count; i++) Insert(_entries[i], i);
     }
 
-    public string Name { get; }
+    public string Header { get; }
+    public IReadOnlyList<RawLine> RawLines { get; }
+    public IEnumerable<EntryLine> Entries => _entries.Where(static e => e.Num > 0);
+
     public string Path { get; }
-    public IReadOnlyList<Column> Cols { get; }
+    public string Name { get; }
+    public IReadOnlyList<DictCol> Cols { get; }
     public uint Cnt { get; private set; }
     public bool Modified { get; private set; }
 
-    public bool ContainsCode(string code) => _entriesByCode[code]?.Count > 0;
-
-    public bool IsOnlyCodePrefix(string code) =>
-        _entriesByCode[code]?.Count == 1 && _entriesByCode.AnyDescendantValue(code);
-
     public EntryLine Insert(EntryLine e) {
-        if (e.Num == 0) e = e with { Num = ++_num };
-        _entries.Add(e);
+        if (e.Num == 0) e = e with { Num = _num++ };
 
-        var i = _entries.Count - 1;
+        _entries.Add(e);
+        Insert(e, _entries.Count - 1);
+
+        Modified = true;
+        return e;
+    }
+
+    private void Insert(EntryLine e, int i) {
+        _entriesByCode.Insert(e.Code, i);
         ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
         if (exists)
             indexes!.Add(i);
         else
             indexes = [i];
-        _entriesByCode.Insert(e.Code, i);
-
         Cnt++;
-        Modified = true;
-        return e;
     }
 
     public bool Remove(EntryLine e) {
@@ -85,10 +83,10 @@ public sealed class Dict: IDictInfo {
         return Modified = true;
     }
 
-    public void ForEachByText(string text, Action<EntryLine> f) {
-        if (!_entriesByText.TryGetValue(text, out var indexes)) return;
-        foreach (var i in indexes) f(_entries[i]);
-    }
+    public void NotifySaved() => Modified = false;
+
+    public int EntriesAtCode(string code) => _entriesByCode[code]?.Count ?? 0;
+    public bool IsCodePrefix(string code) => _entriesByCode.AnyDescendantValue(code);
 
     public void ForEachByCode(string code, Action<EntryLine> f) {
         if (_entriesByCode[code] is not {} indexes) return;
@@ -98,34 +96,8 @@ public sealed class Dict: IDictInfo {
     public void ForEachByCodePrefix(string code, Action<EntryLine> f) =>
         _entriesByCode.ForEachSubtreeValue(code, i => f(_entries[i]));
 
-    /// <summary> 保存词库（不迁移路径） </summary>
-    /// <param name="path"> null 则覆写 </param>
-    /// <param name="reorder"> true：词条先按 Code 升序再按 Num 升序重排，非词条行按原序排在末尾；false：保持原有行，新词条按插入顺序排在末尾 </param>
-    public async Task SaveAsync(string? path, bool reorder) {
-        await using StreamWriter writer = new(path ?? Path);
-        writer.NewLine = "\n";
-        await writer.WriteLineAsync(_header);
-
-        if (reorder) {
-            foreach (var e in _entries.Where(static e => e.Num > 0)
-                .OrderBy(static e => (e.Code, e.Num)))
-                await writer.WriteLineAsync(e.Serialize(Cols));
-            foreach (var r in _rawLines) await writer.WriteLineAsync(r.Content);
-        } else {
-            using var entries = _entries.Where(static e => e.Num > 0).GetEnumerator();
-            using var rawLines = _rawLines.GetEnumerator();
-            var anyE = entries.MoveNext();
-            var anyR = rawLines.MoveNext();
-            while (anyE || anyR)
-                if (anyE && (!anyR || entries.Current.Num <= rawLines.Current.Num)) {
-                    await writer.WriteLineAsync(entries.Current.Serialize(Cols));
-                    anyE = entries.MoveNext();
-                } else {
-                    await writer.WriteLineAsync(rawLines.Current.Content);
-                    anyR = rawLines.MoveNext();
-                }
-        }
-
-        Modified = false;
+    public void ForEachByText(string text, Action<EntryLine> f) {
+        if (!_entriesByText.TryGetValue(text, out var indexes)) return;
+        foreach (var i in indexes) f(_entries[i]);
     }
 }

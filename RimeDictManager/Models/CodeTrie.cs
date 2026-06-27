@@ -11,14 +11,6 @@ public sealed class CodeTrie(int cap) {
             ? _values[i]
             : null;
 
-    private int IndexOf(string code) {
-        var i = 0;
-        foreach (var c in code)
-            if (_children[i] is not {} ch || !ch.TryGetValue(c, out i))
-                return -1;
-        return i;
-    }
-
     public void Insert(string code, int v) {
         var i = 0;
         foreach (var c in code) {
@@ -46,6 +38,14 @@ public sealed class CodeTrie(int cap) {
         return true;
     }
 
+    private int IndexOf(string code) {
+        var i = 0;
+        foreach (var c in code)
+            if (_children[i] is not {} ch || !ch.TryGetValue(c, out i))
+                return -1;
+        return i;
+    }
+
     public bool AnyDescendantValue(string code) =>
         IndexOf(code) is >= 0 and var i && AnyDescendantValue(i);
 
@@ -62,7 +62,9 @@ public sealed class CodeTrie(int cap) {
     }
 
     private void ForEachSubtreeValue(int i, Action<int> f) {
-        _values[i]?.ForEach(f);
+        if (_values[i] is {} vals)
+            foreach (var v in vals)
+                f(v);
         if (_children[i] is not {} ch) return;
         foreach (var (_, j) in ch) ForEachSubtreeValue(j, f);
     }

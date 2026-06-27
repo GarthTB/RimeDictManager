@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Models;
 using Services;
 using ZLinq;
+using OpEx = InvalidOperationException;
 
 public sealed partial class DictWindowVM: ObservableObject {
     public DictWindowVM() {
@@ -13,6 +14,8 @@ public sealed partial class DictWindowVM: ObservableObject {
         Dicts.FirstOrDefault()?.SetTgt(true);
         foreach (var dict in Encoder.AllDicts) SingleDicts.Add(dict);
     }
+
+    [ObservableProperty] public partial InputMethod SelInputMethod { get; set; } = Encoder.Method;
 
     #region 词库
 
@@ -27,67 +30,69 @@ public sealed partial class DictWindowVM: ObservableObject {
     public bool SelDictModified => SelDict is { Modified: true };
     private bool SelDictNotTgt => SelDict is { Tgt: false };
 
-    public void AddDict(string path) {
-        DictVM dict = new(DictManager.AddDict(path));
-        Dicts.Add(dict);
-        if (Dicts.Count == 1) dict.SetTgt(true);
+    public async Task AddDict(string path) {
+        var dict = await DictManager.AddDictAsync(path);
+        DictVM dictVM = new(dict);
+        Dicts.Add(dictVM);
+        if (Dicts.Count == 1) dictVM.SetTgt(true);
     }
 
     [RelayCommand(CanExecute = nameof(HasSelDict))]
     private async Task RemoveDictAsync() {
         try {
-            var dict = SelDict!;
-            var (done, tgt) = await DictManager.RemoveDictAsync(dict.Src);
+            var dictVM = SelDict ?? throw new OpEx("UI 错误");
+            var (done, tgt) = await DictManager.RemoveDictAsync(dictVM.Src);
             if (!done) return;
-            if (!Dicts.Remove(dict)) throw new InvalidOperationException("表格移除词库失败");
+            if (!Dicts.Remove(dictVM)) throw new OpEx("UI 移除词库失败");
             if (tgt is {}) Dicts.AsValueEnumerable().First(x => x.Src == tgt).SetTgt(true);
-        } catch (Exception ex) { await ex.Alert("移除词库"); }
+        } catch (Exception ex) { await ex.AlertAsync("移除词库"); }
     }
 
-    public async Task SaveAsync(DictVM dict, string? path, bool reorder) {
-        await DictManager.SaveAsync(dict.Src, path, reorder);
-        dict.NotifySaved();
+    public async Task SaveAsync(DictVM dictVM, string? path, bool reorder) {
+        await DictManager.SaveAsync(dictVM.Src, path, reorder);
+        dictVM.NotifySaved();
         OnPropertyChanged(nameof(SelDictModified));
     }
 
     [RelayCommand(CanExecute = nameof(SelDictNotTgt))]
     private async Task SetTgtDictAsync() {
         try {
-            var dict = SelDict!;
-            var prev = DictManager.SetTgtDict(dict.Src);
-            dict.SetTgt(true);
+            var dictVM = SelDict ?? throw new OpEx("UI 错误");
+            var prev = DictManager.SetTgtDict(dictVM.Src);
+            dictVM.SetTgt(true);
             Dicts.AsValueEnumerable().First(x => x.Src == prev).SetTgt(false);
-        } catch (Exception ex) { await ex.Alert("设置加词目标"); }
+        } catch (Exception ex) { await ex.AlertAsync("设置加词目标"); }
     }
 
     #endregion 词库
 
-    #region 单字和编码方案
+    #region 单字码表
 
     public ObservableCollection<SingleDict> SingleDicts { get; } = [];
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(RemoveSingleDictCommand))]
     public partial SingleDict? SelSingleDict { get; set; }
 
-    [ObservableProperty] public partial InputMethod SelInputMethod { get; set; } = Encoder.Method;
-
     public bool CanSelectMethod => SingleDicts.Count > 0;
     private bool HasSelSingleDict => SelSingleDict is {};
 
-    public void AddSingleDict(string path) {
-        SingleDicts.Add(Encoder.AddDict(path));
+    public async Task AddSingleDict(string path) {
+        var dict = await Encoder.AddDictAsync(path);
+        SingleDicts.Add(dict);
         OnPropertyChanged(nameof(CanSelectMethod));
     }
 
     [RelayCommand(CanExecute = nameof(HasSelSingleDict))]
     private async Task RemoveSingleDictAsync() {
         try {
-            var dict = SelSingleDict!;
+            var dict = SelSingleDict ?? throw new OpEx("UI 错误");
             Encoder.RemoveDict(dict);
-            if (!SingleDicts.Remove(dict)) throw new InvalidOperationException("表格移除单字码表失败");
+            if (!SingleDicts.Remove(dict)) throw new OpEx("UI 移除单字码表失败");
             OnPropertyChanged(nameof(CanSelectMethod));
-        } catch (Exception ex) { await ex.Alert("移除单字码表"); }
+        } catch (Exception ex) { await ex.AlertAsync("移除单字码表"); }
     }
 
-    #endregion 单字和编码方案
+    #endregion 单字码表
+
+    // TODO: 自动加载整个目录
 }
