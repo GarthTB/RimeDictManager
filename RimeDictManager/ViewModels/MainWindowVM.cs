@@ -218,7 +218,7 @@ public sealed partial class MainWindowVM: ObservableObject {
             foreach (var e in entries)
                 if (e.TryNewIfModified(out var tgt))
                     mods.Add((e.Src, tgt));
-            if (mods.Count == 0) throw new OpEx("没有改动，什么都没做");
+            if (mods.Count == 0) throw new OpEx("无改动，什么都没做");
             if (await ModifyEntriesAsync(mods)) _ = SearchAsync();
         } catch (Exception ex) { await ex.AlertAsync("应用修改"); }
     }

@@ -31,18 +31,9 @@ public sealed class Dict: IDictInfo {
         Path = path;
         Name = name;
         Cols = cols;
-        Cnt = (uint)_entries.Count;
         _entriesByCode = new(4 * _entries.Count);
         _entriesByText = new(_entries.Count);
-        for (var i = 0; i < _entries.Count; i++) {
-            var e = _entries[i];
-            _entriesByCode.Insert(e.Code, i);
-            ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
-            if (exists)
-                indexes!.Add(i);
-            else
-                indexes = [i];
-        }
+        for (var i = 0; i < _entries.Count; i++) Insert(_entries[i], i);
     }
 
     public string Header { get; }
@@ -57,19 +48,22 @@ public sealed class Dict: IDictInfo {
 
     public EntryLine Insert(EntryLine e) {
         if (e.Num == 0) e = e with { Num = _num++ };
-        _entries.Add(e);
 
-        var i = _entries.Count - 1;
+        _entries.Add(e);
+        Insert(e, _entries.Count - 1);
+
+        Modified = true;
+        return e;
+    }
+
+    private void Insert(EntryLine e, int i) {
         _entriesByCode.Insert(e.Code, i);
         ref var indexes = ref GetValueRefOrAddDefault(_entriesByText, e.Text, out var exists);
         if (exists)
             indexes!.Add(i);
         else
             indexes = [i];
-
         Cnt++;
-        Modified = true;
-        return e;
     }
 
     public bool Remove(EntryLine e) {

@@ -27,7 +27,7 @@ public sealed class DictIOTests {
           + "滚滚\tgun gun\t100\n"
           + " 长江 \t chang jiang \t 50 \n" // 有空格
           + "东逝水\tdong shi shui\n"; // 有省略
-        const string expectedHeader = "---\nname: test\n..."; // 没有换行符
+        const string expectedHeader = "---\nname: test\n..."; // 无换行符
         using TestFile file = new(text);
 
         var dict = await DictIO.LoadDictAsync(file.Name);
@@ -100,7 +100,7 @@ public sealed class DictIOTests {
 
     [Fact]
     public async Task LoadDictAsync_HeaderNoName_GetFileName() {
-        using TestFile file = new("---\n...\n", "test.dict.yaml");
+        using TestFile file = new("---\ncolumns: [text, code, weight]\n...\n", "test.dict.yaml");
 
         var dict = await DictIO.LoadDictAsync(file.Name);
 
@@ -219,6 +219,7 @@ public sealed class DictIOTests {
 
         await DictIO.SaveAsync(dict, file.Name, true);
 
+        Equal("test.dict.yaml", dict.Path);
         var lines = await File.ReadAllLinesAsync(file.Name, TestContext.Current.CancellationToken);
         Equal(8, lines.Length);
         Equal("---", lines[0]);
@@ -241,6 +242,7 @@ public sealed class DictIOTests {
 
         await DictIO.SaveAsync(dict, file.Name, false);
 
+        Equal("test.dict.yaml", dict.Path);
         var lines = await File.ReadAllLinesAsync(file.Name, TestContext.Current.CancellationToken);
         Equal(8, lines.Length);
         Equal("---", lines[0]);
