@@ -15,8 +15,9 @@ public static class DictManager {
     public static IReadOnlySet<DictCol> UnionCols =>
         Dicts.AsValueEnumerable().SelectMany(static x => x.Cols).Distinct().ToHashSet();
 
-    private static bool IsOnlyCodePrefix(Dict dict, string code) =>
-        dict.EntriesAtCode(code) == 1 && Dicts.AsValueEnumerable().Any(x => x.IsCodePrefix(code));
+    private static bool IsOnlyCodePrefix(string code) =>
+        Dicts.AsValueEnumerable().Sum(x => x.EntriesAtCode(code)) == 1
+     && Dicts.AsValueEnumerable().Any(x => x.IsCodePrefix(code));
 
     #region 文件
 
@@ -110,7 +111,7 @@ public static class DictManager {
         var eStr = e.Entry.Format(dict.Cols);
 
         var msg = $"确认删除词条？\n\n{eStr}";
-        if (e.Entry.Code.Length > 0 && IsOnlyCodePrefix(dict, e.Entry.Code))
+        if (e.Entry.Code.Length > 0 && IsOnlyCodePrefix(e.Entry.Code))
             msg += $"\n\n删除后，编码'{e.Entry.Code}'将空缺，有更长编码可被截短";
         if (!await MsgBox.AskAsync<bool>(msg)) return false;
 
@@ -121,10 +122,9 @@ public static class DictManager {
 
     public static async Task<bool> ShortenEntryAsync(DictEntry e, string tgt) {
         var dict = (Dict)e.Dict;
-        var cols = dict.Cols;
 
         var ol = e.Entry; // 旧长码词条
-        if (!EntryLine.TryNew(ol.Num, ol.Text, tgt, ol.Weight, ol.Stem, cols, out var ns))
+        if (!EntryLine.TryNew(ol.Num, ol.Text, tgt, ol.Weight, ol.Stem, dict.Cols, out var ns))
             throw new OpEx("截短编码后词条无效");
         List<EntryLine> osList = []; // 旧短码词条
         dict.ForEachByCode(tgt, osList.Add);
@@ -141,7 +141,7 @@ public static class DictManager {
         var nsStr = ns.Format(dict.Cols);
 
         var msg = $"截短前：\t'{olStr}'\n截短后：\t'{nsStr}'";
-        if (IsOnlyCodePrefix(dict, ol.Code)) msg += $"\n\n截短后，编码'{ol.Code}'将空缺，有更长编码可被截短";
+        if (IsOnlyCodePrefix(ol.Code)) msg += $"\n\n截短后，编码'{ol.Code}'将空缺，有更长编码可被截短";
         if (!await MsgBox.AskAsync<bool>($"确认截短编码？\n\n{msg}")) return false;
 
         if (!dict.Remove(ol)) throw new OpEx("删除原词条失败");
@@ -177,7 +177,7 @@ public static class DictManager {
                 + $"截短后：\t'{nsStr}'\n\n"
                 + $"延长前：\t'{osStr}'\n"
                 + $"延长后：\t'{nlStr}'";
-        if (ol.Code != nl.Code && IsOnlyCodePrefix(dict, ol.Code))
+        if (ol.Code != nl.Code && IsOnlyCodePrefix(ol.Code))
             msg += $"\n\n截短后，编码'{ol.Code}'将空缺，有更长编码可被截短";
         if (!await MsgBox.AskAsync<bool>($"确认截短并延长编码？\n\n{msg}")) return false;
 
@@ -220,7 +220,7 @@ public static class DictManager {
                 if (src.Code.Length > 0
                  && src.Code != tgt.Code
                  && !newCodes.Contains(src.Code)
-                 && IsOnlyCodePrefix(dict, src.Code))
+                 && IsOnlyCodePrefix(src.Code))
                     msg.Add($"修改后，编码'{src.Code}'将空缺，有更长编码可被截短");
 
                 return (dict, src, tgt, srcStr, tgtStr);
