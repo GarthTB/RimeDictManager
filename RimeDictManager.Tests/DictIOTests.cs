@@ -220,7 +220,7 @@ public sealed class DictIOTests {
     }
 
     [Fact]
-    public async Task SaveAsync_AfterSave_ModifiedFalse() {
+    public async Task SaveAsync_AfterSave_NotModified() {
         const string header = "---\nname: test\n...";
         Dict dict = new("test.dict.yaml", header, "test", DictCols.Default, [], [], 4);
         dict.Insert(new(0, "文本", "code", "100", ""));
