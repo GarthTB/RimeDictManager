@@ -5,11 +5,13 @@
     WindowStartupLocation="CenterOwner"
     Icon="/Assets/icon_48.png"
     Padding="0,32,0,0"
+    ShowInTaskbar="False"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Grid RowDefinitions="*,Auto">
-        <ScrollViewer Padding="16,4">
+        <ScrollViewer>
             <SelectableTextBlock x:Name="Msg"
+                Padding="16,4"
                 VerticalAlignment="Stretch"
                 TextWrapping="Wrap"/>
         </ScrollViewer>
