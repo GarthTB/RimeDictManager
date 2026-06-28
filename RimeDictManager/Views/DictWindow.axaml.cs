@@ -46,8 +46,8 @@ public sealed partial class DictWindow: Window {
     private async Task LoadDirAsync(string dir) {
         try {
             var (dict, single) = await _vm.LoadDirAsync(dir);
-            if (dict + single == 0) throw new OpEx("指定的目录中没有词库和单字码表，什么都没做");
-            await MsgBox.SuccessAsync($"成功加载 {dict} 个词库、{single} 个单字码表。目录：{dir}", this);
+            if (dict + single == 0) throw new OpEx("什么都没做：目录中没有词库和单字码表，或者全都重复了");
+            await MsgBox.SuccessAsync($"成功加载 {dict} 个词库、{single} 个单字码表\n目录：{dir}\n别忘了设置加词目标", this);
         } catch (Exception ex) { await ex.AlertAsync("加载目录", this); }
     }
 

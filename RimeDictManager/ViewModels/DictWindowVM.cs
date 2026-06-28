@@ -10,12 +10,14 @@ using OpEx = InvalidOperationException;
 
 public sealed partial class DictWindowVM: ObservableObject {
     public DictWindowVM() => RefreshState();
+
     [ObservableProperty] public partial InputMethod SelInputMethod { get; set; } = Encoder.Method;
 
     private void RefreshState() {
         foreach (var dict in DictManager.AllDicts) Dicts.Add(new(dict));
         Dicts.FirstOrDefault()?.SetTgt(true);
         foreach (var dict in Encoder.AllDicts) SingleDicts.Add(dict);
+        OnPropertyChanged(nameof(CanSelectMethod));
     }
 
     #region 添加目录
