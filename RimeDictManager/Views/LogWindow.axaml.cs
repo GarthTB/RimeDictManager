@@ -8,7 +8,7 @@ using Services;
 
 public sealed partial class LogWindow: Window {
     private readonly FilePickerSaveOptions _saveOptions = new() {
-        Title = "将日志保存至...", FileTypeChoices = [FileTypes.Log, FilePickerFileTypes.All]
+        Title = "将日志保存到...", FileTypeChoices = [FileTypes.Log, FilePickerFileTypes.All]
     };
 
     public LogWindow() {
@@ -29,7 +29,7 @@ public sealed partial class LogWindow: Window {
 
             await using (var stream = await file.OpenWriteAsync()) await Log.SaveAsync(stream);
             var path = file.TryGetLocalPath() ?? file.Path.LocalPath;
-            await MsgBox.SuccessAsync($"保存成功，路径：{path}", this);
+            await MsgBox.SuccessAsync($"成功保存到：{path}", this);
         } catch (Exception ex) { await ex.AlertAsync("保存日志", this); }
     }
 }

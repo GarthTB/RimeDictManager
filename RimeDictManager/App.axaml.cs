@@ -13,16 +13,12 @@ public sealed class App: Application {
             MainWindow mainWindow = new();
             desktop.MainWindow = mainWindow;
 #if MACOS
-            // macOS 捕获参数
             if (this.TryGetFeature<IActivatableLifetime>() is {} lifetime)
                 lifetime.Activated += async (_, e) => {
                     if (e is not ProtocolActivatedEventArgs { Kind: ActivationKind.OpenUri } args)
                         return;
                     UrlActivation.ParseUrl(args.Uri.OriginalString);
-                    if (!mainWindow.IsVisible || UrlActivation.ConsumeDir() is not {} dir) return;
-                    for (var i = mainWindow.OwnedWindows.Count - 1; i >= 0; i--)
-                        (mainWindow.OwnedWindows[i] as DictWindow)?.Close();
-                    await mainWindow.ShowDictWindow(dir);
+                    if (mainWindow.IsLoaded) await mainWindow.AutoLoadDir();
                 };
 #endif
         }

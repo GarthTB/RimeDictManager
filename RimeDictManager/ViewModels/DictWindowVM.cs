@@ -9,13 +9,28 @@ using ZLinq;
 using OpEx = InvalidOperationException;
 
 public sealed partial class DictWindowVM: ObservableObject {
-    public DictWindowVM() {
+    public DictWindowVM() => RefreshState();
+    [ObservableProperty] public partial InputMethod SelInputMethod { get; set; } = Encoder.Method;
+
+    private void RefreshState() {
         foreach (var dict in DictManager.AllDicts) Dicts.Add(new(dict));
         Dicts.FirstOrDefault()?.SetTgt(true);
         foreach (var dict in Encoder.AllDicts) SingleDicts.Add(dict);
     }
 
-    [ObservableProperty] public partial InputMethod SelInputMethod { get; set; } = Encoder.Method;
+    #region 添加目录
+
+    public async Task<(uint, uint)> LoadDirAsync(string dir) {
+        var dict = await DictManager.LoadDirAsync(dir);
+        var single = await Encoder.LoadDirAsync(dir);
+        if (dict + single == 0) return (0, 0);
+        Dicts.Clear();
+        SingleDicts.Clear();
+        RefreshState();
+        return (dict, single);
+    }
+
+    #endregion 添加目录
 
     #region 词库
 
@@ -30,7 +45,7 @@ public sealed partial class DictWindowVM: ObservableObject {
     public bool SelDictModified => SelDict is { Modified: true };
     private bool SelDictNotTgt => SelDict is { Tgt: false };
 
-    public async Task AddDict(string path) {
+    public async Task AddDictAsync(string path) {
         var dict = await DictManager.AddDictAsync(path);
         DictVM dictVM = new(dict);
         Dicts.Add(dictVM);
@@ -76,7 +91,7 @@ public sealed partial class DictWindowVM: ObservableObject {
     public bool CanSelectMethod => SingleDicts.Count > 0;
     private bool HasSelSingleDict => SelSingleDict is {};
 
-    public async Task AddSingleDict(string path) {
+    public async Task AddSingleDictAsync(string path) {
         var dict = await Encoder.AddDictAsync(path);
         SingleDicts.Add(dict);
         OnPropertyChanged(nameof(CanSelectMethod));
@@ -93,6 +108,4 @@ public sealed partial class DictWindowVM: ObservableObject {
     }
 
     #endregion 单字码表
-
-    // TODO: 自动加载整个目录
 }

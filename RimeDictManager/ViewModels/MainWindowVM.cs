@@ -42,7 +42,9 @@ public sealed partial class MainWindowVM: ObservableObject {
         ShowCodeCol = DictReady && unionCols.Contains(DictCol.Code);
         ShowWeightCol = DictReady && unionCols.Contains(DictCol.Weight);
         ShowStemCol = DictReady && unionCols.Contains(DictCol.Stem);
+
         UseEncoder = Encoder.Ready;
+        CurCodeLen = Encoder.Method.MinLen;
         OnPropertyChanged(nameof(CanToggleEncoder));
         OnPropertyChanged(nameof(MinCodeLen));
         OnPropertyChanged(nameof(MaxCodeLen));
