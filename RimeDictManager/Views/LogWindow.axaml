@@ -4,7 +4,7 @@
     Height="480"
     Width="680"
     Icon="/Assets/icon_48.png"
-    Padding="0,32,0,0"
+    Padding="0,30,0,0"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Grid RowDefinitions="*,Auto">

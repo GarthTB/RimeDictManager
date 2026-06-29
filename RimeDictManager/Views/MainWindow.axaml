@@ -6,7 +6,7 @@
     Height="480"
     Width="680"
     Icon="/Assets/icon_48.png"
-    Padding="0,32,0,0"
+    Padding="0,30,0,0"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Design.DataContext>
@@ -16,6 +16,7 @@
         RowDefinitions="Auto,14,Auto,14,Auto,14,Auto,14,*"
         ColumnDefinitions="108,16,*,16,*,16,*,16,108">
         <Button Content="词库窗口"
+            Theme="{DynamicResource SolidButton}"
             Click="ShowDictWindow"/>
         <Button Grid.Row="2"
             Grid.Column="0"

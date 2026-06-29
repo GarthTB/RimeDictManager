@@ -4,7 +4,7 @@
     SizeToContent="WidthAndHeight"
     WindowStartupLocation="CenterOwner"
     Icon="/Assets/icon_48.png"
-    Padding="0,32,0,0"
+    Padding="0,30,0,0"
     ShowInTaskbar="False"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
