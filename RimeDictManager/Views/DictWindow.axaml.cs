@@ -12,9 +12,7 @@ public sealed partial class DictWindow: Window {
     private const string OverwritePrompt = "是：覆写原词库\n否：另存副本（如果下一次选择覆写，覆写原文件而不是副本）",
         ReorderPrompt = "是：词条先按编码升序再按原序重排，非词条行按原序排在末尾\n否：保持原有行，新词条按插入顺序排在末尾";
 
-    private readonly FolderPickerOpenOptions _openDirOptions = new() {
-        Title = "选取 RIME 词库目录...", AllowMultiple = false
-    };
+    private readonly FolderPickerOpenOptions _openDirOptions = new() { Title = "选取 RIME 词库目录..." };
 
     private readonly FilePickerOpenOptions _openFileOptions = new() {
         AllowMultiple = true,
@@ -47,7 +45,8 @@ public sealed partial class DictWindow: Window {
         try {
             var (dict, single) = await _vm.LoadDirAsync(dir);
             if (dict + single == 0) throw new OpEx("目录中没有词库和单字码表，或者全都重复了，所以什么都没做");
-            await MsgBox.SuccessAsync($"成功加载 {dict} 个词库、{single} 个单字码表\n目录：{dir}\n别忘了设置加词目标", this);
+            var msg = $"成功加载 {dict} 个词库、{single} 个单字码表\n目录：{dir}\n别忘了设置加词目标和编码方案";
+            await MsgBox.SuccessAsync(msg, this);
         } catch (Exception ex) { await ex.AlertAsync("加载目录", this); }
     }
 
@@ -58,6 +57,7 @@ public sealed partial class DictWindow: Window {
 
             var folder = folders[0];
             var dir = folder.TryGetLocalPath() ?? folder.Path.LocalPath;
+            foreach (var f in folders) f.Dispose();
             await LoadDirAsync(dir);
         } catch (Exception ex) { await ex.AlertAsync("选取目录", this); }
     }

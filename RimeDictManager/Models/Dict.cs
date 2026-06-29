@@ -38,7 +38,7 @@ public sealed class Dict: IDictInfo {
 
     public string Header { get; }
     public IReadOnlyList<RawLine> RawLines { get; }
-    public IEnumerable<EntryLine> Entries => _entries.Where(static e => e.Num > 0);
+    public IEnumerable<EntryLine> Entries => _entries.Where(static x => x.Num > 0);
 
     public string Path { get; }
     public string Name { get; }

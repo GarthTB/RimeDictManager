@@ -63,7 +63,7 @@
             <ComboBox.Styles>
                 <Style Selector="ComboBox.Multi">
                     <Setter Property="Foreground"
-                        Value="Red"/>
+                        Value="#F22"/>
                 </Style>
             </ComboBox.Styles>
         </ComboBox>

@@ -25,7 +25,7 @@ public sealed partial class DictWindowVM: ObservableObject {
     public async Task<(uint, uint)> LoadDirAsync(string dir) {
         var dict = await DictManager.LoadDirAsync(dir);
         var single = await Encoder.LoadDirAsync(dir);
-        if (dict + single == 0) return (0, 0);
+        if (dict + single == 0) return (dict, single);
         Dicts.Clear();
         SingleDicts.Clear();
         RefreshState();

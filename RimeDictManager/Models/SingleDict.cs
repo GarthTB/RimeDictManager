@@ -15,10 +15,10 @@ public sealed record SingleDict(
         Dictionary<char, HashSet<string>> merged = new(cap);
         foreach (var dict in dicts)
         foreach (var (c, local) in dict.Entries) {
-            ref var global = ref GetValueRefOrAddDefault(merged, c, out var exists);
-            if (!exists) global = new(local.Count);
+            ref var master = ref GetValueRefOrAddDefault(merged, c, out var exists);
+            if (!exists) master = new(local.Count);
             foreach (var code in local.AsValueEnumerable().Where(x => x.Length >= stemLen))
-                global!.Add(code[..stemLen]);
+                master!.Add(code[..stemLen]);
         }
         return merged.ToFrozenDictionary(static x => x.Key, static x => x.Value.ToArray());
     }

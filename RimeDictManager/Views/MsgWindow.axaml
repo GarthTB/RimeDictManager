@@ -19,9 +19,11 @@
             Margin="16,8,16,14"
             ColumnDefinitions="*,16,*"
             HorizontalAlignment="Right">
-            <Button x:Name="BtnNo"/>
+            <Button x:Name="BtnNo"
+                Theme="{DynamicResource SolidButton}"/>
             <Button x:Name="BtnYes"
-                Grid.Column="2"/>
+                Grid.Column="2"
+                Theme="{DynamicResource SolidButton}"/>
         </Grid>
     </Grid>
 </Window>
