@@ -15,19 +15,23 @@ public sealed partial class MainWindow: Window {
         InitializeComponent();
         DataContext = _vm;
         Title = $"{Meta.Name} - {Meta.Version}";
-        Loaded += async (_, _) => {
-            if (UrlActivation.ConsumeDir() is {} dir) await ShowDictWindowAsync(dir);
-        };
+        Loaded += async (_, _) => await AutoLoadDir();
     }
 
-    // ReSharper disable once AsyncVoidEventHandlerMethod
-    private async void ShowDictWindow(object? _, RoutedEventArgs e) =>
-        await ShowDictWindowAsync(null);
-
     // ReSharper disable once MemberCanBePrivate.Global
-    public async Task ShowDictWindowAsync(string? dir) {
+    public async Task AutoLoadDir() {
         try {
+            var dir = UrlActivation.ConsumeDir();
+            if (dir is null) return;
+            if (!Directory.Exists(dir)) throw new InvalidOperationException("指定的目录不存在");
             await new DictWindow(dir).ShowDialog(this);
+            _vm.RefreshState();
+        } catch (Exception ex) { await ex.AlertAsync("自动加载目录", this); }
+    }
+
+    private async void ShowDictWindow(object? _, RoutedEventArgs e) {
+        try {
+            await new DictWindow().ShowDialog(this);
             _vm.RefreshState();
         } catch (Exception ex) { await ex.AlertAsync("管理词库并刷新状态", this); }
     }

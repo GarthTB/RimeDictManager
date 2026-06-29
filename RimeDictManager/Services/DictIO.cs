@@ -110,7 +110,7 @@ file sealed class DictReader(string path): IDisposable {
             if (raw.Length < 3 || !raw.AsSpan().EndsWith("...")) throw new FmtEx("文件头缺失或未闭合");
 
             var header = YamlSerializer.Deserialize(raw[start..^3], HeaderContext.Default.Header)
-                      ?? throw new FmtEx("YAML 解析器返回 NULL");
+                      ?? throw new FmtEx("YAML 解析器返回 NULL，文件头可能为空");
             var name = header.Name ?? TrimExt(Path.GetFileName(path));
             ParseCols(header.Columns);
 

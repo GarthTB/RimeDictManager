@@ -7,7 +7,7 @@
     Height="480"
     Width="680"
     Icon="/Assets/icon_48.png"
-    Padding="0,32,0,0"
+    Padding="0,30,0,0"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Design.DataContext>
@@ -16,19 +16,23 @@
     <Grid RowDefinitions="*,Auto,*">
         <Grid Margin="16,8,16,14"
             RowDefinitions="Auto,14,*">
-            <Grid ColumnDefinitions="*,16,*,16,*,16,*">
-                <Button Content="添加词库"
-                    Click="AddDict"/>
+            <Grid ColumnDefinitions="*,16,*,16,*,16,*,16,*">
+                <Button Content="添加目录"
+                    Theme="{DynamicResource SolidButton}"
+                    Click="AddDir"/>
                 <Button Grid.Column="2"
+                    Content="添加词库"
+                    Click="AddDict"/>
+                <Button Grid.Column="4"
                     Content="移除词库"
                     Classes="Danger"
                     Command="{Binding RemoveDictCommand, Mode=OneTime}"/>
-                <Button Grid.Column="4"
+                <Button Grid.Column="6"
                     Content="保存词库"
                     IsEnabled="{Binding SelDictModified}"
                     Click="SaveDict"/>
-                <Button Grid.Column="6"
-                    Content="设为加词目标"
+                <Button Grid.Column="8"
+                    Content="为它加词"
                     Command="{Binding SetTgtDictCommand, Mode=OneTime}"/>
             </Grid>
             <DataGrid Grid.Row="2"
@@ -42,7 +46,7 @@
                     <DataGridTextColumn Width="*"
                         Header="路径"
                         Binding="{Binding Src.Path, Mode=OneTime}"/>
-                    <DataGridTextColumn Width="100"
+                    <DataGridTextColumn Width="108"
                         Header="词数"
                         Binding="{Binding Src.Cnt, Mode=OneTime}"/>
                     <DataGridTextColumn Width="80"
@@ -91,7 +95,7 @@
                     <DataGridTextColumn Width="*"
                         Header="路径"
                         Binding="{Binding Path, Mode=OneTime}"/>
-                    <DataGridTextColumn Width="100"
+                    <DataGridTextColumn Width="108"
                         Header="字数"
                         Binding="{Binding Entries.Count, Mode=OneTime}"/>
                 </DataGrid.Columns>

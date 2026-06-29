@@ -1,5 +1,6 @@
 namespace RimeDictManager.Services;
 
+using Common;
 using Models;
 using ZLinq;
 using OpEx = InvalidOperationException;
@@ -20,6 +21,23 @@ public static class DictManager {
      && Dicts.AsValueEnumerable().Any(x => x.IsCodePrefix(code));
 
     #region 文件
+
+    /// <summary> 加载整个目录 </summary>
+    /// <param name="dir"> 目录 </param>
+    /// <returns> 载入的词库数 </returns>
+    public static async Task<uint> LoadDirAsync(string dir) {
+        var olds = Dicts.AsValueEnumerable().Select(static x => x.Path).ToFrozenSet();
+        var news = Directory.EnumerateFiles(dir, $"*{FileTypes.DictExt}");
+        var cnt = 0u;
+        foreach (var path in news.Where(x => !olds.Contains(x)))
+            try {
+                var dict = await DictIO.LoadDictAsync(path);
+                Dicts.Add(dict);
+                cnt++;
+                Log.Info($"添加词库\t{path}");
+            } catch { Log.Info($"跳过词库\t{path}"); }
+        return cnt;
+    }
 
     public static async Task<IDictInfo> AddDictAsync(string path) {
         if (Dicts.AsValueEnumerable().Any(x => x.Path == path)) throw new OpEx("词库重复");
@@ -204,7 +222,7 @@ public static class DictManager {
 
     public static async Task<bool> ModifyEntriesAsync(
         IReadOnlyList<(DictEntry Src, EntryLine Tgt)> mods) {
-        var newCodes = mods.AsValueEnumerable().Select(static m => m.Tgt.Code).ToHashSet();
+        var newCodes = mods.AsValueEnumerable().Select(static m => m.Tgt.Code).ToFrozenSet();
         List<string> msg = new(1 + 4 * mods.Count) { "确认应用修改？" };
         var modInfo = mods.AsValueEnumerable()
             .Select(mod => {

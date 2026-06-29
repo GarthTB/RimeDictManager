@@ -1,6 +1,7 @@
 namespace RimeDictManager.Services;
 
 using System.Collections.Frozen;
+using Common;
 using Models;
 using ZLinq;
 using OpEx = InvalidOperationException;
@@ -13,6 +14,25 @@ public static class Encoder {
     public static bool Ready => _merged is {};
 
     public static InputMethod Method { get; private set; } = InputMethod.FlyPyTigerWubi;
+
+    /// <summary> 加载整个目录 </summary>
+    /// <param name="dir"> 目录 </param>
+    /// <returns> 载入的码表数 </returns>
+    public static async Task<uint> LoadDirAsync(string dir) {
+        var olds = Dicts.AsValueEnumerable().Select(static x => x.Path).ToFrozenSet();
+        var news = Directory.EnumerateFiles(dir, $"*{FileTypes.DictExt}");
+        var cnt = 0u;
+        foreach (var path in news.Where(x => !olds.Contains(x)))
+            try {
+                var dict = await DictIO.LoadSingleDictAsync(path);
+                if (dict.Entries.Count == 0) continue; // 不是单字码表
+                Dicts.Add(dict);
+                cnt++;
+                _merged = null;
+                Log.Info($"添加单字码表\t{path}");
+            } catch { Log.Info($"跳过单字码表\t{path}"); }
+        return cnt;
+    }
 
     public static async Task<SingleDict> AddDictAsync(string path) {
         if (Dicts.AsValueEnumerable().Any(x => x.Path == path)) throw new OpEx("单字码表重复");

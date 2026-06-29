@@ -15,8 +15,8 @@ public static class MsgBox {
     public static Task AlertAsync(this Exception ex, string op, Window? owner = null) {
         var msg = $"{op}时出错：{ex.Message}";
         Log.Err(msg);
-        return new MsgWindow("错误", $"{msg}\n\n详情：\n\n{ex}", false).ShowDialog(
-            owner ?? GetTopWindow());
+        owner ??= GetTopWindow();
+        return new MsgWindow("错误", $"{msg}\n\n详情：\n\n{ex}", false).ShowDialog(owner);
     }
 
     private static Window GetTopWindow() {

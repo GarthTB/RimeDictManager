@@ -4,17 +4,17 @@
     SizeToContent="WidthAndHeight"
     WindowStartupLocation="CenterOwner"
     Icon="/Assets/icon_48.png"
-    Padding="0,32,0,0"
+    Padding="0,30,0,0"
+    ShowInTaskbar="False"
     ExtendClientAreaToDecorationsHint="True"
     TransparencyLevelHint="AcrylicBlur">
     <Grid RowDefinitions="*,Auto">
-        <TextBox x:Name="Msg"
-            Padding="14,8"
-            VerticalAlignment="Stretch"
-            VerticalContentAlignment="Top"
-            Background="Transparent"
-            IsReadOnly="True"
-            TextWrapping="Wrap"/>
+        <ScrollViewer>
+            <SelectableTextBlock x:Name="Msg"
+                Padding="16,4"
+                VerticalAlignment="Stretch"
+                TextWrapping="Wrap"/>
+        </ScrollViewer>
         <Grid Grid.Row="1"
             Margin="16,8,16,14"
             ColumnDefinitions="*,16,*"
