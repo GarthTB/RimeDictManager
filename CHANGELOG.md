@@ -4,11 +4,37 @@
 
 ## [开发中]
 
+## [4.2.0] - 2026-07-01
+
+### Added
+
+- 加载整个词库目录的功能
+- **RIME 词库格式指南**：作为 RIME 的注解和本应用的守则
+
+### Changed
+
+- 禁止单字缺失编码
+- 会移除所有行尾的空白符
+- **缺省列定义**：按 RIME 规则改为 `[text, code, weight]`
+- **注释识别**：按 RIME 规则，详见格式指南的 `注释行处理` 部分
+- **空码判据**：所有词库中仅有一条该编码，且存在任一以其为前缀的更长编码
+- **安装**：macOS 打包为 `.dmg`，Linux 提供安装脚本
+- **UI**：码长控件改为带箭头的文本框
+
+### Deprecated
+
+点击表头排序的功能
+
+### Fixed
+
+- 手动修改词条后，以非重排模式保存时顺序错乱的问题
+- 新词条行号比实际大 1 的问题
+
 ## [4.1.1] - 2026-06-21
 
 - **Fixed**: 未定义 `WINDOWS` `MACOS` 常量，导致条件编译永不触发
 - **Fixed**: Linux 安装指南仅拷贝可执行文件
-- **Fixed**: 空码判断条件遗漏当前编码词条的唯一性
+- **Fixed**: 空码判据遗漏当前编码词条的唯一性
 - **Changed**: 新词条编号不再显示为 `0`
 
 ## [4.1.0] - 2026-06-21 [YANKED]
@@ -84,7 +110,9 @@
 
 [语义化版本]: https://semver.org
 
-[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.1...HEAD
+[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.2.0...HEAD
+
+[4.2.0]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.1...v4.2.0
 
 [4.1.1]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.0...v4.1.1
 
