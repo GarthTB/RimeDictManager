@@ -16,7 +16,7 @@
                 TextWrapping="Wrap"/>
         </ScrollViewer>
         <Grid Grid.Row="1"
-            Margin="16,8,16,14"
+            Margin="16,8,16,16"
             ColumnDefinitions="*,16,*"
             HorizontalAlignment="Right">
             <Button x:Name="BtnNo"

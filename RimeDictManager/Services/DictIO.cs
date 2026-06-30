@@ -171,11 +171,11 @@ file sealed class DictReader(string path): IDisposable {
         var mask = 0;
         for (var i = 0; i < cols.Length; i++) {
             var s = cols[i]; // Yaml 解析器会 Trim
-            if (!Enum.TryParse(s, true, out DictCol col)) throw new FmtEx($"列名无效：'{s}'");
+            if (!Enum.TryParse(s, true, out DictCol col)) throw new FmtEx($"列名'{s}'无效");
             vals[i] = col;
 
             var bit = 1 << (int)col;
-            if ((mask & bit) != 0) throw new FmtEx($"列名重复：'{s}'");
+            if ((mask & bit) != 0) throw new FmtEx($"列名'{s}'重复");
             mask |= bit;
         }
         if ((mask & (1 << (int)DictCol.Text)) == 0) throw new FmtEx("未定义文本列");

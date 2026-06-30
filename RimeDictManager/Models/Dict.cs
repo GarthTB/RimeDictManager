@@ -76,7 +76,7 @@ public sealed class Dict: IDictInfo {
         indexes.RemoveAt(indexes.Count - 1);
         if (!_entriesByCode.Remove(e.Code, i)
          || (indexes.Count == 0 && !_entriesByText.Remove(e.Text)))
-            throw new InvalidOperationException("请停用并报告：数据结构内部相悖");
+            throw new InvalidOperationException("数据结构内部相悖，请停用并报告");
 
         _entries[i] = e with { Num = 0 }; // 标记死亡
         Cnt--;

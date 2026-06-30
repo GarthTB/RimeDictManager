@@ -110,10 +110,11 @@ public static class DictManager {
             throw new OpEx("待添加的词条无效");
         var eStr = e.Format(dict.Cols);
 
-        var msg = $"确认添加词条？\n\n{eStr}";
         List<EntryLine> related = [];
         dict.ForEachByText(e.Text, related.Add);
         if (e.Code.Length > 0) dict.ForEachByCode(e.Code, related.Add);
+
+        var msg = $"确认添加词条？\n\n{eStr}";
         if (related.Count > 0)
             msg += "\n\n同词库内，存在以下相关词条：\n\n"
                  + string.Join('\n', related.Distinct().Select(x => x.Format(dict.Cols)));
@@ -213,7 +214,8 @@ public static class DictManager {
             for (var len = os.Code.Length + 1; len <= Encoder.Method.MaxLen; len++) {
                 var l = len; // 消除 Rider 警告
                 var codes = fullCodes.AsValueEnumerable().Select(x => x[..l]).Distinct().ToArray();
-                if (codes.Length > 1) throw new OpEx("原短码词条的更长编码不唯一");
+                if (codes.Length > 1)
+                    throw new OpEx($"原短码词条的更长编码不唯一\n候选：[ {string.Join(", ", codes)} ]");
                 if (dict.EntriesAtCode(codes[0]) == 0) return codes[0];
             }
             throw new OpEx("原短码词条没有空闲的更长编码");

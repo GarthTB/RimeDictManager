@@ -14,7 +14,7 @@
         <vm:DictWindowVM/>
     </Design.DataContext>
     <Grid RowDefinitions="*,Auto,*">
-        <Grid Margin="16,8,16,14"
+        <Grid Margin="16,8,16,16"
             RowDefinitions="Auto,14,*">
             <Grid ColumnDefinitions="*,16,*,16,*,16,*,16,*">
                 <Button Content="添加目录"
@@ -61,7 +61,7 @@
         <GridSplitter Grid.Row="1"
             Background="{DynamicResource ButtonBackground}"/>
         <Grid Grid.Row="2"
-            Margin="16,14"
+            Margin="16"
             RowDefinitions="Auto,14,*">
             <Grid ColumnDefinitions="*,16,*">
                 <Grid ColumnDefinitions="*,16,*">
