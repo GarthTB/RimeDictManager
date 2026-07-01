@@ -8,10 +8,12 @@ public sealed record SingleDict(
     string Path,
     string Name,
     IReadOnlyDictionary<char, List<string>> Entries) {
+    public int Cnt => Entries.Count;
+
     public static FrozenDictionary<char, string[]> Merge(
         IReadOnlyList<SingleDict> dicts,
         byte stemLen) {
-        var cap = dicts.AsValueEnumerable().Sum(static x => x.Entries.Count);
+        var cap = dicts.AsValueEnumerable().Sum(static x => x.Cnt);
         Dictionary<char, HashSet<string>> merged = new(cap);
         foreach (var dict in dicts)
         foreach (var (c, local) in dict.Entries) {

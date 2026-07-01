@@ -187,7 +187,7 @@ public sealed class DictIOTests {
 
         Equal(file.Name, dict.Path);
         Equal("test", dict.Name);
-        Equal(2, dict.Entries.Count);
+        Equal(2, dict.Cnt);
         True(dict.Entries.TryGetValue('甲', out var list1));
         True(new HashSet<string> { "jia1", "jia2" }.SetEquals(list1));
         True(dict.Entries.TryGetValue('乙', out var list2));
