@@ -119,7 +119,7 @@
                     Binding="{Binding Src.Dict.Name, Mode=OneTime}"/>
                 <DataGridTextColumn Width="108"
                     Header="行号"
-                    Binding="{Binding Num, Mode=OneTime}"/>
+                    Binding="{Binding Src.Entry.Num, Mode=OneTime}"/>
                 <DataGridTextColumn Width="*"
                     Header="文本"
                     Binding="{Binding Text}"/>

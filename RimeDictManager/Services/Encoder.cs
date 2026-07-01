@@ -25,7 +25,7 @@ public static class Encoder {
         foreach (var path in news.Where(x => !olds.Contains(x)))
             try {
                 var dict = await DictIO.LoadSingleDictAsync(path);
-                if (dict.Entries.Count == 0) continue; // 不是单字码表
+                if (dict.Cnt == 0) continue; // 不是单字码表
                 Dicts.Add(dict);
                 cnt++;
                 _merged = null;

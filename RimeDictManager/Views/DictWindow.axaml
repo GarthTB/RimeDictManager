@@ -97,7 +97,7 @@
                         Binding="{Binding Path, Mode=OneTime}"/>
                     <DataGridTextColumn Width="108"
                         Header="字数"
-                        Binding="{Binding Entries.Count, Mode=OneTime}"/>
+                        Binding="{Binding Cnt, Mode=OneTime}"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>
