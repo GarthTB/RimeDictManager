@@ -6,12 +6,12 @@ using Models;
 public sealed partial class EntryVM(DictEntry src): ObservableObject {
     public DictEntry Src { get; } = src;
 
-    public uint Num => Src.Entry.Num;
     [ObservableProperty] public partial string Text { get; set; } = src.Entry.Text;
     [ObservableProperty] public partial string Code { get; set; } = src.Entry.Code;
     [ObservableProperty] public partial string Weight { get; set; } = src.Entry.Weight;
     [ObservableProperty] public partial string Stem { get; set; } = src.Entry.Stem;
 
     public bool TryNewIfModified(out EntryLine aft) =>
-        EntryLine.TryNew(Num, Text, Code, Weight, Stem, Src.Dict.Cols, out aft) && aft != Src.Entry;
+        EntryLine.TryNew(Src.Entry.Num, Text, Code, Weight, Stem, Src.Dict.Cols, out aft)
+     && aft != Src.Entry;
 }
