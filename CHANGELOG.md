@@ -4,6 +4,8 @@
 
 ## [开发中]
 
+## [4.2.0] - 2026-07-01
+
 ### Added
 
 - 加载整个词库目录的功能
@@ -106,7 +108,9 @@
 
 [语义化版本]: https://semver.org
 
-[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.1...HEAD
+[开发中]: https://github.com/GarthTB/RimeDictManager/compare/v4.2.0...HEAD
+
+[4.2.0]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.1...v4.2.0
 
 [4.1.1]: https://github.com/GarthTB/RimeDictManager/compare/v4.1.0...v4.1.1
 
