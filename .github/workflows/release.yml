@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.rid }}" = "osx-arm64" ]; then
-            VER=$(grep -oP '<Version>\K[^<]+' RimeDictManager/RimeDictManager.csproj)
+            VER=$(dotnet msbuild RimeDictManager/RimeDictManager.csproj -getProperty:Version)
             plutil -replace CFBundleVersion -string "$VER" RimeDictManager/Assets/macOS/Info.plist
             plutil -replace CFBundleShortVersionString -string "$VER" RimeDictManager/Assets/macOS/Info.plist
             APP="RimeDictManager.app"
