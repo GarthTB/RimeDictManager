@@ -27,6 +27,8 @@
     </PropertyGroup>
     <ItemGroup>
         <AvaloniaResource Include="Assets\icon_48.png"/>
+        <!-- DataGrid 需要，不能移除 -->
+        <TrimmerRootAssembly Include="RimeDictManager"/>
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="12.0.5"/>
